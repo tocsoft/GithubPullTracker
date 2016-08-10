@@ -13,6 +13,11 @@ namespace GithubPullTracker
         {
             AreaRegistration.RegisterAllAreas();
             RouteConfig.RegisterRoutes(RouteTable.Routes);
+
+            SettingsManager.Settings
+                .AddEnvironmentVariables()
+                .AddDevlopmentSettings("GithubPullTracker")
+                .AddFromConfig();
         }
     }
 }

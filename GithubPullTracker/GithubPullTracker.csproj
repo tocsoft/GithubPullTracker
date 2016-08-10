@@ -106,10 +106,18 @@
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
+    <Content Include="Scripts\codemirror.css" />
+    <Content Include="Scripts\codemirror.js" />
+    <Content Include="Scripts\codemirror.min.js" />
     <Content Include="Scripts\jquery-1.10.2.js" />
     <Content Include="Scripts\jquery-1.10.2.min.js" />
     <Content Include="Scripts\lscache.min.js" />
+    <Content Include="Scripts\mergely.css" />
+    <Content Include="Scripts\mergely.js" />
+    <Content Include="Scripts\mergely.min.js" />
     <Content Include="Scripts\modernizr-2.6.2.js" />
+    <Content Include="Scripts\searchcursor.js" />
+    <Content Include="Scripts\splitter.js" />
     <Content Include="Web.config" />
     <Content Include="Views\Home\Search.cshtml" />
     <Content Include="Views\Home\ViewPullRequest.cshtml" />
@@ -127,6 +135,7 @@
     <Compile Include="Models\GithubUser.cs" />
     <Compile Include="AuthAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SettingsManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\web.config" />

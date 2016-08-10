@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewBag.Title - My ASP.NET Application</title>
     <link href="~/Content/Site.css" rel="stylesheet" type="text/css" />
-    <link href="~/Content/bootstrap.min.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
 
+    <link href="~/Scripts/codemirror.css" rel="stylesheet" />
+    <link href="~/Scripts/mergely.css" rel="stylesheet" />
     <script src="~/Scripts/modernizr-2.6.2.js"></script>
 </head>
 <body>
-    <div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="navbar navbar-inverse ">
         <div class="container">
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
@@ -28,7 +29,7 @@
         </div>
     </div>
 
-    <div class="container body-content">
+    <div class="container-fluid  body-content">
         @RenderBody()
         <hr />
         <footer>
@@ -37,9 +38,10 @@
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+    <script src="~/Scripts/splitter.js"></script>
     <script src="~/Scripts/lscache.min.js"></script>
-    <script src="~/Scripts/bootstrap.min.js"></script>
-
+    <script src="~/Scripts/codemirror.min.js"></script>
+    <script src="~/Scripts/mergely.js"></script>
     @RenderSection("scripts", false)
 </body>
 </html>

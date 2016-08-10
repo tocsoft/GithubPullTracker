@@ -169,7 +169,7 @@ namespace GithubPullTracker.Models
                     return this;
                 }
 
-                return Children.Select(x => x.GetItem(path)).FirstOrDefault();
+                return Children.Select(x => x.GetItem(path)).Where(x=>x != null).FirstOrDefault();
             }
         }
     }

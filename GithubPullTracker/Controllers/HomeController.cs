@@ -6,6 +6,7 @@ using System.Web;
 using System.Web.Mvc;
 using GithubPullTracker.Models;
 using Octokit;
+using System.Net.Http;
 
 namespace GithubPullTracker.Controllers
 {
@@ -18,21 +19,54 @@ namespace GithubPullTracker.Controllers
         [Route("{owner}/{repo}/pull/{reference}/files/{*path}")]
         public async Task<ActionResult> ViewPullRequest(string owner , string repo, int reference, string path = null)
         {
-            
-            var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
-
-            var files = await Client.PullRequest.Files(owner, repo, reference);
-
-            if (path != null)
+            if (this.Request.IsAjaxRequest())
             {
-                path = path.TrimEnd('/');
-                var vm = new PullRequestView(pullRequest, files, path);
-                return View(vm);
-            }
+                var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
 
-            var pr = new PullRequestView(pullRequest, files);
-            return View(pr);
+                var files = await Client.PullRequest.Files(owner, repo, reference);
+                var file = files.Where(x => x.FileName == path).Single();
+
+                //we are loading the json compare data here
+                string targetText = "";
+                if (file.Status != "removed")
+                {
+                    var target = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Head.Ref);
+                    targetText = target.SingleOrDefault()?.Content;
+                }
+                string sourceText = "";
+
+                if (file.Status != "added")
+                {
+                    var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Base.Ref);
+                    sourceText = source.SingleOrDefault()?.Content;
+                }
+
+
+                return Json(new
+                {
+                    source = sourceText,
+                    target = targetText
+                }, JsonRequestBehavior.AllowGet);
+
+            }
+            else
+            {
+                var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
+
+                var files = await Client.PullRequest.Files(owner, repo, reference);
+
+                if (path != null)
+                {
+                    path = path.TrimEnd('/');
+                    var vm = new PullRequestView(pullRequest, files, path);
+                    return View(vm);
+                }
+
+                var pr = new PullRequestView(pullRequest, files);
+                return View(pr);
+            }
         }
+
 
         [Route("")]
         public async Task<ActionResult> Search(string query, int page =1, RequestState? state = null, RequestConnection? type = null)

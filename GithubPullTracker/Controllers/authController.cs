@@ -33,7 +33,7 @@ namespace GithubPullTracker.Controllers
 
             string csrf = Membership.GeneratePassword(24, 1);
             TempData["CSRF:State"] = csrf;
-            var clientId = ConfigurationManager.AppSettings["GithubClientId"];
+            var clientId = SettingsManager.Settings.GetSetting("Github.ClientId");
             var request = new OauthLoginRequest(clientId)
             {
                 Scopes = { "repo" },
@@ -56,11 +56,10 @@ namespace GithubPullTracker.Controllers
             var expectedState = TempData["CSRF:State"] as string;
             if (state != expectedState) throw new InvalidOperationException("SECURITY FAIL!");
 
-            var clientId = ConfigurationManager.AppSettings["GithubClientId"];
+            var clientId = SettingsManager.Settings.GetSetting("Github.ClientId");
 
-            var clientSecret = ConfigurationManager.AppSettings["GithubClientSecret"];
-
-
+            var clientSecret = SettingsManager.Settings.GetSetting("Github.ClientSecret");
+            
             var request = new OauthTokenRequest(clientId, clientSecret, code);
             var token = await Client.Oauth.CreateAccessToken(request);
 

@@ -3,22 +3,44 @@
     
 
 }
-<div id="jstree_demo_div"></div>
+<style>
 
-<div id="mergly">
+</style>
+<div id="splitter">
+    <div id="jstree_demo_div"></div>
 
+    <div>
+        <div style="overflow-y: hidden; position:absolute; top:0;left:0;right:0;bottom:0;">
+            <div id="file_diff">
+            </div>
+        </div>
+    </div>
 </div>
 
 @section scripts{
 <script>
+    $(function(){
+        
+        var width =  lscache.get('spliterWidth') || ($(window).width() * 0.8);
+        $("#splitter").splitter({
+            sizeRight: width
+        });
+    });
     $(function () {
         var data = @Html.Raw(Model.JsTreeData);
+        var blankState = null;
+        var pathPrefix = '@Url.Action("ViewPullRequest")';
+        var idSeed = 0;
         function updateType(node){
-            //todo check while looping anyway to see if we are trying to directly view this file !!!
+            
+            //due to the recursive nature this will always be the lowest item
+            if(node.state.selected){
+                blankState = node;
+            }
 
             if(node.data.type == 'file'){
                 var key = node.data.sha;
-
+                node.id = "file_" + key;
                 if(lscache.get(key)){
                     node.type = 'file_visited';
                 }else{
@@ -27,6 +49,7 @@
 
             }else{
                 node.type = 'folder';
+                node.id = "folder_" + (++idSeed);
             }
 
             if(node.children && node.children.length > 0)
@@ -58,26 +81,96 @@
                 }
             },
             "plugins" : [ "types" ]
-        }).on('select_node.jstree', function(e, d){
-            if(d.node.data.type === 'file'){
-                loadPage(d.node);
-                d.instance.set_type(d.node, "file_visisted");
+        }).on('changed.jstree', function(e, d){
+            if(d.selected.length ){
+                var node = d.instance.get_node(d.selected[0]);
+                loadPage(node, true);              
+                if(node.data.type=='file'){
+                    d.instance.set_type(d.node, "file_visisted");
+                }
             }
-        }).on("redraw.jstree", function(e, d){
-          //  d.instance.
-            console.log(arguments);
         });
 
-
-        function loadPage(node)
+        var currentNode = null;
+        function loadPage(node, navigate)
         {
-            //we cache the page visit for 12 months so browse3r will attempt to remember visited sha's  
-            lscache.set(node.data.sha, true, 60 * 24 * 7 * 52);
-            //window.location =  '@Url.Action("ViewPullRequest")/files/' + path;
+            //we are already on this node don't load it.
+            if(currentNode !== null && node !== null && currentNode.id == node.id){
+                return;
+            }
+            currentNode = node;
+            if(node != null){
+                var targetPath = pathPrefix + '/files/' + node.data.path;
+                //we cache the page visit for 12 months so browse3r will attempt to remember visited sha's
+                lscache.set(node.data.sha, true, 60 * 24 * 7 * 52);
+                if(navigate){
+                    if(window.location.pathname == targetPath ){
+                        history.replaceState(node, null, targetPath);
+                    }else
+                    {
+                        history.pushState(node, null, targetPath);
+                    }
+                }
 
+                showFileDiff(node.data.path);
 
+                console.log(targetPath);
+            }else{
+                //show homepage!!
+                console.log(pathPrefix);
+            }
+        }
+
+        function showFileDiff(path){
+            
+            var targetPath = pathPrefix + '/files/' + path;
+            
+            $.get(targetPath, function(data){
+                
+                //$("#splitter").splitter();
+                $('#file_diff').mergely('lhs', data.source);
+                $('#file_diff').mergely('rhs', data.target);
+            });
 
         }
+        var diffElm = $('#file_diff');
+        diffElm .mergely({
+            ignorews:false,
+            autoupdate:true,
+            autoresize:true,
+            fadein:false
+        });        
+        
+        $("#splitter").on("resize", function(){
+            
+            var width = $(window).width() - $('#jstree_demo_div').width(); 
+            lscache.get('spliterWidth', width);
+            diffElm.mergely('resize');
+        });
+        $(window).resize(function(){
+            diffElm .mergely('resize');      
+            var winh = $(this).height();
+            $('#splitter').height(winh ).trigger("resize");
+        });
+        
+        window.onpopstate = function(s)
+        {
+            var currentStateNode = s.state;
+
+            var jstree = $('#jstree_demo_div').jstree(true);
+            jstree.deselect_all();
+            if(currentStateNode){
+                jstree.select_node(currentStateNode, true);
+            }
+            loadPage(currentStateNode, false);
+        }
+
+            if(blankState !=null){
+                history.replaceState(blankState, null, pathPrefix + '/files/' + blankState.data.path);
+            }else{
+                history.replaceState(null, null, pathPrefix);
+            }
+            loadPage(blankState, false);
     });
 
 </script>
