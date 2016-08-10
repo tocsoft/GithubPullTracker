@@ -1,0 +1,84 @@
+﻿@model GithubPullTracker.Models.PullRequestView
+@{ 
+    
+
+}
+<div id="jstree_demo_div"></div>
+
+<div id="mergly">
+
+</div>
+
+@section scripts{
+<script>
+    $(function () {
+        var data = @Html.Raw(Model.JsTreeData);
+        function updateType(node){
+            //todo check while looping anyway to see if we are trying to directly view this file !!!
+
+            if(node.data.type == 'file'){
+                var key = node.data.sha;
+
+                if(lscache.get(key)){
+                    node.type = 'file_visited';
+                }else{
+                    node.type = 'file_new';
+                }
+
+            }else{
+                node.type = 'folder';
+            }
+
+            if(node.children && node.children.length > 0)
+            {
+                for(var i = 0; i<node.children.length; i++){
+                    updateType(node.children[i]);
+                }
+            }
+        }
+        for(var i = 0; i<data.length; i++){
+            updateType(data[i]);
+        }
+        //lets update types in data based on local file visited cache
+
+        $('#jstree_demo_div').jstree({
+            'core': {
+                'data': data
+            },
+            "types" : {
+                "folder" : {
+                    "icon" : "glyphicon glyphicons-folder-open"
+                },
+                "file_new" : {
+                    "icon" : "glyphicon glyphicons-unchecked file_new",
+                    "a_attr" : { "class" : 'file_new' }
+                },
+                "file_visited" : {
+                    "icon" : "glyphicon glyphicons-check"
+                }
+            },
+            "plugins" : [ "types" ]
+        }).on('select_node.jstree', function(e, d){
+            if(d.node.data.type === 'file'){
+                loadPage(d.node);
+                d.instance.set_type(d.node, "file_visisted");
+            }
+        }).on("redraw.jstree", function(e, d){
+          //  d.instance.
+            console.log(arguments);
+        });
+
+
+        function loadPage(node)
+        {
+            //we cache the page visit for 12 months so browse3r will attempt to remember visited sha's  
+            lscache.set(node.data.sha, true, 60 * 24 * 7 * 52);
+            //window.location =  '@Url.Action("ViewPullRequest")/files/' + path;
+
+
+
+        }
+    });
+
+</script>
+    }
