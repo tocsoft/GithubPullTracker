@@ -25,35 +25,72 @@ namespace GithubPullTracker.Controllers
 
                 var files = await Client.PullRequest.Files(owner, repo, reference);
                 var file = files.Where(x => x.FileName == path).Single();
+                var comments = await Client.PullRequest.Comment.GetAll(owner, repo, reference);
+
+
+
+                var fileComments = comments.Where(x => x.Path == path).Select(x=> new {
+                    comment = x,
+                    diff = x.DiffHunk.Split('\n').Last()[0]
+                });
+
+                var sourceComments = fileComments
+                    .Where(x=>x.diff == '-')
+                    .Select(x=>x.comment)
+                    .GroupBy(x => x.Position)
+                    
+                    .ToDictionary(x => x.Key, x => x.Select(c => new
+                    {
+                        c.Body,
+                        Commenter = new { c.User.AvatarUrl, c.User.Login },
+                        c.CreatedAt
+                    }).ToList());
+
+                var targetComments = fileComments
+                    .Where(x => x.diff == '+' || x.diff == ' ')
+                    .Select(x => x.comment)
+                    .GroupBy(x => x.Position)                    
+                   .ToDictionary(x => x.Key, x => x.Select(c => new
+                   {
+                       c.Body,
+                       Commenter = new { c.User.AvatarUrl, c.User.Login },
+                       c.CreatedAt
+                   }).ToList());
 
                 //we are loading the json compare data here
                 string targetText = "";
                 if (file.Status != "removed")
                 {
-                    var target = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Head.Ref);
+                    var target = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Head.Sha);
                     targetText = target.SingleOrDefault()?.Content;
                 }
                 string sourceText = "";
 
                 if (file.Status != "added")
                 {
-                    var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Base.Ref);
+                    var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Base.Sha);
                     sourceText = source.SingleOrDefault()?.Content;
                 }
-
-
-                return Json(new
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
                 {
                     source = sourceText,
-                    target = targetText
-                }, JsonRequestBehavior.AllowGet);
-
+                    target = targetText,
+                    sourceSha = pullRequest.Base.Sha,
+                    targetSha = pullRequest.Head.Sha,
+                    sourceComments = sourceComments,
+                    targetComments = targetComments
+                });
+                return Content(json, "application/json");
             }
             else
             {
+                
                 var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
 
+                //todo load file list via ajax
                 var files = await Client.PullRequest.Files(owner, repo, reference);
+
+                //var comments = await Client.PullRequest.Comment.GetAll(owner, repo, reference);
 
                 if (path != null)
                 {

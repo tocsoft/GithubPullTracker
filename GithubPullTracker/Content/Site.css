@@ -24,17 +24,75 @@
 }
 
 .github-comments{
+    width:10px;
+
+}
+
+.addcomment, 
+.viewcomment{
     width:20px;
-
-}
-
-.addcomment{
-    width:15px;
-    height:12px;
+    height:20px;
+    border-radius:2px;
     margin-top:2px;
-    position:absolute;
-}
-.addcomment:hover{
     cursor:pointer;
-    background:red;
+    position:absolute;
+    display:none;
+    border:1px solid silver;
+    background-color:silver;
+    color:black;
+    text-align:center;
+    left:0px;
+    top:-4px;
+    z-index:10;
+    opacity:0.8;
 }
+ 
+.viewcomment{
+    display:block;
+}
+.addcomment::after{
+    content:'+';
+}
+
+.CodeMirror-code > div:hover .addcomment,
+.CodeMirror-code > div:hover .viewcomment{
+    display:block;    
+    opacity:0.7;
+}
+
+div.commentList {
+    background-color:white;
+    margin-top: 5px;
+    padding:10px;
+        border-bottom:1px solid silver;
+        border-top:1px solid silver;
+}
+
+    .comment {
+        border:1px solid silver;
+        border-radius:5px;
+        margin-bottom:5px;
+        margin-right:15px;
+        margin-left:30px;
+        padding:10px;
+    }
+    .comment  div.header {
+        background-color:#eee;
+        border-bottom:1px solid silver;
+        margin:-10px -10px  10px -10px;
+        height:20px;
+        padding-top:10px;
+    }
+    .comment div.header img{
+        height:20px;
+        margin:5px;
+        margin-top:-5px;
+        border-radius:2px;
+        display:block;
+        float:left;
+    }
+
+    .CodeMirror-wrap pre
+    {
+        margin-left:10px;
+    }

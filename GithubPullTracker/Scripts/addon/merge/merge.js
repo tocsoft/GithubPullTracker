@@ -489,6 +489,7 @@
       if (left) makeConnections(left);
       if (right) makeConnections(right);
     };
+    this.resize = onResize;
     CodeMirror.on(window, "resize", onResize);
     var resizeInterval = setInterval(function() {
       for (var p = wrapElt.parentNode; p && p != document.body; p = p.parentNode) {}
