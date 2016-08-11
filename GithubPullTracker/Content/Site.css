@@ -22,3 +22,19 @@
 #splitter > div#file_diff{
     overflow:hidden;
 }
+
+.github-comments{
+    width:20px;
+
+}
+
+.addcomment{
+    width:15px;
+    height:12px;
+    margin-top:2px;
+    position:absolute;
+}
+.addcomment:hover{
+    cursor:pointer;
+    background:red;
+}

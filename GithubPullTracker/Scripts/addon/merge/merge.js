@@ -38,7 +38,9 @@
     init: function(pane, orig, options) {
       this.edit = this.mv.edit;
       (this.edit.state.diffViews || (this.edit.state.diffViews = [])).push(this);
-      this.orig = CodeMirror(pane, copyObj({value: orig, readOnly: !this.mv.options.allowEditingOriginals}, copyObj(options)));
+
+      var readonlySetting = ('readOnly' in this.mv.options) ? this.mv.options.readOnly : !this.mv.options.allowEditingOriginals;
+      this.orig = CodeMirror(pane, copyObj({ value: orig, readOnly: readonlySetting }, copyObj(options)));
       this.orig.state.diffViews = [this];
 
       this.diff = getDiff(asString(orig), asString(options.value));
@@ -760,10 +762,14 @@
       if (pos != null && (found == null || (dir < 0 ? pos > found : pos < found)))
         found = pos;
     }
-    if (found != null)
-      cm.setCursor(found, 0);
+    if (found != null) {
+        var t = cm.charCoords({ line: found, ch: 0 }, "local").top;
+        var middleHeight = cm.getScrollerElement().offsetHeight / 2;
+        cm.scrollTo(null, t - middleHeight - 5);
+        cm.setCursor(found, 0);
+    }
     else
-      return CodeMirror.Pass;
+        return CodeMirror.Pass;
   }
 
   CodeMirror.commands.goNextDiff = function(cm) {

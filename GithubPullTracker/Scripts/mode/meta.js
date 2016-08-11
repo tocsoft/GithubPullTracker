@@ -157,7 +157,8 @@
         name: "XML", mimes: ["application/xml", "text/xml"], mode: "xml", ext: ["xml", "xsl", "xsd",
             "config",
             "csproj",
-            "xproj"
+            "xproj",
+            "xaml"
         ], alias: ["rss", "wsdl", "xsd"]
     },
     {name: "XQuery", mime: "application/xquery", mode: "xquery", ext: ["xy", "xquery"]},

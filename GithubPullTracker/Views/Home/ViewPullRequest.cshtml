@@ -167,6 +167,18 @@
         }
 
         var diffElm = null;
+        $(document).bind('keydown', 'j', function(){
+            if(diffElm){
+                diffElm.edit.execCommand("goNextDiff"); 
+            }
+        });
+        
+        $(document).bind('keydown', 'k', function(){
+            if(diffElm){
+                diffElm.edit.execCommand("goPrevDiff"); 
+            }
+        });
+       
         function showFileDiff(path){
             
             var targetPath = pathPrefix + '/files/' + path;
@@ -188,11 +200,17 @@
                         lineNumbers: true,
                         mode: info.mime, 
                         connect :null,
-                        readOnly: true,
+                        readOnly: 'nocursor',
                         allowEditingOriginals : false,
                         collapseIdentical : false,
-                        revertButtons : false
-                    })
+                        revertButtons : false,
+                        gutters : ["CodeMirror-linenumbers", "github-comments"]
+                    });
+                    var doc = diffElm.edit.getDoc();
+                    var lineCount = doc.lineCount();
+                    for(var i = 0; i<=lineCount; i++){
+                        diffElm.edit.setGutterMarker(i, "github-comments", $('<span class="addcomment" />')[0]);
+                    }
 
                     //diffElm .mergely({
                     //    cmsettings :{ },
@@ -227,7 +245,7 @@
                 lscache.set('spliterWidth', width);
                 if(diffElm){
                     diffElm.edit.refresh();
-                    diffElm.right.orig.refresh();
+                    diffElm.left.orig.refresh();
                 }
             },100);
            
