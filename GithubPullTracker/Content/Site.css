@@ -1,5 +1,6 @@
 ﻿body {
-    
+    padding:0;
+    margin:0;
 }
 
 
@@ -17,4 +18,7 @@
 #splitter .vsplitbar {
 	width: 5px;
 	background: #aaa;
+}
+#splitter > div#file_diff{
+    overflow:hidden;
 }

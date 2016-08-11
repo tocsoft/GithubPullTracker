@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
 
     <link href="~/Scripts/codemirror.css" rel="stylesheet" />
-    <link href="~/Scripts/mergely.css" rel="stylesheet" />
+    @*<link href="~/Scripts/mergely.css" rel="stylesheet" />*@
+    <link href="~/Scripts/addon/merge/merge.css" rel="stylesheet" />
     <script src="~/Scripts/modernizr-2.6.2.js"></script>
 </head>
 <body>
@@ -31,17 +32,16 @@
 
     <div class="container-fluid  body-content">
         @RenderBody()
-        <hr />
-        <footer>
-            <p>&copy; @DateTime.Now.Year - My ASP.NET Application</p>
-        </footer>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
     <script src="~/Scripts/splitter.js"></script>
     <script src="~/Scripts/lscache.min.js"></script>
-    <script src="~/Scripts/codemirror.min.js"></script>
-    <script src="~/Scripts/mergely.js"></script>
+    <script src="~/Scripts/diff_match_patch.js"></script>
+    <script src="~/Scripts/codemirror.js"></script>
+    <script src="~/Scripts/mode/meta.js"></script>
+    <script src="~/Scripts/addon/merge/merge.js"></script>
+    @*<script src="~/Scripts/mergely.js"></script>*@
     @RenderSection("scripts", false)
 </body>
 </html>

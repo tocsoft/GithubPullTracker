@@ -9,15 +9,17 @@
 <div id="splitter">
     <div id="jstree_demo_div"></div>
 
-    <div>
-        <div style="overflow-y: hidden; position:absolute; top:0;left:0;right:0;bottom:0;">
-            <div id="file_diff">
-            </div>
-        </div>
+    <div id="file_diff">
+            
     </div>
 </div>
 
 @section scripts{
+    <style id="mergeHeight">       
+         .CodeMirror-merge {
+            height:auto;
+        }
+    </style>
 <script>
     $(function(){
         
@@ -120,38 +122,130 @@
                 console.log(pathPrefix);
             }
         }
+        
+        function loadMimeRenderer(info, cb){
 
+            if(!info.mime && info.mimes){
+                info.mime= info.mimes[0];
+            }
+
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.async = true;
+            script.onload = function(){
+                // remote script has loaded
+                info.loaded = true;
+                cb(info);
+            };
+            script.src = '/scripts/mode/'+info.mode + '/'+info.mode + '.js';
+            document.getElementsByTagName('head')[0].appendChild(script)
+        }
+        function getMimeSettings(filename, cb){
+
+            var r= filename.lastIndexOf('.');
+            if(r > -1){
+                var ext = filename.substr(r+1, filename.length - r).toLowerCase();
+                  for(var i in CodeMirror.modeInfo){
+                      var info = CodeMirror.modeInfo[i];
+                      if(info.ext){
+                          if(info.ext.indexOf(ext) > -1){
+                            
+
+                              if(info.loaded){
+                                  cb(info);
+                                  return;
+                              }else{
+                                  loadMimeRenderer(info, cb);
+                                  return;
+                              }
+                          }
+                    }                
+                }
+            }
+            cb({ mime:null});
+            return;
+        }
+
+        var diffElm = null;
         function showFileDiff(path){
             
             var targetPath = pathPrefix + '/files/' + path;
             
+            
             $.get(targetPath, function(data){
-                
-                //$("#splitter").splitter();
-                $('#file_diff').mergely('lhs', data.source);
-                $('#file_diff').mergely('rhs', data.target);
+                getMimeSettings(path, function(info){
+                    var elm = $('#file_diff');
+                    elm.html("");//clear the dom
+                    var winh =  $(window).height();
+                    $('#splitter').height(winh ).trigger("resize");
+                    $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror { height: "+winh+"px;}")
+                    
+                    //diffElm = $("<div />");
+                    //parent.append(diffElm );
+                    diffElm = CodeMirror.MergeView(elm[0], {
+                        origLeft :  data.source,
+                        value : data.target,
+                        lineNumbers: true,
+                        mode: info.mime, 
+                        connect :null,
+                        readOnly: true,
+                        allowEditingOriginals : false,
+                        collapseIdentical : false,
+                        revertButtons : false
+                    })
+
+                    //diffElm .mergely({
+                    //    cmsettings :{ },
+                    //    ignorews:false,
+                    //    autoupdate:true,
+                    //    autoresize:true,
+                    //    fadein:false
+                    //}); 
+                    ////$("#splitter").splitter();
+                    //diffElm.mergely('lhs', data.source);
+                    //diffElm.mergely('rhs', data.target);
+                    //setTimeout(function(){
+                    //    diffElm.mergely('resize');
+                    //    diffElm.mergely('scrollToDiff', 'next');
+                    //},100);
+                });
             });
 
         }
-        var diffElm = $('#file_diff');
-        diffElm .mergely({
-            ignorews:false,
-            autoupdate:true,
-            autoresize:true,
-            fadein:false
-        });        
         
+        //diffElm .mergely({
+        //    ignorews:false,
+        //    autoupdate:true,
+        //    autoresize:true,
+        //    fadein:false
+        //});        
+        var to;
         $("#splitter").on("resize", function(){
-            
-            var width = $(window).width() - $('#jstree_demo_div').width(); 
-            lscache.get('spliterWidth', width);
-            diffElm.mergely('resize');
+            clearTimeout(to);
+            to = setTimeout(function(){
+                var width = $(window).width() - $('#jstree_demo_div').width(); 
+                lscache.set('spliterWidth', width);
+                if(diffElm){
+                    diffElm.edit.refresh();
+                    diffElm.right.orig.refresh();
+                }
+            },100);
+           
         });
-        $(window).resize(function(){
-            diffElm .mergely('resize');      
-            var winh = $(this).height();
-            $('#splitter').height(winh ).trigger("resize");
-        });
+        var to1;
+        $(window).resize(function(e){
+            //diffElm .mergely('resize');    
+            if(e.target === window){
+                clearTimeout(to1);
+                to1 = setTimeout(function(){
+                    var winh =  $(window).height();
+                    $('#splitter').height(winh ).trigger("resize");
+                    $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror { height: "+winh+"px;}")
+                    //$('#file_diff .CodeMirror-merge').height(winh );
+
+                });
+            }
+        }).resize();
         
         window.onpopstate = function(s)
         {
