@@ -21,6 +21,7 @@
         }
     </style>
 <script>
+    var dmp = new diff_match_patch();
     $(function(){
         
         var width =  lscache.get('spliterWidth') || ($(window).width() * 0.8);
@@ -183,7 +184,6 @@
             
             var targetPath = pathPrefix + '/files/' + path;
             
-            
             $.get(targetPath, function(data){
                 getMimeSettings(path, function(info){
                     var elm = $('#file_diff');
@@ -194,9 +194,12 @@
                     
                     //diffElm = $("<div />");
                     //parent.append(diffElm );
+                    var source = data.source;
+                    var target = JsDiff.applyPatch( source, data.patch);
+
                     diffElm = CodeMirror.MergeView(elm[0], {
-                        origLeft :  data.source,
-                        value : data.target,
+                        origLeft :  source,
+                        value : target,
                         lineNumbers: true,
                         mode: info.mime, 
                         connect :null,
@@ -225,64 +228,56 @@
                             var widget = doc.addLineWidget(line, elm[0], { coverGutter : true, noHScroll: true, });
                             commentBlocks[doc][line] = block ={ elm:elm, widget:widget};
                         }
-                        block.elm.append($('<div class="comment"><div class="header"><img src="'+ comment.Commenter.AvatarUrl +'&s=40"> ' + comment.Commenter.Login +' added a note <span class="timeago">'+comment.CreatedAt+'</span></div>' + comment.Body + '</div>'));
+                        block.elm.append($('<div class="comment"><div class="header"><img src="'+ comment.commenter.avatarUrl +'&s=40"> ' + comment.commenter.login +' added a note <span class="timeago">'+comment.createdAt+'</span></div>' + marked(comment.body) + '</div>'));
                         block.widget.changed();
                         //dot adda single widget per comment append to the old widget if exists
                         
                     }
+                    var targetEditor = diffElm.edit;
+                    var sourceEditor = diffElm.left.orig;
+                    var targetDoc = targetEditor.getDoc();;
+                    var sourceDoc = sourceEditor.getDoc();
 
-                    if(data.target.length){
-                        var doc = diffElm.edit.getDoc();
+                    for(var i in data.comments){
+
+                        var comment = data.comments[i];
+                        if(comment.sourceLine > 0){
+                            
+                            addComment(sourceDoc,  comment.sourceLine, comment);    
+                        }
+                        if(comment.targetLine > 0){
+                            
+                            addComment(targetDoc,  comment.targetLine, comment);    
+                        }
+                        
+                    }
+
+                    function markPatch(editor, map){
+                        var doc = editor.getDoc();
                         var lineCount = doc.lineCount();
 
                         for(var i = 0; i<lineCount; i++){
-                            //has comment
-                            var comments = data.targetComments[i+1];
-                            var btn = null;
-                            if(comments){
-                                for(var c in comments)
-                                {                                    
-                                    addComment(doc,  i, comments[c]);                                   
-                                }                                
-                            }
+                            var mappedPage = map[i+1]
+                            if(mappedPage > -1){
+                             
                                 var btn = $('<span class="addcomment"></span>');
                                 btn.click(function(){
                                     addComments(this);
                                 });
-                                btn.data("line", i);
-                                btn.data("sha",data.targetSha);
-                                diffElm.edit.setGutterMarker(i, "github-comments", btn[0]);
+                                btn.data("patchLine", mappedPage);
+                                editor.setGutterMarker(i, "github-comments", btn[0]);
                             
-                           
-                        }
-                    }
-
-                    if(data.source.length){
-                        var doc = diffElm.left.orig.getDoc();
-                        var lineCount = doc.lineCount();
-
-                        for(var i = 0; i<=lineCount; i++){
-
-                            var comments = data.sourceComments[i+1];
-                            var btn = null;
-                            if(comments){
-                                for(var c in comments)
-                                {                                    
-                                    addComment(doc,  i, comments[c]);                                   
-                                }                               
+                            }else{
+                                doc.addLineClass(i, "wrap", "not-in-patch");
                             }
-
-                                var btn = $('<span class="addcomment"></span>');
-                                btn.click(function(){
-                                    addComments(this);
-                                });
-                                btn.data("line", i);
-                                btn.data("sha",data.sourceSha);
-                                diffElm.left.orig.setGutterMarker(i, "github-comments", btn[0]);
-                            
-                            
+                
                         }
                     }
+
+                    markPatch(targetDoc, data.pageMap.TargetFile);
+                    markPatch(sourceDoc, data.pageMap.SourceFile);
+
+                    
                     diffElm.resize();
                     //diffElm .mergely({
                     //    cmsettings :{ },

@@ -24,7 +24,7 @@
 }
 
 .github-comments{
-    width:10px;
+    width:0px;
 
 }
 
@@ -41,7 +41,7 @@
     background-color:silver;
     color:black;
     text-align:center;
-    left:0px;
+    left:-10px;
     top:-4px;
     z-index:10;
     opacity:0.8;
@@ -95,4 +95,24 @@ div.commentList {
     .CodeMirror-wrap pre
     {
         margin-left:10px;
+    }
+
+    .not-in-patch{
+        background:#efefef;
+    }
+    .not-in-patch .CodeMirror-line {
+        opacity:0.7;
+    }
+    .CodeMirror-linenumber
+    {
+        color:#555;
+        padding-right: 13px;
+    }
+    .not-in-patch .CodeMirror-linenumber{
+        
+        color:#aaa
+
+    }
+    .not-in-patch .CodeMirror-gutter-wrapper{
+
     }

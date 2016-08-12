@@ -7,6 +7,7 @@ using System.Web.Mvc;
 using GithubPullTracker.Models;
 using Octokit;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 
 namespace GithubPullTracker.Controllers
 {
@@ -14,6 +15,37 @@ namespace GithubPullTracker.Controllers
     [Auth]
     public class HomeController : ControllerBase
     {
+
+
+        public class PageMap
+        {
+            public IDictionary<int, int> SourceFile = new Dictionary<int, int>();
+            public IDictionary<int, int> TargetFile = new Dictionary<int, int>();
+
+            public int? PatchToTargetLineNumber(int? patchnumber)
+            {
+                if (patchnumber == null)
+                { return null; }
+                var parts = TargetFile.Where(x => x.Value == patchnumber).Select(x => x.Key).ToArray();
+                if (parts.Length > 0)
+                {
+                    return parts[0];
+                }
+                return null;
+            }
+
+            public int? PatchToSourceLineNumber(int? patchnumber)
+            {
+                if (patchnumber == null)
+                { return null; }
+                var parts = SourceFile.Where(x => x.Value == patchnumber).Select(x => x.Key).ToArray();
+                if (parts.Length > 0)
+                {
+                    return parts[0];
+                }
+                return null;
+            }
+        }
 
         [Route("{owner}/{repo}/pull/{reference}")]
         [Route("{owner}/{repo}/pull/{reference}/files/{*path}")]
@@ -25,45 +57,33 @@ namespace GithubPullTracker.Controllers
 
                 var files = await Client.PullRequest.Files(owner, repo, reference);
                 var file = files.Where(x => x.FileName == path).Single();
+                
+                //Client.PullRequest.Comment.Create(owner, repo, reference, new PullRequestReviewCommentCreate("", pullRequest.Head.Sha, path, ) );
+                
+                PageMap map = MapPatchToFiles(file.Patch);
+
                 var comments = await Client.PullRequest.Comment.GetAll(owner, repo, reference);
+                var fileComments = comments.Where(x => x.Path == path).Select(x => new
+                {
+                    body = x.Body,
+                    commenter = new { avatarUrl = x.User.AvatarUrl, login = x.User.Login },
+                    createdAt = x.CreatedAt,
+                    x.Position
 
+                })
+                .Select(x => new
+                {
 
+                    x.body,
+                    x.commenter,
+                    x.createdAt,
+                    sourceLine = map.PatchToSourceLineNumber(x.Position) ?? -1,
+                    targetLine = map.PatchToTargetLineNumber(x.Position) ?? -1
 
-                var fileComments = comments.Where(x => x.Path == path).Select(x=> new {
-                    comment = x,
-                    diff = x.DiffHunk.Split('\n').Last()[0]
-                });
-
-                var sourceComments = fileComments
-                    .Where(x=>x.diff == '-')
-                    .Select(x=>x.comment)
-                    .GroupBy(x => x.Position)
-                    
-                    .ToDictionary(x => x.Key, x => x.Select(c => new
-                    {
-                        c.Body,
-                        Commenter = new { c.User.AvatarUrl, c.User.Login },
-                        c.CreatedAt
-                    }).ToList());
-
-                var targetComments = fileComments
-                    .Where(x => x.diff == '+' || x.diff == ' ')
-                    .Select(x => x.comment)
-                    .GroupBy(x => x.Position)                    
-                   .ToDictionary(x => x.Key, x => x.Select(c => new
-                   {
-                       c.Body,
-                       Commenter = new { c.User.AvatarUrl, c.User.Login },
-                       c.CreatedAt
-                   }).ToList());
+                }).ToList();
+                
 
                 //we are loading the json compare data here
-                string targetText = "";
-                if (file.Status != "removed")
-                {
-                    var target = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Head.Sha);
-                    targetText = target.SingleOrDefault()?.Content;
-                }
                 string sourceText = "";
 
                 if (file.Status != "added")
@@ -71,14 +91,13 @@ namespace GithubPullTracker.Controllers
                     var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Base.Sha);
                     sourceText = source.SingleOrDefault()?.Content;
                 }
+
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
                 {
                     source = sourceText,
-                    target = targetText,
-                    sourceSha = pullRequest.Base.Sha,
-                    targetSha = pullRequest.Head.Sha,
-                    sourceComments = sourceComments,
-                    targetComments = targetComments
+                    patch = file.Patch,
+                    pageMap = map,
+                    comments = fileComments
                 });
                 return Content(json, "application/json");
             }
@@ -104,6 +123,45 @@ namespace GithubPullTracker.Controllers
             }
         }
 
+        private static PageMap MapPatchToFiles(string patch)
+        {
+            var lines = patch.Split('\n');
+            var map = new PageMap();
+
+
+            int sourcePageIndex = 0;
+            int targetPageIndex = 0;
+            for (var line = 1; line <= lines.Length; line++)
+            {
+                var text = lines[line - 1];
+                if (text.StartsWith("@@"))
+                {
+                    var match = Regex.Match(text, @"^\@\@\s?(?:-(\d*),(\d*))?\s?(?:\+(\d*),(\d*))?\s?\@\@");
+                    sourcePageIndex = int.Parse(match.Groups[1].Value) -1;
+                    targetPageIndex = int.Parse(match.Groups[3].Value) -1 ;
+                }else
+                {
+                    var prefix = text[0];
+                    if (prefix == '-')
+                    {
+                        map.SourceFile.Add(++sourcePageIndex, line);
+                    }
+                    else if (prefix == ' ')
+                    {
+                        map.TargetFile.Add(++targetPageIndex, line);
+                        map.SourceFile.Add(++sourcePageIndex, -1);
+                        //++sourcePageStart;//only increment source but allow commenting on right
+                    }
+                    if (prefix == '+')
+                    {
+                        map.TargetFile.Add(++targetPageIndex, line);
+                    }
+                }
+
+            }
+
+            return map;
+        }
 
         [Route("")]
         public async Task<ActionResult> Search(string query, int page =1, RequestState? state = null, RequestConnection? type = null)
