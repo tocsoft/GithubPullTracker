@@ -23,6 +23,8 @@ namespace GithubPullTracker.Models
         public int Page = 1;
 
         public IEnumerable<PullRequestItem> Items { get; set; }
+        public string RepoName { get; internal set; }
+        public string Owner { get; internal set; }
     }
 
     public class PullRequestItem

@@ -142,7 +142,9 @@
 
 			// Search methods
 			search: $.proxy(this.search, this),
-			clearSearch: $.proxy(this.clearSearch, this)
+			clearSearch: $.proxy(this.clearSearch, this),
+
+		    redraw: $.proxy(this.render, this),
 		};
 	};
 
@@ -269,7 +271,11 @@
 		$.each(node.nodes, function checkStates(index, node) {
 
 			// nodeId : unique, incremental identifier
-			node.nodeId = _this.nodes.length;
+		    node.nodeId = _this.nodes.length;
+
+		    //if (node.id && !_this.nodes[node.id]) {
+		    //    node.nodeId = node.id;
+		    //}
 
 			// parentId : transversing up the tree
 			node.parentId = parent.nodeId;
@@ -418,7 +424,7 @@
 			// Continue selecting node
 			node.state.selected = true;
 			if (!options.silent) {
-				this.$element.trigger('nodeSelected', $.extend(true, {}, node));
+			    this.$element.trigger('nodeSelected', $.extend(true, {}, node));
 			}
 		}
 		else {
@@ -592,7 +598,7 @@
 			}
 
 			// Add text
-			if (_this.options.enableLinks) {
+			if (node.href) {
 				// Add hyperlink
 				treeItem
 					.append($(_this.template.link)
@@ -606,6 +612,10 @@
 					.append(node.text);
 			}
 
+			if (node.class) {
+			    treeItem.addClass(node.class)
+			}
+
 			// Add tags as badges
 			if (_this.options.showTags && node.tags) {
 				$.each(node.tags, function addTag(id, tag) {
@@ -614,6 +624,13 @@
 							.append(tag)
 						);
 				});
+			}
+
+			if (_this.options.showLabel && node.label) {
+			    treeItem
+                    .append($(_this.template.badge)
+                        .append(node.label)
+                    );
 			}
 
 			// Add item to the tree

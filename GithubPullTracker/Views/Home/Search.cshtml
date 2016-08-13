@@ -2,41 +2,7 @@
 
 
 @{
-    ViewBag.Title = "SignIn";
+    ViewBag.Title = "Search";
 }
 
-
-@foreach (var result in Model.Items)
-{
-    <div>
-        <div>
-            <h2>
-                <a href="https://github.com/@(result.RepositoryOwner)/@(result.RepositoryName)" target="_blank">
-                    @(result.RepositoryOwner)/@(result.RepositoryName)
-                </a>
-                <a href="@Url.Action("ViewPullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
-                    @result.Title
-                </a>
-            </h2>
-            <span>
-                <a href="@Url.Action("ViewPullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
-                    #@(result.Number)
-                </a>
-                @switch (result.LastAction)
-                {
-                    case GithubPullTracker.Models.Status.Open:
-                        <text>opened</text>
-                        break;
-                    case GithubPullTracker.Models.Status.Closed:
-                        <text>cloaed</text>
-                        break;
-                    case GithubPullTracker.Models.Status.Merged:
-                        <text>merged</text>
-                        break;
-                }
-                <span class="timeago">@result.LastActioned.ToString()</span> by
-                <a href="@result.LastActionedBy.HtmlUrl" target="_blank">@result.LastActionedBy.Login</a>
-            </span>
-        </div>
-    </div>
-}
+@{Html.RenderPartial("_SearchResults", Model);}

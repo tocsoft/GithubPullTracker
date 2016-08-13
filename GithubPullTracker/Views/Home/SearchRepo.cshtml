@@ -1,0 +1,10 @@
+﻿@model GithubPullTracker.Models.PullRequestResult
+
+
+@{
+    ViewBag.Title = "Search";
+    ViewBag.HideRepo = true;
+}
+<h1><a href="~/@Model.Owner">@Model.Owner</a> /<a href="~/@Model.Owner/@Model.RepoName">@Model.RepoName</a></h1>
+
+@{Html.RenderPartial("_SearchResults", Model);}

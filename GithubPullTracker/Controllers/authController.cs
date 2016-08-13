@@ -13,13 +13,13 @@ namespace GithubPullTracker.Controllers
 {
     public class AuthController : ControllerBase
     {
-        [Route("login")]
+        [Route("login", Order = 1)]
         public ActionResult SignIn()
         {
             return View();
         }
 
-        [Route("logout")]
+        [Route("logout", Order = 1)]
         public ActionResult SignOut()
         {
             CurrentUser = null;
@@ -27,7 +27,7 @@ namespace GithubPullTracker.Controllers
             return RedirectToAction("signin");
         }
 
-        [Route("login/github")]
+        [Route("login/github", Order = 1)]
         public ActionResult SignInStart()
         {
 
@@ -37,7 +37,7 @@ namespace GithubPullTracker.Controllers
             var request = new OauthLoginRequest(clientId)
             {
                 Scopes = { "repo" },
-                State = csrf
+                State = csrf,
             };
 
             // NOTE: user must be navigated to this URL
@@ -47,7 +47,7 @@ namespace GithubPullTracker.Controllers
             return Redirect(oauthLoginUrl.ToString());
         }
 
-        [Route("login/github/callback")]
+        [Route("login/github-callback", Order = -1)]
         public async Task<ActionResult> SignInComplete(string code, string state)
         {
             if (String.IsNullOrEmpty(code))
@@ -75,7 +75,7 @@ namespace GithubPullTracker.Controllers
                 ProfileUrl = currentUser.HtmlUrl
             };
             
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Search", "Home");
         }
     }
 }

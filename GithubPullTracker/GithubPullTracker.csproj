@@ -122,6 +122,11 @@
     <Content Include="Scripts\addon\dialog\dialog.js" />
     <Content Include="Content\addon\merge\merge.css" />
     <Content Include="Scripts\addon\merge\merge.js" />
+    <Content Include="Scripts\addon\mode\loadmode.js" />
+    <Content Include="Scripts\addon\mode\multiplex.js" />
+    <Content Include="Scripts\addon\mode\multiplex_test.js" />
+    <Content Include="Scripts\addon\mode\overlay.js" />
+    <Content Include="Scripts\addon\mode\simple.js" />
     <Content Include="Scripts\addon\scroll\annotatescrollbar.js" />
     <Content Include="Scripts\addon\scroll\scrollpastend.js" />
     <Content Include="Scripts\addon\scroll\simplescrollbars.css" />
@@ -136,10 +141,12 @@
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\codemirror.js" />
     <Content Include="Scripts\diff.js" />
+    <Content Include="Scripts\DiffViewScript.js" />
     <Content Include="Scripts\diff_match_patch.js" />
     <Content Include="Scripts\jquery-1.10.2.js" />
     <Content Include="Scripts\jquery-1.10.2.min.js" />
     <Content Include="Scripts\jquery.hotkeys.js" />
+    <Content Include="Scripts\jquery.textcomplete.js" />
     <Content Include="Scripts\lscache.js" />
     <Content Include="Scripts\marked.js" />
     <Content Include="Scripts\modernizr-2.6.2.js" />
@@ -434,6 +441,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\PullFileList.cs" />
     <Compile Include="Models\PullRequestView.cs" />
     <Compile Include="Models\PullRequestResult.cs" />
     <Compile Include="Models\GithubUser.cs" />
@@ -451,6 +459,10 @@
     <Content Include="fonts\glyphicons-halflings-regular.ttf" />
     <Content Include="fonts\glyphicons-halflings-regular.eot" />
     <Content Include="Scripts\jquery-1.10.2.min.map" />
+    <Content Include="Views\Home\_SearchResults.cshtml" />
+    <Content Include="Views\Home\SearchOwner.cshtml" />
+    <Content Include="Views\Home\SearchRepo.cshtml" />
+    <Content Include="Views\Home\Login.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

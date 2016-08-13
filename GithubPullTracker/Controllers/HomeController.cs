@@ -10,15 +10,13 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.IO;
 using System.Text;
+using System.Net;
 
 namespace GithubPullTracker.Controllers
 {
-    [RoutePrefix("")]
     [Auth]
     public class HomeController : ControllerBase
     {
-
-
         public class PageMap
         {
             public IDictionary<int, int> SourceFile = new Dictionary<int, int>();
@@ -48,40 +46,33 @@ namespace GithubPullTracker.Controllers
                 return null;
             }
         }
-        
-        [Route("{owner}/{repo}/pull/{reference}/contents/{*path}")]
-        public async Task<ActionResult> GetFile(string owner, string repo, int reference, string path)
-        {
-            var fileExtension = Path.GetExtension(path).ToLower();
 
+        [Route("{owner}/{repo}/pull/{reference}/contents/{*path}")]
+        public async Task<ActionResult> GetFile(string owner, string repo, int reference, string path, string expectedSha)
+        {
             var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
 
+            if (pullRequest.Head.Sha != expectedSha)
+            {
+                    return Content(Newtonsoft.Json.JsonConvert.SerializeObject(new
+                    {
+                        headSha = pullRequest.Head.Sha
+                    }), "application/json");
+            }
+            
             var files = await Client.PullRequest.Files(owner, repo, reference);
-            var file = files.Where(x => x.FileName == path).Single();
+            var file = files.Where(x => x.FileName == path).SingleOrDefault();
 
-            //Client.PullRequest.Comment.Create(owner, repo, reference, new PullRequestReviewCommentCreate("", pullRequest.Head.Sha, path, ) );
+            if (file == null)
+            {
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(new
+                {
+                    headSha = pullRequest.Head.Sha,
+                    notfound = true,
+                }), "application/json");
+            }
 
             PageMap map = MapPatchToFiles(file.Patch);
-
-            var comments = await Client.PullRequest.Comment.GetAll(owner, repo, reference);
-            var fileComments = comments.Where(x => x.Path == path).Select(x => new
-            {
-                body = x.Body,
-                commenter = new { avatarUrl = x.User.AvatarUrl, login = x.User.Login },
-                createdAt = x.CreatedAt,
-                x.Position
-
-            })
-            .Select(x => new
-            {
-
-                x.body,
-                x.commenter,
-                x.createdAt,
-                sourceLine = map.PatchToSourceLineNumber(x.Position) ?? -1,
-                targetLine = map.PatchToTargetLineNumber(x.Position) ?? -1
-
-            }).ToList();
 
 
             //we are loading the json compare data here
@@ -91,7 +82,7 @@ namespace GithubPullTracker.Controllers
             if (file.Status != "added")
             {
                 var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Base.Sha);
-                
+
                 var sourceFile = source.SingleOrDefault();
                 if (sourceFile != null)
                 {
@@ -102,43 +93,113 @@ namespace GithubPullTracker.Controllers
                         sourceText = sourceFile.Content;
                     }
                 }
-            }else
+            }
+            else
             {
                 sourceText = "";
             }
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
             {
+                headSha = pullRequest.Head.Sha,
                 source = sourceText,
-                status = file.Status,
                 patch = file.Patch,
                 pageMap = map,
-                isBinary = isBinaryDataType,
-                comments = fileComments
+                isBinary = isBinaryDataType
+            });
+            return Content(json, "application/json");
+        }
+
+
+
+        [Route("{owner}/{repo}/pull/{reference}/comments")]
+        public async Task<ActionResult> GetFileComments(string owner, string repo, int reference, string expectedSha)
+        {
+            var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
+
+            if (pullRequest.Head.Sha != expectedSha)
+            {
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(new
+                {
+                    headSha = pullRequest.Head.Sha
+                }), "application/json");
+            }
+
+            var files = await Client.PullRequest.Files(owner, repo, reference);
+
+            var comments = await Client.PullRequest.Comment.GetAll(owner, repo, reference);
+            var commentedFiles = comments.Select(x => x.Path).ToList();
+
+            var maps = files
+                        .Where(x=> commentedFiles.Contains(x.FileName))//only parse patch files we will need
+                        .ToDictionary(x => x.FileName, x => MapPatchToFiles(x.Patch));
+
+            var convertedComments = comments.Select(x => new
+            {
+                body = x.Body,
+                commenter = new { avatarUrl = x.User.AvatarUrl, login = x.User.Login },
+                createdAt = x.CreatedAt,
+                path = x.Path,
+                x.Position
+
+            })
+            .Select(x => new
+            {
+                x.path,
+                x.body,
+                x.commenter,
+                x.createdAt,
+                sourceLine = maps[x.path].PatchToSourceLineNumber(x.Position) ?? -1,
+                targetLine = maps[x.path].PatchToTargetLineNumber(x.Position) ?? -1
+            }).ToList();
+            
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
+            {
+                headSha = pullRequest.Head.Sha,
+                comments = convertedComments
             });
             return Content(json, "application/json");
 
         }
+
+        
+        [Route("{owner}/{repo}/pull/{reference}/files")]
+        public async Task<ActionResult> GetFileList(string owner, string repo, int reference, string expectedSha)
+        {
+            var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
+
+            if (pullRequest.Head.Sha != expectedSha)
+            {
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(new
+                {
+                    headSha = pullRequest.Head.Sha
+                }), "application/json");
+            }
+
+            //todo load file list via ajax
+            var files = await Client.PullRequest.Files(owner, repo, reference);
+            
+            var pr = new PullFileList(pullRequest, files);
+            var json = pr.TreeData.ToString();
+            return Content(json, "application/json");
+
+        }
+
 
         [Route("{owner}/{repo}/pull/{reference}")]
         [Route("{owner}/{repo}/pull/{reference}/files/{*path}")]
         public async Task<ActionResult> ViewPullRequest(string owner, string repo, int reference, string path = null)
         {
             var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
-
-            //todo load file list via ajax
-            var files = await Client.PullRequest.Files(owner, repo, reference);
-
-            //var comments = await Client.PullRequest.Comment.GetAll(owner, repo, reference);
-
+            
             if (path != null)
             {
                 path = path.TrimEnd('/');
-                var vm = new PullRequestView(pullRequest, files, path);
+                var vm = new PullRequestView(pullRequest, path);
                 return View(vm);
             }
 
-            var pr = new PullRequestView(pullRequest, files);
+            var pr = new PullRequestView(pullRequest);
             return View(pr);
         }
 
@@ -159,8 +220,8 @@ namespace GithubPullTracker.Controllers
                 if (text.StartsWith("@@"))
                 {
                     var match = Regex.Match(text, @"^\@\@\s?(?:-(\d*),(\d*))?\s?(?:\+(\d*),(\d*))?\s?\@\@");
-                    sourcePageIndex = int.Parse(match.Groups[1].Value) -1;
-                    targetPageIndex = int.Parse(match.Groups[3].Value) -1 ;
+                    sourcePageIndex = match.Groups[1].Success ? int.Parse(match.Groups[1].Value) -1 : -1;
+                    targetPageIndex = match.Groups[3].Success ? int.Parse(match.Groups[3].Value) -1  : -1;
                 }else
                 {
                     var prefix = text[0];
@@ -185,10 +246,14 @@ namespace GithubPullTracker.Controllers
             return map;
         }
 
+
+        //[Route("{owner}/{repo}")]
+        //[Route("{owner}")]
         [Route("")]
-        public async Task<ActionResult> Search(string query, int page =1, RequestState? state = null, RequestConnection? type = null)
+        public async Task<ActionResult> Search(string query, string owner = null, string repo = null, int page =1, RequestState? state = null, RequestConnection? type = null)
         {
-            var realType = type ?? RequestConnection.Assigned;
+            string viewPage = "Search";
+
             var realState = state ?? RequestState.Open;
 
             List<IssueIsQualifier> isQual = new List<IssueIsQualifier>();
@@ -210,24 +275,41 @@ namespace GithubPullTracker.Controllers
                 Is = isQual,
                 Involves = CurrentUser.UserName,
             };
-            switch (realType)
+            if (repo == null && owner == null)
             {
-                case RequestConnection.Involved:
-                    request.Assignee = CurrentUser.UserName;
-                    break;
-                case RequestConnection.Created:
-                    request.Author = CurrentUser.UserName;
-                    break;
-                case RequestConnection.Assigned:
-                    request.Involves = CurrentUser.UserName;
-                    break;
+                var realType = type ?? RequestConnection.Assigned;
+                switch (realType)
+                {
+                    case RequestConnection.Involved:
+                        request.Assignee = CurrentUser.UserName;
+                        break;
+                    case RequestConnection.Created:
+                        request.Author = CurrentUser.UserName;
+                        break;
+                    case RequestConnection.Assigned:
+                        request.Involves = CurrentUser.UserName;
+                        break;
+                }
+            }else
+            {
+                if(repo == null)
+                {
+                    request.Involves = owner;
+                    viewPage = "SearchOwner";
+                }
+                else {
+                    request.Repos.Add($"{owner}/{repo}");
+                    viewPage = "SearchRepo";
+                }
             }
             request.Page = page;
             request.PerPage = 25;
             
             var results = await this.Client.Search.SearchIssues(request);
             var vm = new PullRequestResult(1, 25, results);
-            return View(vm);
+            vm.RepoName = repo;
+            vm.Owner = owner;
+            return View(viewPage, vm);
         }
         
         public enum RequestConnection

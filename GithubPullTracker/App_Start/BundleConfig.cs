@@ -24,9 +24,12 @@ namespace GithubPullTracker
                 .Include("~/Scripts/splitter.js")
                 .Include("~/Scripts/codemirror.js")
                 .Include("~/Scripts/mode/meta.js")
+                .Include("~/Scripts/addon/mode/loadmode.js")
+                .Include("~/Scripts/addon/mode/overlay.js")
                 .Include("~/Scripts/jquery.hotkeys.js")
                 .Include("~/Scripts/addon/scroll/annotatescrollbar.js")
-                .Include("~/Scripts/addon/merge/merge.js"));
+                .Include("~/Scripts/addon/merge/merge.js")
+                .Include("~/Scripts/DiffViewScript.js"));
 
             bundles.Add(new StyleBundle("~/Site.css")
                 .Include("~/Content/codemirror.css")
