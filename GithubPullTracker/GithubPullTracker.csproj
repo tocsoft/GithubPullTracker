@@ -103,8 +103,14 @@
     <Content Include="Content\Site.css" />
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
+    <Content Include="Scripts\addon\dialog\dialog.css" />
+    <Content Include="Scripts\addon\dialog\dialog.js" />
     <Content Include="Scripts\addon\merge\merge.css" />
     <Content Include="Scripts\addon\merge\merge.js" />
+    <Content Include="Scripts\addon\scroll\annotatescrollbar.js" />
+    <Content Include="Scripts\addon\scroll\scrollpastend.js" />
+    <Content Include="Scripts\addon\scroll\simplescrollbars.css" />
+    <Content Include="Scripts\addon\scroll\simplescrollbars.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />

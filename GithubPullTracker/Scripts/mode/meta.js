@@ -158,6 +158,7 @@
             "config",
             "csproj",
             "xproj",
+            "proj",
             "xaml"
         ], alias: ["rss", "wsdl", "xsd"]
     },

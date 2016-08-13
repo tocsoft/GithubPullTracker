@@ -116,3 +116,18 @@ div.commentList {
     .not-in-patch .CodeMirror-gutter-wrapper{
 
     }
+
+    .in-patch{
+
+    }
+    
+    .in-patch::after{
+        content:' ';
+        position:absolute;
+        top:0;
+        left:3px;
+        right:4px;
+        bottom:0;
+        background-color:cornflowerblue;
+        opacity:0.5;
+    }

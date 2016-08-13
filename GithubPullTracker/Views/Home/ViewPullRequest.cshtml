@@ -87,9 +87,16 @@
         }).on('changed.jstree', function(e, d){
             if(d.selected.length ){
                 var node = d.instance.get_node(d.selected[0]);
-                loadPage(node, true);              
                 if(node.data.type=='file'){
+                    loadPage(node, true);              
                     d.instance.set_type(d.node, "file_visisted");
+                }
+            }
+        }).on('select_node.jstree', function (e, data) {
+            if(data.node.data.type!='file'){
+                if (data.node.children.length > 0) {
+                    $(this).jstree(true).deselect_node(data.node);                    
+                    $(this).jstree(true).toggle_node(data.node);                    
                 }
             }
         });
@@ -182,7 +189,7 @@
        
         function showFileDiff(path){
             
-            var targetPath = pathPrefix + '/files/' + path;
+            var targetPath = pathPrefix + '/contents/' + path;
             
             $.get(targetPath, function(data){
                 getMimeSettings(path, function(info){
@@ -255,11 +262,16 @@
                     function markPatch(editor, map){
                         var doc = editor.getDoc();
                         var lineCount = doc.lineCount();
-
+                        
+                        var annotation = [];
+                        var currentAnn = null;
                         for(var i = 0; i<lineCount; i++){
                             var mappedPage = map[i+1]
                             if(mappedPage > -1){
-                             
+                                if(currentAnn == null){
+                                    currentAnn = {from : {line:i}};
+                                }
+                                currentAnn.to = {line:i};
                                 var btn = $('<span class="addcomment"></span>');
                                 btn.click(function(){
                                     addComments(this);
@@ -268,14 +280,25 @@
                                 editor.setGutterMarker(i, "github-comments", btn[0]);
                             
                             }else{
+                                if(currentAnn){
+                                    annotation.push(currentAnn);
+                                }
+                                currentAnn = null;
                                 doc.addLineClass(i, "wrap", "not-in-patch");
                             }
                 
                         }
+                        if(currentAnn !== null){                            
+                            annotation.push(currentAnn);
+                        }
+                        var bar =  editor.annotateScrollbar('in-patch');
+
+                        bar.update(annotation);
                     }
 
-                    markPatch(targetDoc, data.pageMap.TargetFile);
-                    markPatch(sourceDoc, data.pageMap.SourceFile);
+
+                    markPatch(targetEditor, data.pageMap.TargetFile);
+                    markPatch(sourceEditor, data.pageMap.SourceFile);
 
                     
                     diffElm.resize();
