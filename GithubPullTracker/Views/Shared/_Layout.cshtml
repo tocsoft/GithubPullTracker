@@ -6,13 +6,8 @@
     <title>@ViewBag.Title - My ASP.NET Application</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
 
-    <link href="~/Scripts/codemirror.css" rel="stylesheet" />
-    @*<link href="~/Scripts/mergely.css" rel="stylesheet" />*@
-    <link href="~/Scripts/addon/merge/merge.css" rel="stylesheet" />
-    <script src="~/Scripts/modernizr-2.6.2.js"></script>
+    @Styles.Render("~/Site.css")
 
-
-    <link href="~/Content/Site.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
     <div class="navbar navbar-inverse ">
@@ -31,22 +26,23 @@
             </div>
         </div>
     </div>
-
-    <div class="container-fluid  body-content">
+    @{ 
+        var bodyClass = "container";
+        if(ViewBag.FullWidth == true)
+        {
+            bodyClass = "container-fluid";
+        }
+    }
+    <div class="@bodyClass body-content">
         @RenderBody()
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
+
+
+
+    @Scripts.Render("~/Site.js")
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
-    <script src="~/Scripts/splitter.js"></script>
-    <script src="~/Scripts/diff.js"></script>
-    <script src="~/Scripts/marked.js"></script>
-    <script src="~/Scripts/lscache.min.js"></script>
-    <script src="~/Scripts/diff_match_patch.js"></script>
-    <script src="~/Scripts/codemirror.js"></script>
-    <script src="~/Scripts/addon/scroll/annotatescrollbar.js"></script>
-    <script src="~/Scripts/mode/meta.js"></script>
-    <script src="~/Scripts/addon/merge/merge.js"></script>
-    <script src="~/Scripts/jquery.hotkeys.js"></script>
+
     @*<script src="~/Scripts/mergely.js"></script>*@
     @RenderSection("scripts", false)
 </body>

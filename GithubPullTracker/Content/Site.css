@@ -21,6 +21,11 @@
 }
 #splitter > div#file_diff{
     overflow:hidden;
+    
+}
+
+.CodeMirror{
+    font-size:12px;
 }
 
 .github-comments{
@@ -80,7 +85,7 @@ div.commentList {
         background-color:#eee;
         border-bottom:1px solid silver;
         margin:-10px -10px  10px -10px;
-        height:20px;
+        height:30px;
         padding-top:10px;
     }
     .comment div.header img{

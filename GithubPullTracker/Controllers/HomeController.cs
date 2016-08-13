@@ -8,6 +8,8 @@ using GithubPullTracker.Models;
 using Octokit;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.IO;
+using System.Text;
 
 namespace GithubPullTracker.Controllers
 {
@@ -46,9 +48,12 @@ namespace GithubPullTracker.Controllers
                 return null;
             }
         }
+        
         [Route("{owner}/{repo}/pull/{reference}/contents/{*path}")]
         public async Task<ActionResult> GetFile(string owner, string repo, int reference, string path)
         {
+            var fileExtension = Path.GetExtension(path).ToLower();
+
             var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
 
             var files = await Client.PullRequest.Files(owner, repo, reference);
@@ -80,19 +85,35 @@ namespace GithubPullTracker.Controllers
 
 
             //we are loading the json compare data here
-            string sourceText = "";
+            string sourceText = null;
+            bool isBinaryDataType = false;
 
             if (file.Status != "added")
             {
                 var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Base.Sha);
-                sourceText = source.SingleOrDefault()?.Content;
+                
+                var sourceFile = source.SingleOrDefault();
+                if (sourceFile != null)
+                {
+                    var data = Convert.FromBase64String(sourceFile.EncodedContent);
+                    isBinaryDataType = isBinary(data);
+                    if (!isBinaryDataType)
+                    {
+                        sourceText = sourceFile.Content;
+                    }
+                }
+            }else
+            {
+                sourceText = "";
             }
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
             {
                 source = sourceText,
+                status = file.Status,
                 patch = file.Patch,
                 pageMap = map,
+                isBinary = isBinaryDataType,
                 comments = fileComments
             });
             return Content(json, "application/json");
@@ -123,9 +144,12 @@ namespace GithubPullTracker.Controllers
 
         private static PageMap MapPatchToFiles(string patch)
         {
-            var lines = patch.Split('\n');
             var map = new PageMap();
-
+            if (string.IsNullOrWhiteSpace(patch))
+            {
+                return map;
+            }
+            var lines = patch.Split('\n');
 
             int sourcePageIndex = 0;
             int targetPageIndex = 0;
@@ -218,5 +242,39 @@ namespace GithubPullTracker.Controllers
             Open,
             Closed,
         }
+
+        public static bool isBinary(byte[] data)
+        {
+            long length = data.Length;
+            if (length == 0) return false;
+
+            using (StreamReader stream = new StreamReader(new MemoryStream(data)))
+            {
+                int ch;
+                while ((ch = stream.Read()) != -1)
+                {
+                    if (isControlChar(ch))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static bool isControlChar(int ch)
+        {
+            return (ch > Chars.NUL && ch < Chars.BS)
+                || (ch > Chars.CR && ch < Chars.SUB);
+        }
+
+        public static class Chars
+        {
+            public static char NUL = (char)0; // Null char
+            public static char BS = (char)8; // Back Space
+            public static char CR = (char)13; // Carriage Return
+            public static char SUB = (char)26; // Substitute
+        }
     }
 }
+

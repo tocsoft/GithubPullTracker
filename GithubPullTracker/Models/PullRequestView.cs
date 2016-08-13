@@ -15,14 +15,15 @@ namespace GithubPullTracker.Models
         }
         public PullRequestView(PullRequest pr, IEnumerable<PullRequestFile> files, string selectedPath) 
         {
+
             var rootItem = new PullRequestViewItem(files);
             Items = rootItem.Children;
             if (selectedPath != null)
             {
-                var item = rootItem.GetItem(selectedPath);
-                if (item != null)
+                CurrentFile = rootItem.GetItem(selectedPath);
+                if (CurrentFile != null)
                 {
-                    item.Selected = true;
+                    CurrentFile.Selected = true;
                 }
             }
         }
@@ -31,13 +32,14 @@ namespace GithubPullTracker.Models
         public string RepositoryName { get; set; }
 
         public int Number { get; set; }
+        public PullRequestViewItem CurrentFile { get; set; }
 
         public IEnumerable<PullRequestViewItem> Items { get; set; }
 
-        public string JsTreeData
+        public string TreeData
         {
             get {
-                return $"[{string.Join(",", Items.Select(x => x.JsTreeSettings))}]";
+                return $"[{string.Join(",", Items.Select(x => x.TreeSettings))}]";
             }
         }
 
@@ -117,7 +119,7 @@ namespace GithubPullTracker.Models
                     }
                 }
             }
-            private JObject JsTreeSettingsObject
+            private JObject TreeSettingsObject
             {
                 get
                 {
@@ -125,16 +127,13 @@ namespace GithubPullTracker.Models
                      new
                      {
                          text = Name,
-                         data = new {
-                            type = IsFile ? "file" : "folder",
-                            path = Path,
-                            sha = fileItem?.Sha,
-                        },
-                         state = new
-                         {
-                             opened = true,//default to all nodes open for now
-                             selected = this.Selected && this.IsFile
-                         }
+                         type = IsFile ? "file" : "folder",
+                         path = Path,
+                         sha = fileItem?.Sha,
+
+                         opened = true,//default to all nodes open for now
+                         selected = this.Selected && this.IsFile
+
                      });
 
 
@@ -142,7 +141,7 @@ namespace GithubPullTracker.Models
                     {
                         JArray childrenList = new JArray();
 
-                        foreach (var c in Children.Select(x => x.JsTreeSettingsObject))
+                        foreach (var c in Children.Select(x => x.TreeSettingsObject))
                         {
                             childrenList.Add(c);
                         }
@@ -154,11 +153,11 @@ namespace GithubPullTracker.Models
                 }
             }
 
-            public string JsTreeSettings
+            public string TreeSettings
             {
                 get
                 {
-                    return JsTreeSettingsObject.ToString();
+                    return TreeSettingsObject.ToString();
                 }
             }
 

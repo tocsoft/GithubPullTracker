@@ -1,14 +1,16 @@
 ﻿@model GithubPullTracker.Models.PullRequestView
 @{ 
-    
+    ViewBag.FullWidth = true;
 
 }
-<style>
 
-</style>
+
 <div id="splitter">
-    <div id="jstree_demo_div"></div>
+    <div>
+        <div id="tree">
 
+        </div>
+    </div>
     <div id="file_diff">
             
     </div>
@@ -21,194 +23,212 @@
         }
     </style>
 <script>
+    function fixHeights(){
+        var splitter = $('#splitter');
+        var offset = splitter.position().top;
+        var winh =  $(window).height() - offset ;
+        splitter.height(winh ).trigger("resize");
+        $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror { height: "+winh+"px;}")
+    }
     var dmp = new diff_match_patch();
     $(function(){
-        
-        var width =  lscache.get('spliterWidth') || ($(window).width() * 0.8);
+
+        var width =   $(window).width() ;
+        var multiplier =  lscache.get('spliterWidth')||0.8;
+        width =   width * multiplier;
         $("#splitter").splitter({
             sizeRight: width
         });
     });
-    $(function () {
-        var data = @Html.Raw(Model.JsTreeData);
-        var blankState = null;
+    $(function ()
+    {
         var pathPrefix = '@Url.Action("ViewPullRequest")';
-        var idSeed = 0;
-        function updateType(node){
+        var currentPath  = '';
+        @if (Model.CurrentFile != null) {
+            <text>
+                currentPath = '@Model.CurrentFile.Path';
+            </text>
+        }
+    var blankState = null;
+    function loadTreeData(){
+    //todo move this to an ajax call
+    var data = @Html.Raw(Model.TreeData);
+        function fixNode(node){
             
-            //due to the recursive nature this will always be the lowest item
-            if(node.state.selected){
-                blankState = node;
-            }
+            node.state = { };
+        //due to the recursive nature this will always be the lowest item
+        if(node.path === currentPath){
+            blankState = node;
+            node.state.selected = true;
+        }
+        node.nodes = node.children;
 
-            if(node.data.type == 'file'){
-                var key = node.data.sha;
-                node.id = "file_" + key;
-                if(lscache.get(key)){
-                    node.type = 'file_visited';
-                }else{
-                    node.type = 'file_new';
-                }
+        if(node.type == 'file'){
+            node.icon = 'glyphicon glyphicon-file';
+            node.tags = ['file'];
 
+            if(lscache.get(node.sha)){
+                node.tags.push('visited');
             }else{
-                node.type = 'folder';
-                node.id = "folder_" + (++idSeed);
+                node.tags.push('new');
             }
 
-            if(node.children && node.children.length > 0)
-            {
-                for(var i = 0; i<node.children.length; i++){
-                    updateType(node.children[i]);
-                }
-            }
+
+        }else{
+            node.icon  = 'glyphicon glyphicon-folder-close';
+            node.expandedIcon  = 'glyphicon glyphicon-folder-open';
+            node.tags = ['folder'];
+            node.selectable = false;
+            node.state.expanded =  true;
         }
-        for(var i = 0; i<data.length; i++){
-            updateType(data[i]);
-        }
-        //lets update types in data based on local file visited cache
 
-        $('#jstree_demo_div').jstree({
-            'core': {
-                'data': data
-            },
-            "types" : {
-                "folder" : {
-                    "icon" : "glyphicon glyphicons-folder-open"
-                },
-                "file_new" : {
-                    "icon" : "glyphicon glyphicons-unchecked file_new",
-                    "a_attr" : { "class" : 'file_new' }
-                },
-                "file_visited" : {
-                    "icon" : "glyphicon glyphicons-check"
-                }
-            },
-            "plugins" : [ "types" ]
-        }).on('changed.jstree', function(e, d){
-            if(d.selected.length ){
-                var node = d.instance.get_node(d.selected[0]);
-                if(node.data.type=='file'){
-                    loadPage(node, true);              
-                    d.instance.set_type(d.node, "file_visisted");
-                }
-            }
-        }).on('select_node.jstree', function (e, data) {
-            if(data.node.data.type!='file'){
-                if (data.node.children.length > 0) {
-                    $(this).jstree(true).deselect_node(data.node);                    
-                    $(this).jstree(true).toggle_node(data.node);                    
-                }
-            }
-        });
-
-        var currentNode = null;
-        function loadPage(node, navigate)
+        if(node.nodes && node.nodes.length > 0)
         {
-            //we are already on this node don't load it.
-            if(currentNode !== null && node !== null && currentNode.id == node.id){
-                return;
-            }
-            currentNode = node;
-            if(node != null){
-                var targetPath = pathPrefix + '/files/' + node.data.path;
-                //we cache the page visit for 12 months so browse3r will attempt to remember visited sha's
-                lscache.set(node.data.sha, true, 60 * 24 * 7 * 52);
-                if(navigate){
-                    if(window.location.pathname == targetPath ){
-                        history.replaceState(node, null, targetPath);
-                    }else
-                    {
-                        history.pushState(node, null, targetPath);
-                    }
-                }
-
-                showFileDiff(node.data.path);
-
-                console.log(targetPath);
-            }else{
-                //show homepage!!
-                console.log(pathPrefix);
+            for(var i = 0; i<node.nodes.length; i++){
+                fixNode(node.nodes[i]);
             }
         }
+
+    }
+
+    for(var i = 0; i< data.length; i++){
+        fixNode(data[i]);
+    }
+
+    return data;
+}
+
+
+        $('#tree').treeview({
+            data: loadTreeData(),
+            expandOptions : {
+                ignoreChildren : true
+            }
+            //collapseIcon :'glyphicon glyphicon-folder-open',
+            //expandIcon :'glyphicon glyphicon-folder-close',
+        }).on('nodeSelected', function(e, node){
+           
+            loadPage(node, true);
+        }).on('nodeExpanded', function(e, node){
+           
+            node.icon
+        });
         
-        function loadMimeRenderer(info, cb){
+                    var currentNode = null;
+                    function loadPage(node, navigate)
+                    {
+                        //we are already on this node don't load it.
+                        if(currentNode !== null && node !== null && currentNode.sha == node.sha){
+                            return;
+                        }
+                        currentNode = node;
+                        if(node != null){
+                            var targetPath = pathPrefix + '/files/' + node.path;
+                            //we cache the page visit for 12 months so browse3r will attempt to remember visited sha's
+                            lscache.set(node.sha, true, 60 * 24 * 7 * 52);
+                            if(navigate){
+                                if(window.location.pathname == targetPath ){
+                                    history.replaceState(node, null, targetPath);
+                                }else
+                                {
+                                    history.pushState(node, null, targetPath);
+                                }
+                            }
 
-            if(!info.mime && info.mimes){
-                info.mime= info.mimes[0];
-            }
+                            showFileDiff(node.path);
 
-            var script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.async = true;
-            script.onload = function(){
-                // remote script has loaded
-                info.loaded = true;
-                cb(info);
-            };
-            script.src = '/scripts/mode/'+info.mode + '/'+info.mode + '.js';
-            document.getElementsByTagName('head')[0].appendChild(script)
-        }
-        function getMimeSettings(filename, cb){
+                            console.log(targetPath);
+                        }else{
+                            //show homepage!!
+                            console.log(pathPrefix);
+                        }
+                    }
+            
 
-            var r= filename.lastIndexOf('.');
-            if(r > -1){
-                var ext = filename.substr(r+1, filename.length - r).toLowerCase();
-                  for(var i in CodeMirror.modeInfo){
-                      var info = CodeMirror.modeInfo[i];
-                      if(info.ext){
-                          if(info.ext.indexOf(ext) > -1){
+                    function loadMimeRenderer(info, cb){
+
+                        if(!info.mime && info.mimes){
+                            info.mime= info.mimes[0];
+                        }
+
+                        var script = document.createElement('script');
+                        script.type = 'text/javascript';
+                        script.async = true;
+                        script.onload = function(){
+                            // remote script has loaded
+                            info.loaded = true;
+                            cb(info);
+                        };
+                        script.src = '/scripts/mode/'+info.mode + '/'+info.mode + '.js';
+                        document.getElementsByTagName('head')[0].appendChild(script)
+                    }
+                    function getMimeSettings(filename, cb){
+
+                        var r= filename.lastIndexOf('.');
+                        if(r > -1){
+                            var ext = filename.substr(r+1, filename.length - r).toLowerCase();
+                            for(var i in CodeMirror.modeInfo){
+                                var info = CodeMirror.modeInfo[i];
+                                if(info.ext){
+                                    if(info.ext.indexOf(ext) > -1){
+
+
+                                        if(info.loaded){
+                                            cb(info);
+                                            return;
+                                        }else{
+                                            loadMimeRenderer(info, cb);
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        cb({ mime:null});
+                        return;
+                    }
+
+                var diffElm = null;
+        $(document).bind('keydown', 'j', function(){
+                    if(diffElm){
+                        diffElm.edit.execCommand("goNextDiff");
+                    }
+                });
+
+        $(document).bind('keydown', 'k', function(){
+                    if(diffElm){
+                        diffElm.edit.execCommand("goPrevDiff");
+                    }
+                });
+
+        function showFileDiff(path){
+
+                    var targetPath = pathPrefix + '/contents/' + path;
+                    var targetElm = $('#file_diff');
+                    targetElm.html('<div class="loader">Loading ...</div>');
+                    $.get(targetPath, function(data){
+                        if(data.isBinary){
+                            targetElm.html("<div>Binary file "+ data.status+", preview unavailible.</div>");
                             
 
-                              if(info.loaded){
-                                  cb(info);
-                                  return;
-                              }else{
-                                  loadMimeRenderer(info, cb);
-                                  return;
-                              }
-                          }
-                    }                
-                }
-            }
-            cb({ mime:null});
-            return;
-        }
+                            return;
+                        }
 
-        var diffElm = null;
-        $(document).bind('keydown', 'j', function(){
-            if(diffElm){
-                diffElm.edit.execCommand("goNextDiff"); 
-            }
-        });
-        
-        $(document).bind('keydown', 'k', function(){
-            if(diffElm){
-                diffElm.edit.execCommand("goPrevDiff"); 
-            }
-        });
-       
-        function showFileDiff(path){
-            
-            var targetPath = pathPrefix + '/contents/' + path;
-            
-            $.get(targetPath, function(data){
-                getMimeSettings(path, function(info){
-                    var elm = $('#file_diff');
-                    elm.html("");//clear the dom
-                    var winh =  $(window).height();
-                    $('#splitter').height(winh ).trigger("resize");
-                    $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror { height: "+winh+"px;}")
-                    
-                    //diffElm = $("<div />");
-                    //parent.append(diffElm );
-                    var source = data.source;
-                    var target = JsDiff.applyPatch( source, data.patch);
+                        getMimeSettings(path, function(info){
+                            var elm = $('#file_diff');
+                            elm.html("");//clear the dom
+                            fixHeights();
 
-                    diffElm = CodeMirror.MergeView(elm[0], {
-                        origLeft :  source,
+                            //diffElm = $("<div />");
+                            //parent.append(diffElm );
+                            var source = data.source;
+                            var target = JsDiff.applyPatch( source, data.patch);
+
+                            diffElm = CodeMirror.MergeView(elm[0], {
+                                origLeft :  source,
                         value : target,
                         lineNumbers: true,
-                        mode: info.mime, 
+                        mode: info.mime,
                         connect :null,
                         readOnly: 'nocursor',
                         allowEditingOriginals : false,
@@ -216,99 +236,99 @@
                         revertButtons : false,
                         lineWrapping:true,
                         gutters : ["CodeMirror-linenumbers", "github-comments"]
-                    });
-                    //load comments
-                    
-                    function addComments(btn){
-                        //show an add commentUI
-                        //inject the add comment widget
-                    }
-                    var commentBlocks = {};
+                            });
+                            //load comments
 
-                    function addComment(doc, line, comment)
+                            function addComments(btn){
+                                //show an add commentUI
+                                //inject the add comment widget
+                            }
+                            var commentBlocks = {};
+
+                            function addComment(doc, line, comment)
+                            {
+                    commentBlocks[doc] = commentBlocks[doc] || {};
+                    var block = commentBlocks[doc][line];
+                    if(!block)
                     {
-                        commentBlocks[doc] = commentBlocks[doc] || {};
-                        var block = commentBlocks[doc][line];
-                        if(!block)
-                        {
-                            var elm = $('<div class="commentList" />');
-                            var widget = doc.addLineWidget(line, elm[0], { coverGutter : true, noHScroll: true, });
-                            commentBlocks[doc][line] = block ={ elm:elm, widget:widget};
-                        }
-                        block.elm.append($('<div class="comment"><div class="header"><img src="'+ comment.commenter.avatarUrl +'&s=40"> ' + comment.commenter.login +' added a note <span class="timeago">'+comment.createdAt+'</span></div>' + marked(comment.body) + '</div>'));
-                        block.widget.changed();
-                        //dot adda single widget per comment append to the old widget if exists
-                        
+                        var elm = $('<div class="commentList" />');
+                        var widget = doc.addLineWidget(line, elm[0], { coverGutter : true, noHScroll: true, });
+                        commentBlocks[doc][line] = block ={ elm:elm, widget:widget};
                     }
-                    var targetEditor = diffElm.edit;
-                    var sourceEditor = diffElm.left.orig;
-                    var targetDoc = targetEditor.getDoc();;
+                    block.elm.append($('<div class="comment"><div class="header"><img src="'+ comment.commenter.avatarUrl +'&s=40"> ' + comment.commenter.login +' added a note <span class="timeago">'+comment.createdAt+'</span></div>' + marked(comment.body) + '</div>'));
+                    block.widget.changed();
+                    //dot adda single widget per comment append to the old widget if exists
+
+                }
+                var targetEditor = diffElm.edit;
+                var sourceEditor = diffElm.left.orig;
+                var targetDoc = targetEditor.getDoc();;
                     var sourceDoc = sourceEditor.getDoc();
 
                     for(var i in data.comments){
 
                         var comment = data.comments[i];
                         if(comment.sourceLine > 0){
-                            
-                            addComment(sourceDoc,  comment.sourceLine, comment);    
-                        }
+
+                            addComment(sourceDoc,  comment.sourceLine, comment);
+            }
                         if(comment.targetLine > 0){
-                            
-                            addComment(targetDoc,  comment.targetLine, comment);    
-                        }
-                        
+
+                            addComment(targetDoc,  comment.targetLine, comment);
+        }
+
                     }
 
                     function markPatch(editor, map){
-                        var doc = editor.getDoc();
-                        var lineCount = doc.lineCount();
-                        
-                        var annotation = [];
-                        var currentAnn = null;
-                        for(var i = 0; i<lineCount; i++){
-                            var mappedPage = map[i+1]
+            var doc = editor.getDoc();
+            var lineCount = doc.lineCount();
+
+            var annotation = [];
+            var currentAnn = null;
+            for(var i = 0; i<lineCount; i++){
+                var mappedPage = map[i+1]
                             if(mappedPage > -1){
-                                if(currentAnn == null){
-                                    currentAnn = {from : {line:i}};
-                                }
-                                currentAnn.to = {line:i};
-                                var btn = $('<span class="addcomment"></span>');
-                                btn.click(function(){
-                                    addComments(this);
-                                });
-                                btn.data("patchLine", mappedPage);
-                                editor.setGutterMarker(i, "github-comments", btn[0]);
-                            
-                            }else{
+                    if(currentAnn == null){
+                        currentAnn = {from : {line:i}};
+                    }
+                    currentAnn.to = {line:i};
+                    var btn = $('<span class="addcomment"></span>');
+                    btn.click(function(){
+                        addComments(this);
+                    });
+            btn.data("patchLine", mappedPage);
+            editor.setGutterMarker(i, "github-comments", btn[0]);
+
+        }else{
                                 if(currentAnn){
                                     annotation.push(currentAnn);
                                 }
                                 currentAnn = null;
                                 doc.addLineClass(i, "wrap", "not-in-patch");
                             }
-                
+
                         }
-                        if(currentAnn !== null){                            
+                        if(currentAnn !== null){
                             annotation.push(currentAnn);
                         }
                         var bar =  editor.annotateScrollbar('in-patch');
 
-                        bar.update(annotation);
+        bar.update(annotation);
                     }
 
 
                     markPatch(targetEditor, data.pageMap.TargetFile);
                     markPatch(sourceEditor, data.pageMap.SourceFile);
 
-                    
-                    diffElm.resize();
+
+        diffElm.resize();
                     //diffElm .mergely({
                     //    cmsettings :{ },
                     //    ignorews:false,
                     //    autoupdate:true,
                     //    autoresize:true,
                     //    fadein:false
-                    //}); 
+                    //});
                     ////$("#splitter").splitter();
                     //diffElm.mergely('lhs', data.source);
                     //diffElm.mergely('rhs', data.target);
@@ -320,46 +340,42 @@
             });
 
         }
-        
+
         //diffElm .mergely({
         //    ignorews:false,
         //    autoupdate:true,
         //    autoresize:true,
         //    fadein:false
-        //});        
+        //});
         var to;
         $("#splitter").on("resize", function(){
             clearTimeout(to);
             to = setTimeout(function(){
-                var width = $(window).width() - $('#jstree_demo_div').width(); 
+                var width = $('#file_diff').width() / $(window).width();
                 lscache.set('spliterWidth', width);
                 if(diffElm){
                     diffElm.edit.refresh();
                     diffElm.left.orig.refresh();
-                    
+
                     diffElm.resize();
                 }
             },100);
             if(diffElm){
                 diffElm.resize();
             }
-           
+
         });
         var to1;
         $(window).resize(function(e){
-            //diffElm .mergely('resize');    
+            //diffElm .mergely('resize');
             if(e.target === window){
                 clearTimeout(to1);
                 to1 = setTimeout(function(){
-                    var winh =  $(window).height();
-                    $('#splitter').height(winh ).trigger("resize");
-                    $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror { height: "+winh+"px;}")
-                    //$('#file_diff .CodeMirror-merge').height(winh );
-
+                    fixHeights();
                 });
             }
         }).resize();
-        
+
         window.onpopstate = function(s)
         {
             var currentStateNode = s.state;
@@ -373,7 +389,7 @@
         }
 
             if(blankState !=null){
-                history.replaceState(blankState, null, pathPrefix + '/files/' + blankState.data.path);
+                history.replaceState(blankState, null, pathPrefix + '/files/' + blankState.path);
             }else{
                 history.replaceState(null, null, pathPrefix);
             }
