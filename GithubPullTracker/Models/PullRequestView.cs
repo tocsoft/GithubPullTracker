@@ -22,11 +22,16 @@ namespace GithubPullTracker.Models
             this.Number = int.Parse(parts[3]);
             this.RepositoryOwner = parts[0];
             this.RepositoryName = parts[1];
+            this.Details = pr.Body;
+            this.Creater = new User(pr.User);
+            this.CreatedAt = pr.CreatedAt;
         }
+
         public PullRequestView(PullRequest pr, string selectedPath) :this(pr)
         {
             CurrentFile = selectedPath;
         }
+
         public string RepositoryOwner { get; set; }
 
         public string RepositoryName { get; set; }
@@ -39,5 +44,8 @@ namespace GithubPullTracker.Models
         
         public string CurrentFile { get; set; }
         public string Title { get; private set; }
+        public string Details { get; private set; }
+        public User Creater { get; private set; }
+        public DateTimeOffset CreatedAt { get; private set; }
     }
 }

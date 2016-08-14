@@ -1,4 +1,4 @@
-﻿@model GithubPullTracker.Models.PullRequestView
+﻿@model GithubPullTracker.Models.PullFileList
 @{
     ViewBag.FullWidth = true;
 
@@ -16,10 +16,46 @@
 
         </div>
     </div>
-    <div id="file_diff">
+    <div>
+        <div  id="home">
+            <div class="main-comment" id="description">
+                <a href="#" class="user">
+                    <img src="@(Model.Creater.avatarUrl)&s=40" class="avatar" />
+                </a>
+                <div class="comment">
+                    <div class="header">
+                        <a href="~/@Model.Creater.login">@Model.Creater.login</a> commented <span class="timeago">@Model.CreatedAt</span>                        
+                    </div>
+                    @if (string.IsNullOrWhiteSpace(Model.Details))
+                    {
+                        <em>No description provided.</em>
+                    }
+                    else
+                    {
+                        <span class="apply-md">@Model.Details</span>
+                    }
+                </div>
+            </div>
 
+
+        </div>
+        <div id="file_diff">
+
+        </div>
     </div>
 </div>
+
+<script type="x-template" id="home-comment-template">
+    @Html.Partial("_MainCommentTemplate")
+</script>
+<script type="x-template" id="home-file-comment-template">
+    @Html.Partial("_MainFileCommentTemplate")
+</script>
+<script type="x-template" id="inline-file-comment-template">
+    @Html.Partial("_InlineFileCommentTemplate")
+</script>
+
+
 
 @section scripts{
     <style id="mergeHeight">
@@ -32,7 +68,7 @@
 
         
 
-        diffViewScript('@Model.CurrentFile', '@Model.HeadSha', '@Url.Action("ViewPullRequest")')
+        diffViewScript('@Model.CurrentFile', '@Model.HeadSha', '@Url.Action("ViewPullRequest")', @Html.Raw(Model.TreeData.ToString()))
 
     </script>
 }

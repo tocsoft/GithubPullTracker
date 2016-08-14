@@ -8,32 +8,30 @@ using Octokit;
 
 namespace GithubPullTracker.Models
 {
-    public class PullFileList
+    public class PullFileList : PullRequestView
     {
-        private PullRequest pr;
 
-        public PullFileList(PullRequest pr, IEnumerable<PullRequestFile> files)
+        public PullFileList(PullRequest pr, IEnumerable<PullRequestFile> files) : this(pr, files, null)
         {
-            this.pr = pr;
+
+        }
+
+
+        public PullFileList(PullRequest pr, IEnumerable<PullRequestFile> files, string currentFile) : base(pr, currentFile)
+        {
             var rootItem = new PullRequestViewItem(files);
             Items = rootItem.Children;
         }
-
-        public string RepositoryOwner { get; set; }
-
-        public string RepositoryName { get; set; }
-
-        public int Number { get; set; }
 
         public IEnumerable<PullRequestViewItem> Items { get; set; }
 
         public JObject TreeData
         {
-            get {
-
-                var obj = JObject.FromObject(new {
-                    headSha = pr.Head.Sha,
-                    baseSha = pr.Base.Sha,
+            get
+            { 
+                var obj = JObject.FromObject(new {                    
+                    headSha = HeadSha,
+                    baseSha = BaseSha,
                     data = new object[0]
                 });
                 foreach (var i in Items) {

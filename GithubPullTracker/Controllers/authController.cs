@@ -8,18 +8,19 @@ using System.Web.Mvc;
 using System.Web.Security;
 using GithubPullTracker.Models;
 using Octokit;
+using AttributeRouting.Web.Mvc;
 
 namespace GithubPullTracker.Controllers
 {
     public class AuthController : ControllerBase
     {
-        [Route("login", Order = 1)]
+        [GET("login", SitePrecedence = 1)]
         public ActionResult SignIn()
         {
             return View();
         }
 
-        [Route("logout", Order = 1)]
+        [GET("logout", SitePrecedence = 2)]
         public ActionResult SignOut()
         {
             CurrentUser = null;
@@ -27,7 +28,7 @@ namespace GithubPullTracker.Controllers
             return RedirectToAction("signin");
         }
 
-        [Route("login/github", Order = 1)]
+        [GET("login/github", SitePrecedence = 1)]
         public ActionResult SignInStart()
         {
 
@@ -47,7 +48,7 @@ namespace GithubPullTracker.Controllers
             return Redirect(oauthLoginUrl.ToString());
         }
 
-        [Route("login/github-callback", Order = -1)]
+        [GET("login/github-callback", SitePrecedence = 1)]
         public async Task<ActionResult> SignInComplete(string code, string state)
         {
             if (String.IsNullOrEmpty(code))

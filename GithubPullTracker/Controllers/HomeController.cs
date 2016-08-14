@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.IO;
 using System.Text;
 using System.Net;
+using AttributeRouting.Web.Mvc;
 
 namespace GithubPullTracker.Controllers
 {
@@ -47,7 +48,7 @@ namespace GithubPullTracker.Controllers
             }
         }
 
-        [Route("{owner}/{repo}/pull/{reference}/contents/{*path}")]
+        [GET("{owner}/{repo}/pull/{reference}/contents/{*path}")]
         public async Task<ActionResult> GetFile(string owner, string repo, int reference, string path, string expectedSha)
         {
             var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
@@ -112,7 +113,7 @@ namespace GithubPullTracker.Controllers
 
 
 
-        [Route("{owner}/{repo}/pull/{reference}/comments")]
+        [GET("{owner}/{repo}/pull/{reference}/comments")]
         public async Task<ActionResult> GetFileComments(string owner, string repo, int reference, string expectedSha)
         {
             var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
@@ -129,41 +130,26 @@ namespace GithubPullTracker.Controllers
 
             var comments = await Client.PullRequest.Comment.GetAll(owner, repo, reference);
             var commentedFiles = comments.Select(x => x.Path).ToList();
+            var issueComments = await Client.Issue.Comment.GetAllForIssue(owner, repo, reference, new ApiOptions { PageSize = 1000 });
 
             var maps = files
                         .Where(x=> commentedFiles.Contains(x.FileName))//only parse patch files we will need
                         .ToDictionary(x => x.FileName, x => MapPatchToFiles(x.Patch));
 
-            var convertedComments = comments.Select(x => new
-            {
-                body = x.Body,
-                commenter = new { avatarUrl = x.User.AvatarUrl, login = x.User.Login },
-                createdAt = x.CreatedAt,
-                path = x.Path,
-                x.Position
+            var convertedComments = comments.Select(x => new Comment(x, maps[x.Path]));
+            var allComments = convertedComments.Union(issueComments.Select(x => new Comment(x))).OrderBy(x=>x.createdAt);
 
-            })
-            .Select(x => new
-            {
-                x.path,
-                x.body,
-                x.commenter,
-                x.createdAt,
-                sourceLine = maps[x.path].PatchToSourceLineNumber(x.Position) ?? -1,
-                targetLine = maps[x.path].PatchToTargetLineNumber(x.Position) ?? -1
-            }).ToList();
-            
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
             {
                 headSha = pullRequest.Head.Sha,
-                comments = convertedComments
+                comments = allComments
             });
             return Content(json, "application/json");
 
         }
 
         
-        [Route("{owner}/{repo}/pull/{reference}/files")]
+        [GET("{owner}/{repo}/pull/{reference}/files")]
         public async Task<ActionResult> GetFileList(string owner, string repo, int reference, string expectedSha)
         {
             var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
@@ -186,20 +172,22 @@ namespace GithubPullTracker.Controllers
         }
 
 
-        [Route("{owner}/{repo}/pull/{reference}")]
-        [Route("{owner}/{repo}/pull/{reference}/files/{*path}")]
+        [GET("{owner}/{repo}/pull/{reference}")]
+        [GET("{owner}/{repo}/pull/{reference}/files/{*path}")]
         public async Task<ActionResult> ViewPullRequest(string owner, string repo, int reference, string path = null)
         {
             var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
+
+            var files = await Client.PullRequest.Files(owner, repo, reference);
             
             if (path != null)
             {
                 path = path.TrimEnd('/');
-                var vm = new PullRequestView(pullRequest, path);
+                var vm = new PullFileList(pullRequest, files, path);
                 return View(vm);
             }
 
-            var pr = new PullRequestView(pullRequest);
+            var pr = new PullFileList(pullRequest, files);
             return View(pr);
         }
 
@@ -216,7 +204,7 @@ namespace GithubPullTracker.Controllers
             int targetPageIndex = 0;
             for (var line = 1; line <= lines.Length; line++)
             {
-                var text = lines[line - 1];
+                var text = lines[line -1];
                 if (text.StartsWith("@@"))
                 {
                     var match = Regex.Match(text, @"^\@\@\s?(?:-(\d*),(\d*))?\s?(?:\+(\d*),(\d*))?\s?\@\@");
@@ -247,9 +235,9 @@ namespace GithubPullTracker.Controllers
         }
 
 
-        //[Route("{owner}/{repo}")]
-        //[Route("{owner}")]
-        [Route("")]
+        [GET("{owner}/{repo}")]
+        [GET("{owner}")]
+        [GET("")]
         public async Task<ActionResult> Search(string query, string owner = null, string repo = null, int page =1, RequestState? state = null, RequestConnection? type = null)
         {
             string viewPage = "Search";

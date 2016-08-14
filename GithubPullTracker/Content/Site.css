@@ -12,6 +12,9 @@
     
     top:0;left:0;right:0;bottom:0;
 }
+    #splitter #home{
+        overflow-y:auto;
+    }
 #splitter > div {
 	overflow: auto;
 }
@@ -19,7 +22,7 @@
 	width: 5px;
 	background: #aaa;
 }
-#splitter > div#file_diff{
+#splitter > div{
     overflow:hidden;
     
 }
@@ -32,6 +35,18 @@
     width:0px;
 
 }
+
+#tree {
+overflow-y:auto;
+overflow-x:hidden;
+position:absolute;
+top:0;left:0;
+right:0;
+bottom:0;
+}
+
+
+#home{ display:none; }
 
 .addcomment, 
 .viewcomment{
@@ -75,18 +90,20 @@ div.commentList {
 
     .comment {
         border:1px solid silver;
-        border-radius:5px;
+        border-radius:3px;
         margin-bottom:5px;
         margin-right:15px;
         margin-left:30px;
         padding:10px;
+	border: 1px solid #bfccd1;
     }
     .comment  div.header {
-        background-color:#eee;
-        border-bottom:1px solid silver;
+	    background: #f2f8fa;
+        border-bottom:1px solid #bfccd1;
         margin:-10px -10px  10px -10px;
         height:30px;
         padding-top:10px;
+        padding-left:10px
     }
     .comment div.header img{
         height:20px;
@@ -96,6 +113,55 @@ div.commentList {
         display:block;
         float:left;
     }
+    .main-comment .comment {
+        margin-left:60px
+    }
+
+     .main-comment .comment  {
+	position: relative;
+}
+.main-comment {
+    position:relative;
+    margin-bottom:15px;
+}
+     .main-comment .user{
+         position:absolute;
+         margin-left:10px
+     }
+        .main-comment .user img {
+                border-radius: 3px;
+        }
+ .main-comment .comment:after,  .main-comment .comment:before {
+	right: 100%;
+	top: 15px;
+	border: solid transparent;
+	content: " ";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+}
+
+ .main-comment .comment:after {
+	border-color: rgba(242, 248, 250, 0);
+	border-right-color: #f2f8fa;
+	border-width: 6px;
+	margin-top: -6px;
+}
+ .main-comment .comment:before {
+	border-color: rgba(191, 204, 209, 0);
+	border-right-color: #bfccd1;
+	border-width: 7px;
+	margin-top: -7px;
+}
+ .file-comment .user img{
+     height:20px;
+     border-radius:3px;
+ }
+.file-comment {
+    padding-left:70px;
+    margin-bottom:15px;
+}
 
     .CodeMirror-wrap pre
     {
@@ -160,4 +226,9 @@ div.commentList {
 }
 .title-bar h1,.title-bar h2{
     float:left;
+}
+
+.highlighted .CodeMirror-linenumber{
+        background-color: gold;
+    font-weight:bold;
 }

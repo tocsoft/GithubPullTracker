@@ -1,5 +1,6 @@
-﻿var diffViewScript = function (currentFilePath, headSha, pathPrefix) {
+﻿var diffViewScript = function (currentFilePath, headSha, pathPrefix, sourceFileTree) {
 
+    var cachedFileTree = sourceFileTree;
     //will be swapped out
     var reloadEditors = null;
 
@@ -9,9 +10,11 @@
     var targetEditor;
     var sourceEditor;
     var comments = null;
-    $('#details-link').click(function (e) { e.preventDefault(); loadPath(""); });
+
+    
+
     function reload() {
-        loadPath(currentFilePath, false, true);
+        loadPath(currentFilePath + '#' + window.location.hash.replace('#', ''), false, true);
 
         loadFileList();
         loadComments();
@@ -32,18 +35,25 @@
     function loadFileList() {
         function fixNode(node) {
 
+
             node.state = {};
+            if (node.path === currentFilePath) {
+                blankState = node;
+                lscache.set(node.sha, true, 60 * 24 * 7 * 52);
+                node.state.selected = true;
+            }
+
             //due to the recursive nature this will always be the lowest item
+            if (node.path === "") {
 
+                node.href = pathPrefix;
+                node.icon = 'octicon octicon-git-pull-request';
 
-            if (node.path) { //has a path then its a file
-                if (node.path === currentFilePath) {
-                    blankState = node;
-                    lscache.set(node.sha, true, 60 * 24 * 7 * 52);
-                    node.state.selected = true;
-                }
+                node.nodes = node.children;
+            }else if (node.hasOwnProperty('path')) { //has a path then its a file
+
                 node.href = pathPrefix + '/files/' + node.path;
-                node.icon = 'glyphicon glyphicon-file';
+                node.icon = 'octicon octicon-file';
                 if (lscache.get(node.sha)) {
                     node.class = "visisted";
                 } else {
@@ -54,8 +64,8 @@
 
             } else {
                 node.nodes = node.children;
-                node.icon = 'glyphicon glyphicon-folder-close';
-                node.expandedIcon = 'glyphicon glyphicon-folder-open';
+                node.icon = 'octicon octicon-file-directory';
+              //  node.expandedIcon = 'glyphicon glyphicon-folder-open';
                 node.selectable = false;
                 node.state.expanded = true;
             }
@@ -65,22 +75,27 @@
                     fixNode(node.nodes[i]);
                 }
             }
-
         }
-
-        $.get(pathPrefix + '/files?expectedSha=' + headSha, function (files) {
+        function loadData(files) {
             if (!checkVersions(files)) {
                 return;
             }
 
-
-            var data = files.data;
-            for (var i = 0; i < data.length; i++) {
-                fixNode(data[i]);
-            }
+            var rootNode = {
+                path : "",
+                text : "Pull Request",
+                children:  files.data,
+            };
+            
+            fixNode(rootNode);
+            var nodes = rootNode.nodes;
+            nodes.unshift(rootNode)
+            rootNode.nodes = null;
+            rootNode.children = null;
+            
 
             $('#tree').treeview({
-                data: data,
+                data: nodes,
                 showTags: true,
                 expandOptions: {
                     ignoreChildren: true
@@ -110,11 +125,22 @@
             tree = $('#tree').treeview(true);
             //ajax  call to load the treeView
             applyCommentsToTree();
-        });
+        }
+
+        if (cachedFileTree) {
+            var data = cachedFileTree;
+            cachedFileTree = null;
+            loadData(data);
+        } else {
+            $.get(pathPrefix + '/files?expectedSha=' + headSha, loadData);
+        }
     }
 
-
-    function loadComments() {
+    String.prototype.replaceAll = function (search, replacement) {
+        var target = this;
+        return target.replace(new RegExp(search, 'g'), replacement);
+    };
+    function loadComments(cb) {
         $.get(pathPrefix + '/comments?expectedSha=' + headSha, function (result) {
 
             if (!checkVersions(result)) {
@@ -122,7 +148,10 @@
             }
 
             var data = result.comments;
-
+            var templateMain = $('#home-comment-template').html();
+            var templateFile = $('#home-file-comment-template').html();
+            $('#home .event').remove();
+            var home = $('#home');
             comments = {};
             for (var i in data) {
                 var comment = data[i];
@@ -131,9 +160,39 @@
                     comments[path] = [];
                 }
                 comments[path].push(comment);
+                var template = templateMain;
+                if (comment.path) {
+
+                    var  lineLink = '';
+                    if (comment.sourceLine) {
+                        lineLink = 's-' + (comment.sourceLine+1);
+                    } else if (comment.targetLine) {
+                        lineLink = 't-' + (comment.targetLine + 1);
+                    }
+
+
+                    template = templateFile
+                    .replaceAll("{path}", comment.path )
+                    .replaceAll("{fullPath}", pathPrefix + '/files/' + comment.path)
+                    .replaceAll("{lineLink}", lineLink);
+                }
+                var html = template
+                    .replaceAll("{avatarUrl}", comment.user.avatarUrl)
+                    .replaceAll("{username}", comment.user.login)
+                    .replaceAll("{created}", comment.createdAt)
+                    .replaceAll("{body}",  marked(comment.body))
+
+               home.append(html)
             }
             applyCommentsToTree();
             applyCommentsToEditors();
+
+            if (cb) {
+                cb();
+            }
+            //load comments into main screen
+
+
         });
     }
 
@@ -162,25 +221,35 @@
 
     }
 
-    var commentBlocks = {};
-
     function applyCommentsToEditors() {
 
         if (!comments) {
             return;
         }
         //clear currrently appled comments from system
-        $('.comment').remove();
+        $('#file_diff .comment').remove();
+        var templateFile = $('#inline-file-comment-template').html();
 
         function addComment(doc, line, comment) {
-            commentBlocks[doc] = commentBlocks[doc] || {};
-            var block = commentBlocks[doc][line];
+            doc._comments = doc._comments || {};
+
+            var block = doc._comments[line];
+
             if (!block) {
                 var elm = $('<div class="commentList" />');
                 var widget = doc.addLineWidget(line, elm[0], { coverGutter: true, noHScroll: true, });
-                commentBlocks[doc][line] = block = { elm: elm, widget: widget };
+                doc._comments[line] = block = { elm: elm, widget: widget };
             }
-            block.elm.append($('<div class="comment"><div class="header"><img src="' + comment.commenter.avatarUrl + '&s=40"> ' + comment.commenter.login + ' added a note <span class="timeago">' + comment.createdAt + '</span></div>' + marked(comment.body) + '</div>'));
+            
+            var html = templateFile
+                .replaceAll("{path}", comment.path)
+                .replaceAll("{fullPath}", pathPrefix + '/files/' + comment.path)
+                .replaceAll("{avatarUrl}", comment.user.avatarUrl)
+                .replaceAll("{username}", comment.user.login)
+                .replaceAll("{created}", comment.createdAt)
+                .replaceAll("{body}", marked(comment.body))
+
+            block.elm.append(html);
             block.widget.changed();
             //dot adda single widget per comment append to the old widget if exists
 
@@ -200,12 +269,12 @@
 
                 var comment = fileComments[i];
                 if (sourceDoc) {
-                    if (comment.sourceLine > 0) {
+                    if (comment.sourceLine ) {
                         addComment(sourceDoc, comment.sourceLine, comment);
                     }
                 }
                 if (targetDoc) {
-                    if (comment.targetLine > 0) {
+                    if (comment.targetLine ) {
 
                         addComment(targetDoc, comment.targetLine, comment);
                     }
@@ -217,24 +286,80 @@
         }
     }
     //preiodically reload comments and reapply??? on loadPageMaybe???
+    function scrollToLine(line) {
+        if (!line) {
+            return;
+        }
 
+        var parts = line.split('-');
+        var editor = targetEditor;
+        if (parts[0] === 's')
+        {
+            editor = sourceEditor;
+        }
+        if (editor) {
+            var line = parseInt(parts[1]) - 1;
+            var t = editor.charCoords({ line: line, ch: 0 }, "local").top;
+            var middleHeight = editor.getScrollerElement().offsetHeight / 2;
+            editor.scrollTo(null, t - middleHeight - 5);
+
+
+            if (sourceEditor && sourceEditor._hightlightedLine) {
+                sourceEditor.removeLineClass(sourceEditor._hightlightedLine, 'wrap', 'highlighted');
+                sourceEditor._hightlightedLine = null;
+            }
+            if (targetEditor && targetEditor._hightlightedLine) {
+                targetEditor.removeLineClass(targetEditor._hightlightedLine, 'wrap', 'highlighted');
+                targetEditor._hightlightedLine = null;
+            }
+
+            editor.addLineClass(line, 'wrap', 'highlighted');
+            editor._hightlightedLine = line;
+        }
+    }
+
+    var currentLine = '';
     //called directly
     function loadPath(path, skipNavigation, refresh) {
 
+        var parts = path.split('#')
+        path = parts[0];
+        var lineScrollerTarget = parts[1];
+
+       
+
         if (!skipNavigation) {
             var navPath = path;
+            var statePath = path;
             if (navPath) {
                 navPath = '/files/' + navPath;
             }
 
+            var urlLine = lineScrollerTarget;
+            if (!urlLine && currentFilePath == path) {
+                //we stayed on the same page but we didn't select a new line then pick old line to render on the url
+                urlLine = currentLine;
+            }
+
+            if (urlLine) {
+                navPath = navPath + '#' + urlLine;
+                statePath = statePath + '#' + urlLine;                
+            }
+
+            currentLine = urlLine;
+
+
+
             if (currentFilePath != path) {
-                history.pushState({ path: path }, null, pathPrefix + navPath);
+                history.pushState({ path: statePath }, null, pathPrefix + navPath);
             } else {
-                history.replaceState({ path: path }, null, pathPrefix + navPath);
+                history.replaceState({ path: statePath }, null, pathPrefix + navPath);
             }
         }
-
+        
         if (currentFilePath == path && !refresh) {
+            scrollToLine(lineScrollerTarget);
+
             return; //we are allready showing the page remain
         }
         currentFilePath = path;
@@ -243,7 +368,11 @@
         commentBlocks = {};//reset the applied comments
 
         var targetElm = $('#file_diff');
+
         targetElm.html('<div class="loader">Loading ...</div>');
+
+        $('#home').hide();
+        targetElm.show();
         //we need to reload the comments whiel we are loading the doc
 
 
@@ -268,8 +397,8 @@
 
 
         if (!path) {
-            //load the empty select a file screen... or maybe the general comments list!!!
-            targetElm.html('<div class="loader">select a file to continue. </div>');
+            $('#home').show();
+            targetElm.hide();
             return;
         }
 
@@ -418,10 +547,23 @@
             markPatch(targetEditor, data.pageMap.TargetFile);
             markPatch(sourceEditor, data.pageMap.SourceFile);
 
+            var lineClicked = function (cm, line, gutter) {
+                var type = 's';
+                if(cm == targetEditor){
+                    type = 't';
+                }
+                loadPath(path + '#' + type + '-' + (line+1));
+            }
+
+            if (targetEditor) { targetEditor.on("gutterClick", lineClicked); }
+            if (sourceEditor) { sourceEditor.on("gutterClick", lineClicked); }
+
             applyCommentsToEditors();
 
         });
-        loadComments();
+        loadComments(function () {
+            scrollToLine(lineScrollerTarget);
+        });
     }
 
     reload();
@@ -438,10 +580,12 @@
         sizeRight: width
     });
     function fixHeights() {
+        var home = $('#home');
         var splitter = $('#splitter');
         var offset = splitter.position().top;
         var winh = $(window).height() - offset;
         splitter.height(winh).trigger("resize");
+        home.height(winh);
         $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror, .CodeMirror { height: " + winh + "px;}")
     }
 
@@ -455,4 +599,9 @@
             });
         }
     }).resize();
+
+    $(document).on('click', '[data-naviagetetree]', function (e) {
+        e.preventDefault();
+        loadPath($(this).attr('data-naviagetetree'));
+    })
 };
