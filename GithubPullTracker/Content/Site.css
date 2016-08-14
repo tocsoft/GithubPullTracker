@@ -202,12 +202,7 @@ div.commentList {
         background-color:cornflowerblue;
         opacity:0.5;
     }
-    .CodeMirror-merge-l-inserted, .CodeMirror-merge-r-inserted, .edittype-added .CodeMirror-code > div{
-        background-color:#C1FFC1;
-    }
-    .CodeMirror-merge-r-deleted, .CodeMirror-merge-l-deleted, .edittype-removed .CodeMirror-code > div{
-        background-color:#FFCCCC;
-    }
+    
      
 
     .treeview .not-visisted{
@@ -231,4 +226,62 @@ div.commentList {
 .highlighted .CodeMirror-linenumber{
         background-color: gold;
     font-weight:bold;
+}
+
+.file-diff {
+    padding:0;
+}
+
+.file-diff div.header{
+    margin:0;
+}
+.file-diff table{
+    font-size:12px;
+
+}
+.file-diff table tr td.src,
+.file-diff table tr td.target{
+    text-align:center;
+    padding:2px 10px;
+    min-width:50px;
+    border-right:1px solid #eef;
+    color:silver;
+}
+
+.file-diff table tr td.txt{
+    padding-left:10px;
+    font-family:Consolas;
+}
+.file-diff table tr.removed td.src,
+.file-diff table tr.removed  td.target{
+    border-color:#f1c0c0
+}
+    
+.CodeMirror-merge-r-deleted, .CodeMirror-merge-l-deleted, .edittype-removed .CodeMirror-code > div,
+.file-diff table tr.removed td.src,
+.file-diff table tr.removed td.target {
+    background-color: #ffdddd;
+}
+
+.file-diff table tr.removed td.txt{
+ background-color:#ffecec;
+}
+
+.CodeMirror-merge-l-inserted, .CodeMirror-merge-r-inserted, .edittype-added .CodeMirror-code > div,
+.file-diff table tr.added td.src,
+.file-diff table tr.added  td.target{
+    background-color:#dbffdb;
+}
+
+.file-diff table tr.added td.src,
+.file-diff table tr.added  td.target{
+    border-color:#c1e9c1
+}
+.file-diff table tr.added td.txt{
+ background-color:#eaffea;
+}
+
+
+.file-comment-list {
+    margin-left:60px;
 }

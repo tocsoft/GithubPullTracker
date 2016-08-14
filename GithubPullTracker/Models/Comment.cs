@@ -21,6 +21,8 @@ namespace GithubPullTracker.Models
 
     public class Comment
     {
+        public string patch { get; private set; }
+
         public string body { get; private set; }
         public User user { get; private set; }
         public DateTimeOffset createdAt { get; private set; }
@@ -34,6 +36,7 @@ namespace GithubPullTracker.Models
             user = new User(x.User);
             createdAt = x.CreatedAt;
             path = x.Path;
+            patch = x.DiffHunk;
             sourceLine = map.PatchToSourceLineNumber(x.Position);
             targetLine = map.PatchToTargetLineNumber(x.Position);
         }

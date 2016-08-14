@@ -41,6 +41,58 @@
         }
     }
 
+    function convertHunkToHtml(hunk){
+        //first line is @@???@@
+        var lines = hunk.split('\n');
+        html = "<table>";
+        var sLine = 0;
+        var tLine = 0;
+        var rgex = new RegExp("^\\@\\@\\s?(?:-(\\d*),(\\d*))?\\s?(?:\\+(\\d*),(\\d*))?\\s?\\@\\@");
+        for (var i in lines)
+        {
+            var line = lines[i];
+            if (line[0] == '@') {
+
+                var result = rgex.exec(line);
+                sLine = result[1] - 1;
+                tLine = result[3] - 1;
+            } else {
+                
+                var cls = '';
+                if (line[0] == '-') {
+                    cls = 'removed';
+                }else if (line[0] == '+') {
+                    cls = 'added';
+                }
+
+                html += "<tr class='"+cls+"'>";
+                html += "<td class='src'>";
+                if (line[0] == ' ' || line[0] == '-') {
+                    sLine++;
+                    html += sLine;
+                }
+                html += "</td>";
+
+                html += "<td class='target'>";
+                if (line[0] == ' ' || line[0] == '+') {
+                    tLine++;
+                    html += tLine;
+                }
+                html += "</td>";
+
+                html += "<td class='txt'>";
+                html += line.substring(1);
+                html += "</td>";
+
+
+
+                html += "</tr>";
+            }
+        }
+        html += "</table>";
+        return html;
+    }
+
     function loadFileList() {
         function fixNode(node) {
 
@@ -158,7 +210,8 @@
 
             var data = result.comments;
             var templateMain = $('#home-comment-template').html();
-            var templateFile = $('#home-file-comment-template').html();
+            var templateFileBlock = $('#home-file-comment-template').html();
+            var templateFile = $('#inline-file-comment-template').html();
             $('#home .event').remove();
             var home = $('#home');
             comments = {};
@@ -170,28 +223,49 @@
                 }
                 comments[path].push(comment);
                 var template = templateMain;
+                var fileDiffSlots = {};
                 if (comment.path) {
-
-                    var  lineLink = '';
+                    var lineLink = '';
                     if (comment.sourceLine) {
-                        lineLink = 's-' + (comment.sourceLine+1);
+                        lineLink = 's-' + (comment.sourceLine + 1);
                     } else if (comment.targetLine) {
                         lineLink = 't-' + (comment.targetLine + 1);
                     }
 
+                    var fileComments = fileDiffSlots[comment.path]
+                    if (!fileComments) {
+                        var html = templateFileBlock
+                        .replaceAll("{path}", comment.path)
+                        .replaceAll("{fullPath}", pathPrefix + '/files/' + comment.path)
+                        .replaceAll("{lineLink}", lineLink)
+                        .replaceAll("{avatarUrl}", comment.user.avatarUrl)
+                        .replaceAll("{username}", comment.user.login)
+                        .replaceAll("{created}", comment.createdAt)
+                        .replaceAll("{patch}", convertHunkToHtml(comment.patch))
+                        .replaceAll("{body}", marked(comment.body));
+                        fileComments = $(html);
+                        home.append(fileComments);
+                        fileDiffSlots[comment.path] = fileComments;
+                    }
 
-                    template = templateFile
-                    .replaceAll("{path}", comment.path )
+                    var html = templateFile
+                    .replaceAll("{path}", comment.path)
                     .replaceAll("{fullPath}", pathPrefix + '/files/' + comment.path)
-                    .replaceAll("{lineLink}", lineLink);
-                }
-                var html = template
+                    .replaceAll("{lineLink}", lineLink)
                     .replaceAll("{avatarUrl}", comment.user.avatarUrl)
                     .replaceAll("{username}", comment.user.login)
                     .replaceAll("{created}", comment.createdAt)
-                    .replaceAll("{body}",  marked(comment.body))
+                    .replaceAll("{body}", marked(comment.body));
+                    fileComments.append(html)
+                } else {
+                    var html = template
+                        .replaceAll("{avatarUrl}", comment.user.avatarUrl)
+                        .replaceAll("{username}", comment.user.login)
+                        .replaceAll("{created}", comment.createdAt)
+                        .replaceAll("{body}", marked(comment.body))
 
-               home.append(html)
+                    home.append(html)
+                }
             }
             applyCommentsToTree();
             applyCommentsToEditors();
@@ -236,7 +310,19 @@
             return;
         }
         //clear currrently appled comments from system
-        $('#file_diff .comment').remove();
+        
+        function removeCommentBlocks(editor) {
+            if (!editor) {
+                return;
+            }
+            var doc = editor.getDoc();
+            for (var i in doc._comments) {
+                doc._comments[i].widget.clear();
+            }
+            doc._comments = null;
+        }
+        removeCommentBlocks(targetEditor);
+        removeCommentBlocks(sourceEditor);
 
         if(options.showInlineComments){
             var templateFile = $('#inline-file-comment-template').html();
@@ -292,24 +378,14 @@
                     }
                 }
             }
-        } else {
-            function removeCommentBlocks(editor) {
-                if (!editor)
-                {
-                    return;
-                }
-                var doc = editor.getDoc();
-                for (var i in doc._comments) {
-                    doc._comments[i].remove();
-                }
-                doc._comments = null;
-            }
-            removeCommentBlocks (targetEditor);
-            removeCommentBlocks(sourceEditor);
         }
         if (reloadEditors) {
             reloadEditors();
+
         }
+        setTimeout(function () {
+            scrollToLine(currentLine);
+        }, 1);
     }
     //preiodically reload comments and reapply??? on loadPageMaybe???
     function scrollToLine(line) {
@@ -327,7 +403,7 @@
             var line = parseInt(parts[1]) - 1;
             var t = editor.charCoords({ line: line, ch: 0 }, "local").top;
             var middleHeight = editor.getScrollerElement().offsetHeight / 2;
-            editor.scrollTo(null, t - middleHeight - 5);
+            editor.scrollTo(null, t );//- middleHeight - 5);
 
 
             if (sourceEditor && sourceEditor._hightlightedLine) {

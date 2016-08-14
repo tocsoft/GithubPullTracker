@@ -129,6 +129,7 @@ namespace GithubPullTracker.Controllers
             var files = await Client.PullRequest.Files(owner, repo, reference);
 
             var comments = await Client.PullRequest.Comment.GetAll(owner, repo, reference);
+            
             var commentedFiles = comments.Select(x => x.Path).ToList();
             var issueComments = await Client.Issue.Comment.GetAllForIssue(owner, repo, reference, new ApiOptions { PageSize = 1000 });
 

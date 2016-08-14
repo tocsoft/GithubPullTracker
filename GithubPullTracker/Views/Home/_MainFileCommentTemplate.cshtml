@@ -1,10 +1,14 @@
 ﻿
-<div class="file-comment event">
-    <a href="#" class="user">
-        <img src="{avatarUrl}&s=40" class="avatar" />
-    </a>
-     <a href="/{username}">{username}</a> 
-    commented <span class="timeago">{created}</span> on <a href="{fullPath}#{lineLink}" data-naviagetetree="{path}#{lineLink}">{path}</a>
-        
+
+<div class="file-comment-list event">
+    <div class="file-diff comment">
+        <div class='header'>
+            {path}
+            
+            <a href="{fullPath}#{lineLink}" data-naviagetetree="{path}#{lineLink}">View full file</a>
+        </div>
+        {patch}
+
+    </div>
 </div>
 
