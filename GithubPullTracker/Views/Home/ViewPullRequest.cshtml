@@ -8,6 +8,7 @@
     <h1><a href="~/@Model.RepositoryOwner">@Model.RepositoryOwner</a> /<a href="~/@Model.RepositoryOwner/@Model.RepositoryName">@Model.RepositoryName</a></h1>
     <h2>@Model.Title <span>#@Model.Number</span></h2>
     <a href="~/@Model.RepositoryOwner/@Model.RepositoryName/pull/@Model.Number" id="details-link">details</a>
+    <label><input type="checkbox" id="show-inline-comments" checked/>show inline comments</label>
 </div>
 
 <div id="splitter">
@@ -37,10 +38,9 @@
                 </div>
             </div>
 
-
         </div>
         <div id="file_diff">
-
+            
         </div>
     </div>
 </div>

@@ -10,7 +10,16 @@
     var targetEditor;
     var sourceEditor;
     var comments = null;
+    var options = lscache.get("options") || { showInlineComments : true};
 
+    $('#show-inline-comments').attr('checked', options.showInlineComments);
+
+    $('#show-inline-comments').change(function () {
+        var checked = $(this).is(':checked');
+        options.showInlineComments = checked;
+        lscache.set("options", options);
+        applyCommentsToEditors();
+    });
     
 
     function reload() {
@@ -228,58 +237,75 @@
         }
         //clear currrently appled comments from system
         $('#file_diff .comment').remove();
-        var templateFile = $('#inline-file-comment-template').html();
 
-        function addComment(doc, line, comment) {
-            doc._comments = doc._comments || {};
+        if(options.showInlineComments){
+            var templateFile = $('#inline-file-comment-template').html();
 
-            var block = doc._comments[line];
+            function addComment(doc, line, comment) {
+                doc._comments = doc._comments || {};
 
-            if (!block) {
-                var elm = $('<div class="commentList" />');
-                var widget = doc.addLineWidget(line, elm[0], { coverGutter: true, noHScroll: true, });
-                doc._comments[line] = block = { elm: elm, widget: widget };
-            }
+                var block = doc._comments[line];
+
+                if (!block) {
+                    var elm = $('<div class="commentList" />');
+                    var widget = doc.addLineWidget(line, elm[0], { coverGutter: true, noHScroll: true, });
+                    doc._comments[line] = block = { elm: elm, widget: widget };
+                }
             
-            var html = templateFile
-                .replaceAll("{path}", comment.path)
-                .replaceAll("{fullPath}", pathPrefix + '/files/' + comment.path)
-                .replaceAll("{avatarUrl}", comment.user.avatarUrl)
-                .replaceAll("{username}", comment.user.login)
-                .replaceAll("{created}", comment.createdAt)
-                .replaceAll("{body}", marked(comment.body))
+                var html = templateFile
+                    .replaceAll("{path}", comment.path)
+                    .replaceAll("{fullPath}", pathPrefix + '/files/' + comment.path)
+                    .replaceAll("{avatarUrl}", comment.user.avatarUrl)
+                    .replaceAll("{username}", comment.user.login)
+                    .replaceAll("{created}", comment.createdAt)
+                    .replaceAll("{body}", marked(comment.body))
 
-            block.elm.append(html);
-            block.widget.changed();
-            //dot adda single widget per comment append to the old widget if exists
+                block.elm.append(html);
+                block.widget.changed();
+                //dot adda single widget per comment append to the old widget if exists
 
-        }
+            }
 
-        var targetDoc = null;
-        if (targetEditor) {
-            targetDoc = targetEditor.getDoc();
-        }
-        var sourceDoc = null;
-        if (sourceEditor) {
-            var sourceDoc = sourceEditor.getDoc();
-        }
-        var fileComments = comments[currentFilePath];
-        if (fileComments) {
-            for (var i in fileComments) {
+            var targetDoc = null;
+            if (targetEditor) {
+                targetDoc = targetEditor.getDoc();
+            }
+            var sourceDoc = null;
+            if (sourceEditor) {
+                var sourceDoc = sourceEditor.getDoc();
+            }
+            var fileComments = comments[currentFilePath];
+            if (fileComments) {
+                for (var i in fileComments) {
 
-                var comment = fileComments[i];
-                if (sourceDoc) {
-                    if (comment.sourceLine ) {
-                        addComment(sourceDoc, comment.sourceLine, comment);
+                    var comment = fileComments[i];
+                    if (sourceDoc) {
+                        if (comment.sourceLine ) {
+                            addComment(sourceDoc, comment.sourceLine, comment);
+                        }
                     }
-                }
-                if (targetDoc) {
-                    if (comment.targetLine ) {
+                    if (targetDoc) {
+                        if (comment.targetLine ) {
 
-                        addComment(targetDoc, comment.targetLine, comment);
+                            addComment(targetDoc, comment.targetLine, comment);
+                        }
                     }
                 }
             }
+        } else {
+            function removeCommentBlocks(editor) {
+                if (!editor)
+                {
+                    return;
+                }
+                var doc = editor.getDoc();
+                for (var i in doc._comments) {
+                    doc._comments[i].remove();
+                }
+                doc._comments = null;
+            }
+            removeCommentBlocks (targetEditor);
+            removeCommentBlocks(sourceEditor);
         }
         if (reloadEditors) {
             reloadEditors();

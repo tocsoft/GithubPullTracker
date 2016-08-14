@@ -204,29 +204,36 @@ namespace GithubPullTracker.Controllers
             int targetPageIndex = 0;
             for (var line = 1; line <= lines.Length; line++)
             {
-                var text = lines[line -1];
-                if (text.StartsWith("@@"))
+                try
                 {
-                    var match = Regex.Match(text, @"^\@\@\s?(?:-(\d*),(\d*))?\s?(?:\+(\d*),(\d*))?\s?\@\@");
-                    sourcePageIndex = match.Groups[1].Success ? int.Parse(match.Groups[1].Value) -1 : -1;
-                    targetPageIndex = match.Groups[3].Success ? int.Parse(match.Groups[3].Value) -1  : -1;
-                }else
+                    var text = lines[line - 1];
+                    if (text.StartsWith("@@"))
+                    {
+                        var match = Regex.Match(text, @"^\@\@\s?(?:-(\d*),(\d*))?\s?(?:\+(\d*),(\d*))?\s?\@\@");
+                        sourcePageIndex = match.Groups[1].Success ? int.Parse(match.Groups[1].Value) - 1 : -1;
+                        targetPageIndex = match.Groups[3].Success ? int.Parse(match.Groups[3].Value) - 1 : -1;
+                    }
+                    else
+                    {
+                        var prefix = text[0];
+                        if (prefix == '-')
+                        {
+                            map.SourceFile.Add(++sourcePageIndex, line);
+                        }
+                        else if (prefix == ' ')
+                        {
+                            map.TargetFile.Add(++targetPageIndex, line);
+                            map.SourceFile.Add(++sourcePageIndex, -1);
+                            //++sourcePageStart;//only increment source but allow commenting on right
+                        }
+                        if (prefix == '+')
+                        {
+                            map.TargetFile.Add(++targetPageIndex, line);
+                        }
+                    }
+                }catch(Exception ex)
                 {
-                    var prefix = text[0];
-                    if (prefix == '-')
-                    {
-                        map.SourceFile.Add(++sourcePageIndex, line);
-                    }
-                    else if (prefix == ' ')
-                    {
-                        map.TargetFile.Add(++targetPageIndex, line);
-                        map.SourceFile.Add(++sourcePageIndex, -1);
-                        //++sourcePageStart;//only increment source but allow commenting on right
-                    }
-                    if (prefix == '+')
-                    {
-                        map.TargetFile.Add(++targetPageIndex, line);
-                    }
+                    throw;
                 }
 
             }
