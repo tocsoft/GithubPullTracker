@@ -21,13 +21,16 @@
 	overflow: auto;
 }
 #splitter .vsplitbar {
-	width: 5px;
-	background: #aaa;
+	width: 10px;
+    cursor:col-resize;
 }
 #splitter > div{
     overflow:hidden;
     
 }
+
+.left-splitter{ padding-right:5px;}
+.right-splitter{ padding-left:5px;}
 
 .CodeMirror{
     font-size:12px;
@@ -99,13 +102,43 @@ div.commentList {
         padding:10px;
 	border: 1px solid #bfccd1;
     }
-    .comment  div.header {
+    .comment >  div.header 
+    {
 	    background: #f2f8fa;
         border-bottom:1px solid #bfccd1;
         margin:-10px -10px  10px -10px;
         height:30px;
         padding-top:10px;
         padding-left:10px
+    }
+
+     #file_diff {
+        border:1px solid silver;
+        border-radius:3px;
+	border: 1px solid #bfccd1;
+    }
+    #file_diff >  div.header 
+    {
+	    background: #f2f8fa;
+        border-bottom:1px solid #bfccd1;
+        margin:0px 0px  0px 0px;
+        height:30px;
+        padding-top:5px;
+        padding-left:10px
+    }
+        #file_diff > div.header #fileName {
+        }
+    #file_diff >  div.header label{
+        float:right;
+        margin-right:5px;
+        position:relative;
+        padding-left:15px;
+        font-weight:normal;
+    }
+    #file_diff >  div.header label input{
+        position:absolute;
+        left:0;
+        top:1px;
     }
     .comment div.header img{
         height:20px;

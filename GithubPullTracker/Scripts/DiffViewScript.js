@@ -481,12 +481,11 @@
         sourceEditor = null;
         commentBlocks = {};//reset the applied comments
 
-        var targetElm = $('#file_diff');
+        var targetElm = $('#file_diff').hide();
+        var editorElm = $('#file_diff .editor');
+        var loaderElm = $('#loader').show();
+        var homeElm = $('#home').hide();
 
-        targetElm.html('<div class="loader">Loading ...</div>');
-
-        $('#home').hide();
-        targetElm.show();
         //we need to reload the comments whiel we are loading the doc
 
 
@@ -511,8 +510,8 @@
 
 
         if (!path) {
-            $('#home').show();
-            targetElm.hide();
+            homeElm.show();
+            loaderElm.hide();
             return;
         }
 
@@ -522,16 +521,21 @@
                 return;
             }
 
+            $('#fileName').text(path);
             if (data.notfound) {
-                targetElm.html("<div>Unable to find '" + path + "' in pull request.</div>");
+                editorElm.html("<div>Unable to find '" + path + "' in pull request.</div>");
                 return;
             }
             if (data.isBinary) {
-                targetElm.html("<div>Binary file " + data.status + ", preview unavailible.</div>");
+                editorElm.html("<div>Binary file " + data.status + ", preview unavailible.</div>");
                 return;
             }
 
-            targetElm.html("");//clear the dom
+            editorElm.html("");
+            targetElm.show();
+            loaderElm.hide();
+
+
 
             var fileMode = CodeMirror.findModeByFileName(path);
 
@@ -545,7 +549,7 @@
             reloadEditors = null;
             if (!sourceText) {
 
-                targetEditor = CodeMirror(targetElm[0], {
+                targetEditor = CodeMirror(editorElm[0], {
                     value: targetText,
                     lineNumbers: true,
                     mode: mime,
@@ -569,7 +573,7 @@
             } else if (!targetText) {
 
                 //single page code mirror with all red background
-                sourceEditor = CodeMirror(targetElm[0], {
+                sourceEditor = CodeMirror(editorElm[0], {
                     value: sourceText,
                     lineNumbers: true,
                     mode: mime,
@@ -589,7 +593,7 @@
                 var lastListChar = doc.getLine(lineCount - 1).length;
                 doc.markText({ line: 0, ch: 0 }, { line: lineCount, ch: lastListChar }, { className: 'CodeMirror-merge-l-deleted', inclusiveLeft: true, inclusiveRight: true });
             } else {
-                var mergView = CodeMirror.MergeView(targetElm[0], {
+                var mergView = CodeMirror.MergeView(editorElm[0], {
                     origLeft: sourceText,
                     value: targetText,
                     lineNumbers: true,
@@ -673,7 +677,9 @@
             if (targetEditor) { targetEditor.on("gutterClick", lineClicked); }
             if (sourceEditor) { sourceEditor.on("gutterClick", lineClicked); }
 
+            
             applyCommentsToEditors();
+            fixHeights();
 
         });
         loadComments(function () {
@@ -701,7 +707,10 @@
         var winh = $(window).height() - offset;
         splitter.height(winh).trigger("resize");
         home.height(winh);
-        $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror, .CodeMirror { height: " + winh + "px;}")
+
+        var editorHEader = $('#file_diff .header').height()
+
+        $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror, .CodeMirror { height: " + (winh - editorHEader) + "px;}")
     }
 
     var to1;
