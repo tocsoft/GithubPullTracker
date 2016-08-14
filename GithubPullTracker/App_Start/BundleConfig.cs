@@ -38,7 +38,7 @@ namespace GithubPullTracker
                 .Include("~/Content/bootstrap.css")
                 .Include("~/Content/bootstrap-theme.css")
                 .Include("~/Content/bootstrap-treeview.css")
-                .Include("~/Content/octicons.css")
+                .Include("~/Content/icomoon.css")
                 .Include("~/Content/Site.css"));
         }
     }

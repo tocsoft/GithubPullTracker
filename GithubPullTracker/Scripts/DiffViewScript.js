@@ -108,13 +108,13 @@
             if (node.path === "") {
 
                 node.href = pathPrefix;
-                node.icon = 'octicon octicon-git-pull-request';
-
+                node.icon = 'icon icon-git-pull-request';
+                node.class = "pullrequest-home";
                 node.nodes = node.children;
             }else if (node.hasOwnProperty('path')) { //has a path then its a file
 
                 node.href = pathPrefix + '/files/' + node.path;
-                node.icon = 'octicon octicon-file';
+                node.icon = 'icon icon-file-text';
                 if (lscache.get(node.sha)) {
                     node.class = "visisted";
                 } else {
@@ -125,7 +125,7 @@
 
             } else {
                 node.nodes = node.children;
-                node.icon = 'octicon octicon-file-directory';
+                node.icon = 'icon icon-file-directory';
               //  node.expandedIcon = 'glyphicon glyphicon-folder-open';
                 node.selectable = false;
                 node.state.expanded = true;
@@ -158,14 +158,19 @@
             $('#tree').treeview({
                 data: nodes,
                 showTags: true,
+                expandIcon: 'icon icon-chevron-down',
+                collapseIcon: 'icon icon-chevron-right',
+                emptyIcon: 'icon',
                 expandOptions: {
                     ignoreChildren: true
                 }
                 //collapseIcon :'glyphicon glyphicon-folder-open',
                 //expandIcon :'glyphicon glyphicon-folder-close',
             }).on('nodeSelected', function (e, node) {
-                tree.getNode(node.nodeId).class = "visisted";
-                lscache.set(node.sha, true, 60 * 24 * 7 * 52);
+                if (node.path) {
+                    tree.getNode(node.nodeId).class = "visisted";
+                    lscache.set(node.sha, true, 60 * 24 * 7 * 52);
+                }
                 setTimeout(function () {
                     loadPath(node.path);
                 }, 1);
@@ -290,15 +295,22 @@
 
         var nodes = tree.getEnabled();
 
+        var rootNode = null;
+        var total = 0;
         for (var n in nodes) {
             var node = nodes[n];
+            if (node.path == "") {
+                rootNode = node;
+            }
 
             if (comments[node.path] && comments[node.path].length > 0) {
                 node.tags = [comments[node.path].length];
+
+                total += comments[node.path].length
             } else { node.tags = []; }
 
         }
-
+        rootNode.tags = [total+1];
 
         tree.redraw();
 
@@ -622,12 +634,13 @@
                                 currentAnn = { from: { line: i } };
                             }
                             currentAnn.to = { line: i };
-                            var btn = $('<span class="addcomment"></span>');
-                            btn.click(function () {
-                                addComments(this);
-                            });
-                            btn.data("patchLine", mappedPage);
-                            editor.setGutterMarker(i, "github-comments", btn[0]);
+                            //var btn = $('<span class="addcomment"></span>');
+                            //btn.click(function () {
+                            //    addComments(this);
+                            //});
+                            
+                            //editor.setGutterMarker(i, "github-comments", btn[0]);
+                            //btn.data("patchLine", mappedPage);
 
                         } else {
                             if (currentAnn) {

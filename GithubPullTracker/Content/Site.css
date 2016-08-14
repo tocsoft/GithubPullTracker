@@ -1,6 +1,8 @@
 ﻿body {
     padding:0;
     margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        font-size: 14px;
 }
 
 
@@ -284,4 +286,40 @@ div.commentList {
 
 .file-comment-list {
     margin-left:60px;
+}
+.treeview span.icon{
+    display:inline-block;
+    top:2px;
+}
+
+.navbar-brand 
+{
+    position:relative;
+padding:10px 0 0  35px;
+    margin-top:5px;
+}
+.navbar-brand .icon {
+    position:absolute;
+    font-size: 28px;
+    color: black;
+    left:0;
+    top:5px;
+}
+
+.navbar-default .navbar-brand:hover .icon, .navbar-default .navbar-brand:focus .icon{
+    color:#337ab7;
+}
+
+.treeview .list-group-item.pullrequest-home{
+    padding:10px 10px;
+    font-size:1.3em;
+    background-color:#f2f8fa;
+    border:1px solid #bfccd1;
+    margin-bottom:1px;
+}
+
+.treeview 
+.pullrequest-home span.icon{
+    margin-right:9px;
+    margin-left:-3px;
 }
