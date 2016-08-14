@@ -35,7 +35,7 @@ namespace GithubPullTracker
                 .Include("~/Content/codemirror.css")
                 .Include("~/Content/addon/merge/merge.css")
                 .Include("~/Content/addon/merge/merge.css")
-                .Include("~/Content/bootstrap.css")
+                //.Include("~/Content/bootstrap.css")
                 .Include("~/Content/bootstrap-theme.css")
                 .Include("~/Content/bootstrap-treeview.css")
                 .Include("~/Content/icomoon.css")

@@ -3,17 +3,14 @@
     ViewBag.FullWidth = true;
 
 }
-<div class="row">
-    <div class="col-md-12">
+@section header
+{ 
         <div class="title-bar">
+            <h1><i class="icon icon-repo" ></i><a class="owner" href="~/@Model.RepositoryOwner">@Model.RepositoryOwner</a> / <a class="repo" href="~/@Model.RepositoryOwner/@Model.RepositoryName">@Model.RepositoryName</a></h1>
 
-            <h1><a href="~/@Model.RepositoryOwner">@Model.RepositoryOwner</a> /<a href="~/@Model.RepositoryOwner/@Model.RepositoryName">@Model.RepositoryName</a></h1>
             <h2>@Model.Title <span>#@Model.Number</span></h2>
-
-            
         </div>
-    </div>
-</div>
+}
 <div id="splitter">
     <div class="left-splitter">
         <div id="tree">

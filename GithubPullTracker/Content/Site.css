@@ -23,6 +23,7 @@
 #splitter .vsplitbar {
 	width: 10px;
     cursor:col-resize;
+    margin-left:5px;
 }
 #splitter > div{
     overflow:hidden;
@@ -48,10 +49,14 @@ position:absolute;
 top:0;left:0;
 right:0;
 bottom:0;
+margin-top: 5px;
 }
 
 
-#home{ display:none; }
+#home {
+    display: none;
+    margin-top: 5px;
+}
 
 .addcomment, 
 .viewcomment{
@@ -113,17 +118,18 @@ div.commentList {
     }
 
      #file_diff {
-        border:1px solid silver;
         border-radius:3px;
 	border: 1px solid #bfccd1;
+        margin-right: 5px;
+        margin-top: 5px;
     }
     #file_diff >  div.header 
     {
 	    background: #f2f8fa;
         border-bottom:1px solid #bfccd1;
         margin:0px 0px  0px 0px;
-        height:30px;
-        padding-top:5px;
+            height: 23px;
+    padding-top: 7px;
         padding-left:10px
     }
         #file_diff > div.header #fileName {
@@ -132,7 +138,7 @@ div.commentList {
         float:right;
         margin-right:5px;
         position:relative;
-        padding-left:15px;
+        padding-left:20px;
         font-weight:normal;
     }
     #file_diff >  div.header label input{
@@ -238,7 +244,11 @@ div.commentList {
         opacity:0.5;
     }
     
-     
+     a{
+         text-decoration:none;
+     }  a:hover{
+         text-decoration:underline;
+     }
 
     .treeview .not-visisted{
         font-weight:bold;
@@ -246,9 +256,36 @@ div.commentList {
 .treeview .list-group-item {
     white-space:nowrap;
 }
-.treeview .list-group-item > .badge{
-    float:none;
-    margin: -5px 5px 0;
+
+.treeview .list-group{
+    list-style-type:none;
+    padding:0;
+    margin:0;
+        border: 1px solid #bfccd1;
+    margin-right:5px;
+    padding-top:45px;
+}
+.treeview .list-group-item{
+    padding:5px 10px;
+}
+
+    .treeview .list-group-item.pullrequest-home {
+           padding: 10px 10px;
+    font-size: 1.2em;
+    background-color: #f2f8fa;
+        border: 1px solid #bfccd1;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 5px;
+    border-top-left-radius:5px;
+    border-top-right-radius:5px;
+    }
+
+.treeview 
+.pullrequest-home span.icon{
+    margin-right:9px;
+    margin-left:-3px;
 }
 
 .title-bar {
@@ -273,6 +310,10 @@ div.commentList {
 .file-diff table{
     font-size:12px;
 
+}
+.file-diff table {
+    border-spacing: 0px;
+    border-collapse: separate;
 }
 .file-diff table tr td.src,
 .file-diff table tr td.target{
@@ -325,34 +366,106 @@ div.commentList {
     top:2px;
 }
 
+.navbar{
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #e5e5e5;
+}
+
 .navbar-brand 
 {
     position:relative;
 padding:10px 0 0  35px;
     margin-top:5px;
+    margin-bottom:10px;
+    margin-left:15px;
+    display: inline-block;
 }
 .navbar-brand .icon {
     position:absolute;
     font-size: 28px;
     color: black;
     left:0;
-    top:5px;
+    top: 0;
 }
 
 .navbar-default .navbar-brand:hover .icon, .navbar-default .navbar-brand:focus .icon{
     color:#337ab7;
 }
 
-.treeview .list-group-item.pullrequest-home{
-    padding:10px 10px;
-    font-size:1.3em;
-    background-color:#f2f8fa;
-    border:1px solid #bfccd1;
-    margin-bottom:1px;
+.navbar-default{
+    margin-bottom:0;
+}
+.header-content{
+    background-color:#fafafa ;
+        position: relative;
+    padding-top: 10px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
 }
 
-.treeview 
-.pullrequest-home span.icon{
-    margin-right:9px;
-    margin-left:-3px;
+.title-bar h1 .icon{
+    color:#bbb;
+    font-size:16px;
+    margin-right:5px
+}
+.title-bar h1 {
+    font-size: 18px;
+    line-height: 26px;
+    color: #666;
+    font-weight:normal;
+    margin:0;
+    margin-top:15px;
+}
+.title-bar h1  a.repo{
+    font-weight:600;
+
+}
+
+.title-bar h2 {
+    font-weight:normal;
+    font-size: 32px;
+    margin:0;
+    margin-left:20px;
+}
+.title-bar h2 span{
+    font-weight: 300;
+    color: #aaa;
+    letter-spacing: -1px;
+}
+
+.badge{
+    margin:-5px 0 0 10px;
+}
+
+.badge {
+       display: inline-block;
+    min-width: 10px;
+    padding: 3px 7px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    border-radius: 10px;
+    color: #f2f8fa;
+    background-color:#333;
+}
+
+.node-selected
+.badge{
+    color: #333;
+    background-color:#f2f8fa;
+
+}
+.container {
+    width:980px;
+    margin:0 auto;
+    
+    padding: 0 15px;
+}
+.container-fluid{
+    padding:0 5px;
 }

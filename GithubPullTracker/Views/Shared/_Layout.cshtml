@@ -10,20 +10,10 @@
 
 </head>
 <body>
-    <div class="navbar navbar-default">
+    <div class="navbar">
         <div class="container">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
+            
                 <a href="~/" class="navbar-brand"><i class="icon icon-logo"></i> Pull Tracker</a>
-            </div>
-            <div class="navbar-collapse collapse">
-                <ul class="nav navbar-nav">
-                </ul>
-            </div>
         </div>
     </div>
     @{ 
@@ -33,9 +23,20 @@
             bodyClass = "container-fluid";
         }
     }
+    @if (IsSectionDefined("header"))
+    {
+        <div class="header-content">
+            <div class="container ">
+                @RenderSection("header")
+            </div>
+        </div>
+    }
+
+
     <div class="@bodyClass body-content">
         @RenderBody()
     </div>
+
 
 
 

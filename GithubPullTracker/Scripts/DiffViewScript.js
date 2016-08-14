@@ -7,10 +7,11 @@
 
 
     var tree;
+    var treeHome;
     var targetEditor;
     var sourceEditor;
     var comments = null;
-    var options = lscache.get("options") || { showInlineComments : true};
+    var options = lscache.get("options") || { showInlineComments: true, splitterWidth: ($(window).width() * 0.2) };
 
     $('#show-inline-comments').attr('checked', options.showInlineComments);
 
@@ -20,7 +21,7 @@
         lscache.set("options", options);
         applyCommentsToEditors();
     });
-    
+
 
     function reload() {
         loadPath(currentFilePath + '#' + window.location.hash.replace('#', ''), false, true);
@@ -41,15 +42,14 @@
         }
     }
 
-    function convertHunkToHtml(hunk){
+    function convertHunkToHtml(hunk) {
         //first line is @@???@@
         var lines = hunk.split('\n');
         html = "<table>";
         var sLine = 0;
         var tLine = 0;
         var rgex = new RegExp("^\\@\\@\\s?(?:-(\\d*),(\\d*))?\\s?(?:\\+(\\d*),(\\d*))?\\s?\\@\\@");
-        for (var i in lines)
-        {
+        for (var i in lines) {
             var line = lines[i];
             if (line[0] == '@') {
 
@@ -57,15 +57,15 @@
                 sLine = result[1] - 1;
                 tLine = result[3] - 1;
             } else {
-                
+
                 var cls = '';
                 if (line[0] == '-') {
                     cls = 'removed';
-                }else if (line[0] == '+') {
+                } else if (line[0] == '+') {
                     cls = 'added';
                 }
 
-                html += "<tr class='"+cls+"'>";
+                html += "<tr class='" + cls + "'>";
                 html += "<td class='src'>";
                 if (line[0] == ' ' || line[0] == '-') {
                     sLine++;
@@ -111,7 +111,7 @@
                 node.icon = 'icon icon-git-pull-request';
                 node.class = "pullrequest-home";
                 node.nodes = node.children;
-            }else if (node.hasOwnProperty('path')) { //has a path then its a file
+            } else if (node.hasOwnProperty('path')) { //has a path then its a file
 
                 node.href = pathPrefix + '/files/' + node.path;
                 node.icon = 'icon icon-file-text';
@@ -126,7 +126,7 @@
             } else {
                 node.nodes = node.children;
                 node.icon = 'icon icon-file-directory';
-              //  node.expandedIcon = 'glyphicon glyphicon-folder-open';
+                //  node.expandedIcon = 'glyphicon glyphicon-folder-open';
                 node.selectable = false;
                 node.state.expanded = true;
             }
@@ -143,17 +143,17 @@
             }
 
             var rootNode = {
-                path : "",
-                text : "Pull Request",
-                children:  files.data,
+                path: "",
+                text: "Pull Request",
+                children: files.data,
             };
-            
+
             fixNode(rootNode);
             var nodes = rootNode.nodes;
             nodes.unshift(rootNode)
             rootNode.nodes = null;
             rootNode.children = null;
-            
+
 
             $('#tree').treeview({
                 data: nodes,
@@ -187,7 +187,7 @@
                     }
                 }, 1);
             });
-
+            treeHome = $('.pullrequest-home');
             tree = $('#tree').treeview(true);
             //ajax  call to load the treeView
             applyCommentsToTree();
@@ -271,7 +271,9 @@
 
                     home.append(html)
                 }
+                
             }
+            fixHeights();
             applyCommentsToTree();
             applyCommentsToEditors();
 
@@ -310,7 +312,7 @@
             } else { node.tags = []; }
 
         }
-        rootNode.tags = [total+1];
+        rootNode.tags = [total + 1];
 
         tree.redraw();
 
@@ -322,7 +324,7 @@
             return;
         }
         //clear currrently appled comments from system
-        
+
         function removeCommentBlocks(editor) {
             if (!editor) {
                 return;
@@ -336,7 +338,7 @@
         removeCommentBlocks(targetEditor);
         removeCommentBlocks(sourceEditor);
 
-        if(options.showInlineComments){
+        if (options.showInlineComments) {
             var templateFile = $('#inline-file-comment-template').html();
 
             function addComment(doc, line, comment) {
@@ -349,7 +351,7 @@
                     var widget = doc.addLineWidget(line, elm[0], { coverGutter: true, noHScroll: true, });
                     doc._comments[line] = block = { elm: elm, widget: widget };
                 }
-            
+
                 var html = templateFile
                     .replaceAll("{path}", comment.path)
                     .replaceAll("{fullPath}", pathPrefix + '/files/' + comment.path)
@@ -378,12 +380,12 @@
 
                     var comment = fileComments[i];
                     if (sourceDoc) {
-                        if (comment.sourceLine ) {
+                        if (comment.sourceLine) {
                             addComment(sourceDoc, comment.sourceLine, comment);
                         }
                     }
                     if (targetDoc) {
-                        if (comment.targetLine ) {
+                        if (comment.targetLine) {
 
                             addComment(targetDoc, comment.targetLine, comment);
                         }
@@ -407,15 +409,14 @@
 
         var parts = line.split('-');
         var editor = targetEditor;
-        if (parts[0] === 's')
-        {
+        if (parts[0] === 's') {
             editor = sourceEditor;
         }
         if (editor) {
             var line = parseInt(parts[1]) - 1;
             var t = editor.charCoords({ line: line, ch: 0 }, "local").top;
             var middleHeight = editor.getScrollerElement().offsetHeight / 2;
-            editor.scrollTo(null, t );//- middleHeight - 5);
+            editor.scrollTo(null, t);//- middleHeight - 5);
 
 
             if (sourceEditor && sourceEditor._hightlightedLine) {
@@ -440,7 +441,7 @@
         path = parts[0];
         var lineScrollerTarget = parts[1];
 
-       
+
 
         if (!skipNavigation) {
             var navPath = path;
@@ -457,7 +458,7 @@
 
             if (urlLine) {
                 navPath = navPath + '#' + urlLine;
-                statePath = statePath + '#' + urlLine;                
+                statePath = statePath + '#' + urlLine;
             }
 
             currentLine = urlLine;
@@ -470,7 +471,7 @@
                 history.replaceState({ path: statePath }, null, pathPrefix + navPath);
             }
         }
-        
+
         if (currentFilePath == path && !refresh) {
             scrollToLine(lineScrollerTarget);
 
@@ -512,6 +513,7 @@
         if (!path) {
             homeElm.show();
             loaderElm.hide();
+            fixHeights();
             return;
         }
 
@@ -642,7 +644,7 @@
                             //btn.click(function () {
                             //    addComments(this);
                             //});
-                            
+
                             //editor.setGutterMarker(i, "github-comments", btn[0]);
                             //btn.data("patchLine", mappedPage);
 
@@ -668,18 +670,45 @@
 
             var lineClicked = function (cm, line, gutter) {
                 var type = 's';
-                if(cm == targetEditor){
+                if (cm == targetEditor) {
                     type = 't';
                 }
-                loadPath(path + '#' + type + '-' + (line+1));
+                loadPath(path + '#' + type + '-' + (line + 1));
             }
 
             if (targetEditor) { targetEditor.on("gutterClick", lineClicked); }
             if (sourceEditor) { sourceEditor.on("gutterClick", lineClicked); }
 
-            
+            var targetPos = $('#splitter').position().top;
+            var mainSCroller = $("html, body");
+
+            var currentTarget = 0;
+            var scrollerTimeout;
+            var scroll = function (cm) {
+                var info = cm.getScrollInfo();
+                var curentPos = info.top;
+                console.log(curentPos);
+
+                if (window.scrollY < targetPos) {
+                    mainSCroller.stop(true);
+                    if (info.top > 5) {
+                        mainSCroller.animate({ 'scrollTop': targetPos + 'px' });
+                    }
+                }
+            }
+
+            //editorElm.find('.CodeMirror-scroll').on('scroll', function (e) {
+            //    e.preventDefault();
+
+            //});
+
+            if (targetEditor) { targetEditor.on("scroll", scroll); }
+            if (sourceEditor) { sourceEditor.on("scroll", scroll); }
+
+
             applyCommentsToEditors();
             fixHeights();
+            scrollToLine(lineScrollerTarget);
 
         });
         loadComments(function () {
@@ -694,25 +723,64 @@
         loadPath(path, true);
     }
 
-    var width = $(window).width();
-    var multiplier = lscache.get('spliterWidth') || 0.8;
-    width = width * multiplier;
     $("#splitter").splitter({
-        sizeRight: width
+        sizeLeft: options.splitterWidth
     });
+    $('#splitter').on("resize", function () {
+        options.splitterWidth = $('.left-splitter').width() - 5;
+        lscache.set('options', options);
+    });
+
+    var topStyle = $("<style />");
+    $('head').append(topStyle)
+
+    var targetPos = $('#splitter').position().top;
+    var mainSCroller = $('html, body');
+    $('#tree').on('scroll', function (e) {
+
+
+        var pos = $(this).scrollTop();
+
+        if (window.scrollY < targetPos) {
+            mainSCroller.stop(true);
+            if (pos > 2) {
+                mainSCroller.animate({ 'scrollTop': targetPos + 'px' });
+            }
+            e.preventDefault();
+        }
+
+        topStyle.html("#tree .pullrequest-home { top : " + pos + "px} ");
+        
+    });
+
+    
     function fixHeights() {
         var home = $('#home');
+        var file_diff = $('#file_diff');
         var splitter = $('#splitter');
-        var offset = splitter.position().top;
-        var winh = $(window).height() - offset;
-        splitter.height(winh).trigger("resize");
-        home.height(winh);
+        //var offset = splitter.position().top;
+        var winh = $(window).height();
 
-        var editorHEader = $('#file_diff .header').height()
 
-        $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror, .CodeMirror { height: " + (winh - editorHEader) + "px;}")
+        if (home.is(':visible')) {
+            var viewHeight = winh - home.position().top;
+            var homeHeight = home.outerHeight();
+
+
+            splitter.height(Math.max(homeHeight, viewHeight)).trigger("resize");
+        } else if (file_diff.is(':visible')) {
+            console.log('is visisble editor')
+            var editorHEader = file_diff.find('.header').outerHeight();
+            $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror, .CodeMirror { height: " + (winh - editorHEader - 15) + "px;}")
+            
+            splitter.height(file_diff.outerHeight() + 10).trigger("resize");
+        } else {
+
+        }
+        //home.height(winh);
+
+
     }
-
     var to1;
     $(window).resize(function (e) {
         //diffElm .mergely('resize');
