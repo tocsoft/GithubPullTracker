@@ -51,62 +51,75 @@ namespace GithubPullTracker.Controllers
         [GET("{owner}/{repo}/pull/{reference}/contents/{*path}")]
         public async Task<ActionResult> GetFile(string owner, string repo, int reference, string path, string expectedSha)
         {
-            var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
+           // var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
 
-            if (pullRequest.Head.Sha != expectedSha)
-            {
-                    return Content(Newtonsoft.Json.JsonConvert.SerializeObject(new
-                    {
-                        headSha = pullRequest.Head.Sha
-                    }), "application/json");
-            }
+            //if (pullRequest.Head.Sha != expectedSha)
+            //{
+            //        return Content(Newtonsoft.Json.JsonConvert.SerializeObject(new
+            //        {
+            //            headSha = pullRequest.Head.Sha
+            //        }), "application/json");
+            //}
             
-            var files = await Client.PullRequest.Files(owner, repo, reference);
-            var file = files.Where(x => x.FileName == path).SingleOrDefault();
+            //var files = await Client.PullRequest.Files(owner, repo, reference);
+            //var file = files.Where(x => x.FileName == path).SingleOrDefault();
 
-            if (file == null)
-            {
-                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(new
-                {
-                    headSha = pullRequest.Head.Sha,
-                    notfound = true,
-                }), "application/json");
-            }
+            //if (file == null)
+            //{
+            //    return Content(Newtonsoft.Json.JsonConvert.SerializeObject(new
+            //    {
+            //        headSha = pullRequest.Head.Sha,
+            //        notfound = true,
+            //    }), "application/json");
+            //}
 
-            PageMap map = MapPatchToFiles(file.Patch);
+            //PageMap map = MapPatchToFiles(file.Patch);
 
 
             //we are loading the json compare data here
             string sourceText = null;
             bool isBinaryDataType = false;
 
-            if (file.Status != "added" && file.Status != "renamed")
-            {
-                var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Base.Sha);
+            var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, expectedSha);
 
-                var sourceFile = source.SingleOrDefault();
-                if (sourceFile != null)
+            var sourceFile = source.SingleOrDefault();
+            if (sourceFile != null)
+            {
+                var data = Convert.FromBase64String(sourceFile.EncodedContent);
+                isBinaryDataType = isBinary(data);
+                if (!isBinaryDataType)
                 {
-                    var data = Convert.FromBase64String(sourceFile.EncodedContent);
-                    isBinaryDataType = isBinary(data);
-                    if (!isBinaryDataType)
-                    {
-                        sourceText = sourceFile.Content;
-                    }
+                    sourceText = sourceFile.Content;
                 }
             }
-            else
-            {
-                sourceText = "";
-            }
+
+            //if (file.Status != "added" && file.Status != "renamed")
+            //{
+            //    var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Base.Sha);
+
+            //    var sourceFile = source.SingleOrDefault();
+            //    if (sourceFile != null)
+            //    {
+            //        var data = Convert.FromBase64String(sourceFile.EncodedContent);
+            //        isBinaryDataType = isBinary(data);
+            //        if (!isBinaryDataType)
+            //        {
+            //            sourceText = sourceFile.Content;
+            //        }
+            //    }
+            //}
+            //else
+            //{
+            //    sourceText = "";
+            //}
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
             {
-                headSha = pullRequest.Head.Sha,
-                source = sourceText,
-                patch = file.Patch,
-                pageMap = map,
-                change = file.Status,
+                //headSha = pullRequest.Head.Sha,
+                target = sourceText,
+                //patch = file.Patch,
+                //pageMap = map,
+                //change = file.Status,
                 isBinary = isBinaryDataType
             });
             return Content(json, "application/json");

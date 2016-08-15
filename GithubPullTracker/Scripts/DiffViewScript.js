@@ -24,22 +24,23 @@
 
 
     function reload() {
+        loadFileList();
         loadPath(currentFilePath + '#' + window.location.hash.replace('#', ''), false, true);
 
-        loadFileList();
         loadComments();
     }
     function checkVersions(obj) {
-        if (obj.headSha == headSha) {
-            return true;
-        } else {
-            headSha = obj.headSha;
-            setTimeout(function () {
+        //if (obj.headSha == headSha) {
+        //    return true;
+        //} else {
+        //    headSha = obj.headSha;
+        //    setTimeout(function () {
 
-                reload()
-            }, 1);
-            return true;
-        }
+        //        reload()
+        //    }, 1);
+        //    return true;
+        //}
+        return true;
     }
 
     function convertHunkToHtml(hunk) {
@@ -93,9 +94,11 @@
         return html;
     }
 
+    var filesNodes = {};
+
     function loadFileList() {
-        function fixNode(node) 
-        {
+        filesNodes = {};
+        function fixNode(node) {
             node.state = {};
             if (node.path === currentFilePath) {
                 blankState = node;
@@ -105,13 +108,13 @@
 
             //due to the recursive nature this will always be the lowest item
             if (node.path === "") {
-                
+
                 node.href = pathPrefix;
                 node.icon = 'icon icon-git-pull-request';
                 node.class = "pullrequest-home";
                 node.nodes = node.children;
             } else if (node.hasOwnProperty('path')) { //has a path then its a file
-
+                filesNodes[node.path] = node;
                 node.href = pathPrefix + '/files/' + node.path;
                 node.icon = 'icon icon-file-text';
                 if (lscache.get(node.sha)) {
@@ -119,7 +122,7 @@
                 } else {
                     node.class = "not-visisted";
                 }
-                node.class = "status-" + node.change;
+                node.class += " status-" + node.change;
 
                 node.id = node.path;
 
@@ -134,82 +137,76 @@
             if (node.nodes && node.nodes.length > 0) {
 
                 var commonChange = node.nodes[0].change;
-                
+
                 for (var i = 0; i < node.nodes.length; i++) {
                     var nChange = node.nodes[i].change;
-                    if(nChange != commonChange){
+                    if (nChange != commonChange) {
                         commonChange = 'modified';
                     }
 
                     fixNode(node.nodes[i]);
                 }
-                node.class =  "status-" + commonChange;
+                node.class = "status-" + commonChange;
             }
         }
-        function loadData(files) {
-            if (!checkVersions(files)) {
-                return;
+
+        var files = cachedFileTree;
+        if (!checkVersions(files)) {
+            return;
+        }
+
+        var rootNode = {
+            path: "",
+            text: "Pull Request",
+            children: files.data,
+        };
+
+        fixNode(rootNode);
+        var nodes = rootNode.nodes;
+        //  nodes.unshift(rootNode)
+        //rootNode.nodes = null;
+        //rootNode.children = null;
+
+
+        $('#tree').treeview({
+            data: nodes,
+            showTags: true,
+            expandIcon: 'icon icon-chevron-down',
+            collapseIcon: 'icon icon-chevron-right',
+            emptyIcon: 'icon',
+            expandOptions: {
+                ignoreChildren: true
             }
+            //collapseIcon :'glyphicon glyphicon-folder-open',
+            //expandIcon :'glyphicon glyphicon-folder-close',
+        }).on('nodeSelected', function (e, node) {
+            if (node.path) {
+                var node = tree.getNode(node.nodeId)
+                node.class = node.class.replace("not-visisted", "visisted");
+                lscache.set(node.sha, true, 60 * 24 * 7 * 52);
+            }
+            setTimeout(function () {
+                loadPath(node.path);
+            }, 1);
+        })
+        .on('nodeUnselected', function (e, node) {
 
-            var rootNode = {
-                path: "",
-                text: "Pull Request",
-                children: files.data,
-            };
-
-            fixNode(rootNode);
-            var nodes = rootNode.nodes;
-          //  nodes.unshift(rootNode)
-            //rootNode.nodes = null;
-            //rootNode.children = null;
-
-
-            $('#tree').treeview({
-                data: nodes,
-                showTags: true,
-                expandIcon: 'icon icon-chevron-down',
-                collapseIcon: 'icon icon-chevron-right',
-                emptyIcon: 'icon',
-                expandOptions: {
-                    ignoreChildren: true
-                }
-                //collapseIcon :'glyphicon glyphicon-folder-open',
-                //expandIcon :'glyphicon glyphicon-folder-close',
-            }).on('nodeSelected', function (e, node) {
-                if (node.path) {
-                    var node = tree.getNode(node.nodeId)
-                    node.class = node.class.replace("not-visisted", "visisted");
-                    lscache.set(node.sha, true, 60 * 24 * 7 * 52);
-                }
-                setTimeout(function () {
-                    loadPath(node.path);
-                }, 1);
-            })
-            .on('nodeUnselected', function (e, node) {
-
-                setTimeout(function () {
-                    //wait for followup selectinoto have a change to propergate
-                    if (currentFilePath != '') {
-                        var sel = tree.getSelected();
-                        if (!sel || !sel.length) {
-                            tree.selectNode(node.nodeId);//reselect the last selected item
-                        }
+            setTimeout(function () {
+                //wait for followup selectinoto have a change to propergate
+                if (currentFilePath != '') {
+                    var sel = tree.getSelected();
+                    if (!sel || !sel.length) {
+                        tree.selectNode(node.nodeId);//reselect the last selected item
                     }
-                }, 1);
-            });
-            treeHome = $('.pullrequest-home');
-            tree = $('#tree').treeview(true);
-            //ajax  call to load the treeView
-            applyCommentsToTree();
-        }
+                }
+            }, 1);
+        });
+        treeHome = $('.pullrequest-home');
+        tree = $('#tree').treeview(true);
+        //ajax  call to load the treeView
+        applyCommentsToTree();
 
-        if (cachedFileTree) {
-            var data = cachedFileTree;
-            cachedFileTree = null;
-            loadData(data);
-        } else {
-            $.get(pathPrefix + '/files?expectedSha=' + headSha, loadData);
-        }
+
     }
 
     String.prototype.replaceAll = function (search, replacement) {
@@ -455,6 +452,35 @@
         }
     }
 
+    function inversePatch(patch) {
+        for (var i = 0; i < patch.length; i++) {
+            var p = patch[i];
+            for (var j = 0; j < p.hunks.length; j++) {
+                var h = p.hunks[j];
+                for (var k = 0; k < h.lines.length; k++) {
+                    var line = h.lines[k];
+
+                    if (line[0] == '-') {
+                        line= '+' + line.substring(1);
+                    }else if (line[0] == '+') {
+                        line = '-' + line.substring(1);
+                    }
+
+                    h.lines[k] = line;
+                }
+
+                var t = h.newLines;
+                h.newLines = h.oldLines;
+                h.oldLines = t;
+
+                var t = h.newStart;
+                h.newStart = h.oldStart;
+                h.oldStart = t;
+            }
+        }
+        return patch;
+    }
+
     var currentLine = '';
     //called directly
     function loadPath(path, skipNavigation, refresh) {
@@ -538,8 +564,7 @@
             fixHeights();
             return;
         }
-
-        $.get(pathPrefix + '/contents/' + path + "?expectedSha=" + headSha, function (data) {
+        function serverResult(data) {
 
             if (!checkVersions(data)) {
                 return;
@@ -555,7 +580,7 @@
                 return;
             }
             if (data.isBinary) {
-                editorElm.html("<div>Binary file " + data.status + ", preview unavailible.</div>");
+                editorElm.html("<div>Binary file " + data.change + ", preview unavailible.</div>");
                 return;
             }
 
@@ -567,8 +592,15 @@
 
             var fileMode = CodeMirror.findModeByFileName(path);
 
-            var sourceText = data.source;
-            var targetText = JsDiff.applyPatch(sourceText, data.patch);
+            
+            var targetText = data.target || "";
+            var sourceText = "";
+            if (filesNodes[path].change != 'added') {
+                var patch = JsDiff.parsePatch(filesNodes[path].patch);
+                sourceText = JsDiff.applyPatch(targetText, inversePatch(patch));
+            }
+
+           
 
             var mime = "";
             if (fileMode) {
@@ -691,8 +723,8 @@
                 }
             }
 
-            markPatch(targetEditor, data.pageMap.TargetFile);
-            markPatch(sourceEditor, data.pageMap.SourceFile);
+            //markPatch(targetEditor, data.pageMap.TargetFile);
+            //markPatch(sourceEditor, data.pageMap.SourceFile);
 
             var lineClicked = function (cm, line, gutter) {
                 var type = 's';
@@ -734,7 +766,14 @@
             fixHeights();
             scrollToLine(lineScrollerTarget);
 
-        });
+        }
+
+        if (filesNodes[path] && filesNodes[path].change == 'removed') {
+            serverResult({ target: '' });
+        } else {
+
+            $.get(pathPrefix + '/contents/' + path + "?expectedSha=" + headSha, serverResult);
+        }
         loadComments(function () {
             scrollToLine(lineScrollerTarget);
         });

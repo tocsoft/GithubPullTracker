@@ -134,6 +134,7 @@
     <Content Include="Content\fonts\icomoon.svg" />
     <Content Include="Content\icomoon.css" />
     <Content Include="Content\Site.css" />
+    <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Scripts\addon\dialog\dialog.js" />
     <Content Include="Content\addon\merge\merge.css" />

@@ -2,6 +2,8 @@
 @{
     ViewBag.FullWidth = true;
 
+    ViewBag.Title = Model.Title + " by " + Model.Creater.login + " · Pull Request #"+Model.Number+ " · "+Model.RepositoryOwner+"/"+Model.RepositoryName;
+
 }
 @section header
 { 
