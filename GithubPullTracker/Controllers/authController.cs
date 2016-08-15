@@ -14,11 +14,6 @@ namespace GithubPullTracker.Controllers
 {
     public class AuthController : ControllerBase
     {
-        [GET("login", SitePrecedence = 1)]
-        public ActionResult SignIn()
-        {
-            return View();
-        }
 
         [GET("logout", SitePrecedence = 2)]
         public ActionResult SignOut()
@@ -28,7 +23,7 @@ namespace GithubPullTracker.Controllers
             return RedirectToAction("signin");
         }
 
-        [GET("login/github", SitePrecedence = 1)]
+        [GET("login", SitePrecedence = 1)]
         public ActionResult SignInStart()
         {
 
@@ -48,7 +43,7 @@ namespace GithubPullTracker.Controllers
             return Redirect(oauthLoginUrl.ToString());
         }
 
-        [GET("login/github-callback", SitePrecedence = 1)]
+        [GET("login/github-callback", SitePrecedence = 2)]
         public async Task<ActionResult> SignInComplete(string code, string state)
         {
             if (String.IsNullOrEmpty(code))
@@ -76,7 +71,7 @@ namespace GithubPullTracker.Controllers
                 ProfileUrl = currentUser.HtmlUrl
             };
             
-            return RedirectToAction("Search", "Home");
+            return RedirectToAction("Home", "Home");
         }
     }
 }

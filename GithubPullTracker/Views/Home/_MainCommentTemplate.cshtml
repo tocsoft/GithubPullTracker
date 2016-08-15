@@ -5,9 +5,11 @@
     </a>
     <div class="comment">
         <div class="header">
-            <a href="/{username}">{username}</a> commented <span class="timeago">{created}</span>
+            <a href="/{username}">{username}</a> commented <time class="timeago" datetime="{created}">{created}</time>
         </div>
-        {body}
+        <div class="markdown">
+            {body}
+        </div>
     </div>
 </div>
 

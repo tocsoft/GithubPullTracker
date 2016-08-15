@@ -528,8 +528,7 @@
 				.addClass(node.state.disabled ? 'node-disabled': '')
 				.addClass(node.state.selected ? 'node-selected' : '')
 				.addClass(node.searchResult ? 'search-result' : '') 
-				.attr('data-nodeid', node.nodeId)
-				.attr('style', _this.buildStyleOverride(node));
+				.attr('data-nodeid', node.nodeId);
 
 			// Add indent/spacer to mimic tree structure
 			for (var i = 0; i < (level - 1); i++) {
@@ -678,9 +677,9 @@
 	// Add inline style into head
 	Tree.prototype.injectStyle = function () {
 
-		if (this.options.injectStyle && !document.getElementById(this.styleId)) {
-			$('<style type="text/css" id="' + this.styleId + '"> ' + this.buildStyle() + ' </style>').appendTo('head');
-		}
+		//if (this.options.injectStyle && !document.getElementById(this.styleId)) {
+		//	$('<style type="text/css" id="' + this.styleId + '"> ' + this.buildStyle() + ' </style>').appendTo('head');
+		//}
 	};
 
 	// Construct trees style based on user options

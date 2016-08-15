@@ -1,11 +1,13 @@
 ﻿
 
-    <div class="comment">
+    <div class="comment  status-{change}">
         <div class="header">
             <a href="/{username}">
                 <img src="{avatarUrl}&s=40" class="avatar" />
                 </a>
-                <a href="/{username}">{username}</a> commented <span class="timeago">{created}</span>
+                <a href="/{username}">{username}</a> commented <time class="timeago" datetime="{created}">{created}</time>
 </div>
-        {body}
-    </div>
+        <div class="markdown">
+            {body}
+            </div>
+        </div>

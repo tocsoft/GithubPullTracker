@@ -7,18 +7,39 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
 
     @Styles.Render("~/Site.css")
+    @{
+
+        var user = ViewData["__CurrentUser__"] as GithubPullTracker.Models.GithubUser;
+    }
 
 </head>
 <body>
     <div class="navbar">
         <div class="container">
-            
-                <a href="~/" class="navbar-brand"><i class="icon icon-logo"></i> Pull Tracker</a>
+
+            <a href="~/" class="navbar-brand"> <i class="icon icon-logo"></i> Pull Tracker</a>
+            @if (user != null)
+            {
+                <div class="user">
+                    <span class="avatar"><img src="@user.AvartarUrl&s=40" /><i class="icon icon-chevron-down"></i></span>
+                    <ul class="dropdown">
+                        <li><span>Signed in as <em>@user.UserName</em></span></li>
+                        <li><a href="@user.ProfileUrl" target="_blank">Your profile</a></li>
+                        <li><a href="https://github.com/settings/profile" target="_blank">Setting</a></li>
+                        <li><a href="~/logout">Sign out</a></li>
+
+                    </ul>
+                </div>
+            }
+            else
+            {
+                <a class="user" href="~/login/github">Sign in</a>
+            }
         </div>
     </div>
-    @{ 
+    @{
         var bodyClass = "container";
-        if(ViewBag.FullWidth == true)
+        if (ViewBag.FullWidth == true)
         {
             bodyClass = "container-fluid";
         }

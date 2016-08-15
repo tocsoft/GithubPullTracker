@@ -131,6 +131,7 @@ namespace GithubPullTracker.Models
                             //we can infer the type based on if it has children or not as there  are no rway of mapping folders in git anyway
                             path = Path,
                             sha = fileItem.Sha,
+                            change = fileItem.Status
                         });
                         return obj;
                     }

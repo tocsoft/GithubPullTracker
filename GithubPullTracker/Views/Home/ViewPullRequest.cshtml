@@ -13,8 +13,15 @@
 }
 <div id="splitter">
     <div class="left-splitter">
-        <div id="tree">
+        <div id="file-list">
+            <span  data-naviagetetree="" class="header">
+                <i class="icon icon-git-pull-request"></i>
+                <a href="~/@Model.RepositoryOwner/@Model.RepositoryName/pull/@Model.Number" data-naviagetetree="" >Pull Request</a>
+                <span class="badge">1</span>
+                </span>
+            <div id="tree">
 
+            </div>
         </div>
     </div>
     <div class="right-splitter">
@@ -25,7 +32,7 @@
                 </a>
                 <div class="comment">
                     <div class="header">
-                        <a href="~/@Model.Creater.login">@Model.Creater.login</a> commented <span class="timeago">@Model.CreatedAt</span>                        
+                        <a href="~/@Model.Creater.login">@Model.Creater.login</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt</time>                        
                     </div>
                     @if (string.IsNullOrWhiteSpace(Model.Details))
                     {

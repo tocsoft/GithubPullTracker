@@ -94,9 +94,8 @@
     }
 
     function loadFileList() {
-        function fixNode(node) {
-
-
+        function fixNode(node) 
+        {
             node.state = {};
             if (node.path === currentFilePath) {
                 blankState = node;
@@ -106,7 +105,7 @@
 
             //due to the recursive nature this will always be the lowest item
             if (node.path === "") {
-
+                
                 node.href = pathPrefix;
                 node.icon = 'icon icon-git-pull-request';
                 node.class = "pullrequest-home";
@@ -120,6 +119,7 @@
                 } else {
                     node.class = "not-visisted";
                 }
+                node.class = "status-" + node.change;
 
                 node.id = node.path;
 
@@ -132,9 +132,18 @@
             }
 
             if (node.nodes && node.nodes.length > 0) {
+
+                var commonChange = node.nodes[0].change;
+                
                 for (var i = 0; i < node.nodes.length; i++) {
+                    var nChange = node.nodes[i].change;
+                    if(nChange != commonChange){
+                        commonChange = 'modified';
+                    }
+
                     fixNode(node.nodes[i]);
                 }
+                node.class =  "status-" + commonChange;
             }
         }
         function loadData(files) {
@@ -150,9 +159,9 @@
 
             fixNode(rootNode);
             var nodes = rootNode.nodes;
-            nodes.unshift(rootNode)
-            rootNode.nodes = null;
-            rootNode.children = null;
+          //  nodes.unshift(rootNode)
+            //rootNode.nodes = null;
+            //rootNode.children = null;
 
 
             $('#tree').treeview({
@@ -168,7 +177,8 @@
                 //expandIcon :'glyphicon glyphicon-folder-close',
             }).on('nodeSelected', function (e, node) {
                 if (node.path) {
-                    tree.getNode(node.nodeId).class = "visisted";
+                    var node = tree.getNode(node.nodeId)
+                    node.class = node.class.replace("not-visisted", "visisted");
                     lscache.set(node.sha, true, 60 * 24 * 7 * 52);
                 }
                 setTimeout(function () {
@@ -220,6 +230,7 @@
             $('#home .event').remove();
             var home = $('#home');
             comments = {};
+            var fileDiffSlots = {};
             for (var i in data) {
                 var comment = data[i];
                 var path = comment.path || '';
@@ -228,7 +239,6 @@
                 }
                 comments[path].push(comment);
                 var template = templateMain;
-                var fileDiffSlots = {};
                 if (comment.path) {
                     var lineLink = '';
                     if (comment.sourceLine) {
@@ -237,10 +247,15 @@
                         lineLink = 't-' + (comment.targetLine + 1);
                     }
 
-                    var fileComments = fileDiffSlots[comment.path]
-                    if (!fileComments) {
+                    var lineComments = fileDiffSlots[comment.path]
+                    if (!lineComments) {
+                        fileDiffSlots[comment.path] = lineComments = {};
+                    }
+                    var lineCommnet = lineComments[lineLink];
+                    if (!lineCommnet) {
                         var html = templateFileBlock
                         .replaceAll("{path}", comment.path)
+                        .replaceAll("{change}", comment.change)
                         .replaceAll("{fullPath}", pathPrefix + '/files/' + comment.path)
                         .replaceAll("{lineLink}", lineLink)
                         .replaceAll("{avatarUrl}", comment.user.avatarUrl)
@@ -250,11 +265,12 @@
                         .replaceAll("{body}", marked(comment.body));
                         fileComments = $(html);
                         home.append(fileComments);
-                        fileDiffSlots[comment.path] = fileComments;
+                        lineComments[lineLink]  = fileComments;
                     }
 
                     var html = templateFile
                     .replaceAll("{path}", comment.path)
+                        .replaceAll("{change}", comment.change)
                     .replaceAll("{fullPath}", pathPrefix + '/files/' + comment.path)
                     .replaceAll("{lineLink}", lineLink)
                     .replaceAll("{avatarUrl}", comment.user.avatarUrl)
@@ -265,6 +281,7 @@
                 } else {
                     var html = template
                         .replaceAll("{avatarUrl}", comment.user.avatarUrl)
+                        .replaceAll("{change}", comment.change)
                         .replaceAll("{username}", comment.user.login)
                         .replaceAll("{created}", comment.createdAt)
                         .replaceAll("{body}", marked(comment.body))
@@ -273,6 +290,8 @@
                 }
                 
             }
+
+            $('#home .timeago').timeago();
             fixHeights();
             applyCommentsToTree();
             applyCommentsToEditors();
@@ -312,11 +331,13 @@
             } else { node.tags = []; }
 
         }
-        rootNode.tags = [total + 1];
+        $('#file-list .header .badge').show();
+        $('#file-list .header .badge').text(total + 1);
 
         tree.redraw();
 
     }
+    $('#file-list .header .badge').show();
 
     function applyCommentsToEditors() {
 
@@ -357,6 +378,7 @@
                     .replaceAll("{fullPath}", pathPrefix + '/files/' + comment.path)
                     .replaceAll("{avatarUrl}", comment.user.avatarUrl)
                     .replaceAll("{username}", comment.user.login)
+                        .replaceAll("{change}", comment.change)
                     .replaceAll("{created}", comment.createdAt)
                     .replaceAll("{body}", marked(comment.body))
 
@@ -489,7 +511,7 @@
 
         //we need to reload the comments whiel we are loading the doc
 
-
+        setTimeout(function () { 
 
         if (tree) {
             var nodeFound = false;
@@ -524,6 +546,10 @@
             }
 
             $('#fileName').text(path);
+            $('#fileName').removeClass("status-modified");
+            $('#fileName').removeClass("status-added");
+            $('#fileName').removeClass("status-removed");
+            $('#fileName').addClass("status-" + data.change);
             if (data.notfound) {
                 editorElm.html("<div>Unable to find '" + path + "' in pull request.</div>");
                 return;
@@ -687,8 +713,6 @@
             var scroll = function (cm) {
                 var info = cm.getScrollInfo();
                 var curentPos = info.top;
-                console.log(curentPos);
-
                 if (window.scrollY < targetPos) {
                     mainSCroller.stop(true);
                     if (info.top > 5) {
@@ -714,6 +738,7 @@
         loadComments(function () {
             scrollToLine(lineScrollerTarget);
         });
+        }, 10);
     }
 
     reload();
@@ -734,53 +759,55 @@
     var topStyle = $("<style />");
     $('head').append(topStyle)
 
-    var targetPos = $('#splitter').position().top;
-    var mainSCroller = $('html, body');
-    $('#tree').on('scroll', function (e) {
+    //var targetPos = $('#splitter').position().top;
+    //var mainSCroller = $('html, body');
+    //$('#tree').on('scroll', function (e) {
 
 
-        var pos = $(this).scrollTop();
+    //    var pos = $(this).scrollTop();
 
-        if (window.scrollY < targetPos) {
-            mainSCroller.stop(true);
-            if (pos > 2) {
-                mainSCroller.animate({ 'scrollTop': targetPos + 'px' });
-            }
-            e.preventDefault();
-        }
+    //    if (window.scrollY < targetPos) {
+    //        mainSCroller.stop(true);
+    //        if (pos > 2) {
+    //            mainSCroller.animate({ 'scrollTop': targetPos + 'px' });
+    //        }
+    //        e.preventDefault();
+    //    }
 
-        topStyle.html("#tree .pullrequest-home { top : " + pos + "px} ");
+    //    topStyle.html("#tree .pullrequest-home { top : " + pos + "px} ");
         
-    });
+    //});
 
-    
-    function fixHeights() {
-        var home = $('#home');
-        var file_diff = $('#file_diff');
-        var splitter = $('#splitter');
-        //var offset = splitter.position().top;
-        var winh = $(window).height();
+    var fixHeightshomeElm = $('#home');
+    var fixHeightsfilediffElm = $('#file_diff');
+    var fixHeightssplitterElm = $('#splitter');
+    var fixHeightswindowElm = $(window);
+
+    var heightFixerTo;
+        function fixHeights() {
+            clearTimeout(heightFixerTo);
+            heightFixerTo = setTimeout(function () {
+                //var offset = splitter.position().top;
+                var winh = fixHeightswindowElm.height();
+
+                if (fixHeightshomeElm.is(':visible')) {
+                    var viewHeight = winh - fixHeightshomeElm.position().top;
+                    var homeHeight = fixHeightshomeElm.outerHeight();
 
 
-        if (home.is(':visible')) {
-            var viewHeight = winh - home.position().top;
-            var homeHeight = home.outerHeight();
+                    fixHeightssplitterElm.height(Math.max(homeHeight, viewHeight)).trigger("resize");
+                } else if (fixHeightsfilediffElm.is(':visible')) {
+                    console.log('is visisble editor')
+                    var editorHEader = fixHeightsfilediffElm.find('.header').outerHeight();
+                    $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror, .CodeMirror { height: " + (winh - editorHEader - 15) + "px;}")
 
+                    fixHeightssplitterElm.height(fixHeightsfilediffElm.outerHeight() + 10).trigger("resize");
+                } else {
 
-            splitter.height(Math.max(homeHeight, viewHeight)).trigger("resize");
-        } else if (file_diff.is(':visible')) {
-            console.log('is visisble editor')
-            var editorHEader = file_diff.find('.header').outerHeight();
-            $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror, .CodeMirror { height: " + (winh - editorHEader - 15) + "px;}")
-            
-            splitter.height(file_diff.outerHeight() + 10).trigger("resize");
-        } else {
-
+                }
+                //home.height(winh);
+            }, 50);
         }
-        //home.height(winh);
-
-
-    }
     var to1;
     $(window).resize(function (e) {
         //diffElm .mergely('resize');

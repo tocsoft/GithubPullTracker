@@ -19,6 +19,7 @@ namespace GithubPullTracker
                 .Include("~/Scripts/bootstrap-treeview.js")
                 .Include("~/Scripts/lscache.js")
                 .Include("~/Scripts/marked.js")
+                .Include("~/Scripts/timeago.js")
                 .Include("~/Scripts/diff.js")
                 .Include("~/Scripts/diff_match_patch.js")
                 .Include("~/Scripts/splitter.js")
@@ -29,7 +30,8 @@ namespace GithubPullTracker
                 .Include("~/Scripts/jquery.hotkeys.js")
                 .Include("~/Scripts/addon/scroll/annotatescrollbar.js")
                 .Include("~/Scripts/addon/merge/merge.js")
-                .Include("~/Scripts/DiffViewScript.js"));
+                .Include("~/Scripts/DiffViewScript.js")
+                .Include("~/Scripts/site.js"));
 
             bundles.Add(new StyleBundle("~/Site.css")
                 .Include("~/Content/codemirror.css")

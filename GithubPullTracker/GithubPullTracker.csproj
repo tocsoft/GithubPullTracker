@@ -442,7 +442,9 @@
     <Content Include="Scripts\mode\yaml\yaml.js" />
     <Content Include="Scripts\mode\z80\index.html" />
     <Content Include="Scripts\mode\z80\z80.js" />
+    <Content Include="Scripts\site.js" />
     <Content Include="Scripts\splitter.js" />
+    <Content Include="Scripts\timeago.js" />
     <Content Include="Web.config" />
     <Content Include="Views\Home\Search.cshtml" />
     <Content Include="Views\Home\ViewPullRequest.cshtml" />
@@ -471,7 +473,7 @@
     <Content Include="packages.config" />
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
-    <Content Include="Views\Auth\SignIn.cshtml" />
+    <Content Include="Views\Home\SignIn.cshtml" />
     <Content Include="Scripts\jquery-1.10.2.min.map" />
     <Content Include="Views\Home\_SearchResults.cshtml" />
     <Content Include="Views\Home\SearchOwner.cshtml" />
@@ -489,6 +491,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Views\Auth\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

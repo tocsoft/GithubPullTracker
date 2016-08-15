@@ -15,7 +15,6 @@ using AttributeRouting.Web.Mvc;
 
 namespace GithubPullTracker.Controllers
 {
-    [Auth]
     public class HomeController : ControllerBase
     {
         public class PageMap
@@ -48,6 +47,7 @@ namespace GithubPullTracker.Controllers
             }
         }
 
+        [Auth]
         [GET("{owner}/{repo}/pull/{reference}/contents/{*path}")]
         public async Task<ActionResult> GetFile(string owner, string repo, int reference, string path, string expectedSha)
         {
@@ -80,7 +80,7 @@ namespace GithubPullTracker.Controllers
             string sourceText = null;
             bool isBinaryDataType = false;
 
-            if (file.Status != "added")
+            if (file.Status != "added" && file.Status != "renamed")
             {
                 var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Base.Sha);
 
@@ -106,13 +106,14 @@ namespace GithubPullTracker.Controllers
                 source = sourceText,
                 patch = file.Patch,
                 pageMap = map,
+                change = file.Status,
                 isBinary = isBinaryDataType
             });
             return Content(json, "application/json");
         }
 
 
-
+        [Auth]
         [GET("{owner}/{repo}/pull/{reference}/comments")]
         public async Task<ActionResult> GetFileComments(string owner, string repo, int reference, string expectedSha)
         {
@@ -149,7 +150,8 @@ namespace GithubPullTracker.Controllers
 
         }
 
-        
+
+        [Auth]
         [GET("{owner}/{repo}/pull/{reference}/files")]
         public async Task<ActionResult> GetFileList(string owner, string repo, int reference, string expectedSha)
         {
@@ -173,6 +175,7 @@ namespace GithubPullTracker.Controllers
         }
 
 
+        [Auth]
         [GET("{owner}/{repo}/pull/{reference}")]
         [GET("{owner}/{repo}/pull/{reference}/files/{*path}")]
         public async Task<ActionResult> ViewPullRequest(string owner, string repo, int reference, string path = null)
@@ -242,11 +245,65 @@ namespace GithubPullTracker.Controllers
             return map;
         }
 
+        [GET("")]
+        public async Task<ActionResult> Home(string query, int page = 1, RequestState? state = null, RequestConnection? type = null)
+        {
+            if(CurrentUser == null)
+            {
+                return View("SignIn");
+            }
 
+            string viewPage = "Search";
+
+            var realState = state ?? RequestState.Open;
+
+            List<IssueIsQualifier> isQual = new List<IssueIsQualifier>();
+            isQual.Add(IssueIsQualifier.PullRequest);
+
+            switch (realState)
+            {
+                case RequestState.Open:
+                    isQual.Add(IssueIsQualifier.Open);
+                    break;
+                case RequestState.Closed:
+                    isQual.Add(IssueIsQualifier.Closed);
+                    break;
+
+            }
+
+            var request = new Octokit.SearchIssuesRequest
+            {
+                Is = isQual,
+                Involves = CurrentUser.UserName,
+            };
+                var realType = type ?? RequestConnection.Assigned;
+                switch (realType)
+                {
+                    case RequestConnection.Involved:
+                        request.Assignee = CurrentUser.UserName;
+                        break;
+                    case RequestConnection.Created:
+                        request.Author = CurrentUser.UserName;
+                        break;
+                    case RequestConnection.Assigned:
+                        request.Involves = CurrentUser.UserName;
+                        break;
+                }
+         
+
+            request.Page = page;
+            request.PerPage = 25;
+
+            var results = await this.Client.Search.SearchIssues(request);
+            var vm = new PullRequestResult(1, 25, results);
+
+            return View(viewPage, vm);
+        }
+
+        [Auth]
         [GET("{owner}/{repo}")]
         [GET("{owner}")]
-        [GET("")]
-        public async Task<ActionResult> Search(string query, string owner = null, string repo = null, int page =1, RequestState? state = null, RequestConnection? type = null)
+        public async Task<ActionResult> Search(string query, string owner, string repo = null, int page = 1, RequestState? state = null, RequestConnection? type = null)
         {
             string viewPage = "Search";
 
@@ -263,7 +320,7 @@ namespace GithubPullTracker.Controllers
                 case RequestState.Closed:
                     isQual.Add(IssueIsQualifier.Closed);
                     break;
-                
+
             }
 
             var request = new Octokit.SearchIssuesRequest
@@ -271,36 +328,22 @@ namespace GithubPullTracker.Controllers
                 Is = isQual,
                 Involves = CurrentUser.UserName,
             };
-            if (repo == null && owner == null)
+
+
+            if (repo == null)
             {
-                var realType = type ?? RequestConnection.Assigned;
-                switch (realType)
-                {
-                    case RequestConnection.Involved:
-                        request.Assignee = CurrentUser.UserName;
-                        break;
-                    case RequestConnection.Created:
-                        request.Author = CurrentUser.UserName;
-                        break;
-                    case RequestConnection.Assigned:
-                        request.Involves = CurrentUser.UserName;
-                        break;
-                }
-            }else
-            {
-                if(repo == null)
-                {
-                    request.Involves = owner;
-                    viewPage = "SearchOwner";
-                }
-                else {
-                    request.Repos.Add($"{owner}/{repo}");
-                    viewPage = "SearchRepo";
-                }
+                request.Involves = owner;
+                viewPage = "SearchOwner";
             }
+            else
+            {
+                request.Repos.Add($"{owner}/{repo}");
+                viewPage = "SearchRepo";
+            }
+
             request.Page = page;
             request.PerPage = 25;
-            
+
             var results = await this.Client.Search.SearchIssues(request);
             var vm = new PullRequestResult(1, 25, results);
             vm.RepoName = repo;
