@@ -225,10 +225,13 @@ else
                 //show the child file screen
                 return;
             }
-
-            $.get(pathPrefix + navPath+"?sha=" + sha, function(data){
-                serverResult(path, lineScrollerTarget, data.contents, data.isBinary);
-            });
+            if(files[path].Status == 'removed' ){
+                serverResult(path, lineScrollerTarget, "", false);
+            }else{
+                $.get(pathPrefix + navPath+"?sha=" + sha, function(data){
+                    serverResult(path, lineScrollerTarget, data.contents, data.isBinary);
+                });
+            }
         }
 
         function serverResult(path, line, targetText, isBinary) {
