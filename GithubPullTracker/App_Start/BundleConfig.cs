@@ -15,8 +15,8 @@ namespace GithubPullTracker
 
             bundles.Add(new ScriptBundle("~/Site.js")
                 .Include("~/Scripts/jquery-{version}.js")
-                .Include("~/Scripts/bootstrap.js")
-                .Include("~/Scripts/bootstrap-treeview.js")
+                //.Include("~/Scripts/bootstrap.js")
+                //.Include("~/Scripts/bootstrap-treeview.js")
                 .Include("~/Scripts/lscache.js")
                 .Include("~/Scripts/marked.js")
                 .Include("~/Scripts/timeago.js")
@@ -30,7 +30,6 @@ namespace GithubPullTracker
                 .Include("~/Scripts/jquery.hotkeys.js")
                 .Include("~/Scripts/addon/scroll/annotatescrollbar.js")
                 .Include("~/Scripts/addon/merge/merge.js")
-                .Include("~/Scripts/DiffViewScript.js")
                 .Include("~/Scripts/site.js"));
 
             bundles.Add(new StyleBundle("~/Site.css")
@@ -38,8 +37,8 @@ namespace GithubPullTracker
                 .Include("~/Content/addon/merge/merge.css")
                 .Include("~/Content/addon/merge/merge.css")
                 //.Include("~/Content/bootstrap.css")
-                .Include("~/Content/bootstrap-theme.css")
-                .Include("~/Content/bootstrap-treeview.css")
+                //.Include("~/Content/bootstrap-theme.css")
+                //.Include("~/Content/bootstrap-treeview.css")
                 .Include("~/Content/icomoon.css")
                 .Include("~/Content/Site.css"));
         }

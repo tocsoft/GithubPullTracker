@@ -127,6 +127,19 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="android-chrome-192x192.png" />
+    <Content Include="android-chrome-512x512.png" />
+    <Content Include="apple-touch-icon-114x114.png" />
+    <Content Include="apple-touch-icon-120x120.png" />
+    <Content Include="apple-touch-icon-144x144.png" />
+    <Content Include="apple-touch-icon-152x152.png" />
+    <Content Include="apple-touch-icon-180x180.png" />
+    <Content Include="apple-touch-icon-57x57.png" />
+    <Content Include="apple-touch-icon-60x60.png" />
+    <Content Include="apple-touch-icon-72x72.png" />
+    <Content Include="apple-touch-icon-76x76.png" />
+    <Content Include="apple-touch-icon.png" />
+    <Content Include="browserconfig.xml" />
     <Content Include="Content\addon\dialog\dialog.css" />
     <Content Include="Content\bootstrap-theme.css" />
     <Content Include="Content\bootstrap-treeview.css" />
@@ -134,8 +147,16 @@
     <Content Include="Content\fonts\icomoon.svg" />
     <Content Include="Content\icomoon.css" />
     <Content Include="Content\Site.css" />
+    <Content Include="favicon-16x16.png" />
+    <Content Include="favicon-32x32.png" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
+    <Content Include="mstile-144x144.png" />
+    <Content Include="mstile-150x150.png" />
+    <Content Include="mstile-310x150.png" />
+    <Content Include="mstile-310x310.png" />
+    <Content Include="mstile-70x70.png" />
+    <Content Include="safari-pinned-tab.svg" />
     <Content Include="Scripts\addon\dialog\dialog.js" />
     <Content Include="Content\addon\merge\merge.css" />
     <Content Include="Scripts\addon\merge\merge.js" />
@@ -151,6 +172,7 @@
     <Content Include="Content\fonts\icomoon.eot" />
     <Content Include="Content\fonts\icomoon.ttf" />
     <Content Include="Content\fonts\icomoon.woff" />
+    <Content Include="manifest.json" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
     <Content Include="Content\codemirror.css" />
     <Content Include="Scripts\bootstrap-treeview.js" />
@@ -454,19 +476,24 @@
     <Compile Include="App_Start\AttributeRoutingConfig.cs" />
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Controllers\PullRequestController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ControllerBase.cs" />
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\PageMap.cs" />
     <Compile Include="Models\Comment.cs" />
-    <Compile Include="Models\PullFileList.cs" />
+    <Compile Include="Models\PullRequestCommentsView.cs" />
+    <Compile Include="Models\PullRequestFileView.cs" />
     <Compile Include="Models\PullRequestView.cs" />
     <Compile Include="Models\PullRequestResult.cs" />
     <Compile Include="Models\GithubUser.cs" />
     <Compile Include="AuthAttribute.cs" />
+    <Compile Include="Models\PullRequestViewItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="HtmlExtensions.cs" />
     <Compile Include="SettingsManager.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -483,6 +510,12 @@
     <Content Include="Views\Home\_MainCommentTemplate.cshtml" />
     <Content Include="Views\Home\_MainFileCommentTemplate.cshtml" />
     <Content Include="Views\Home\_InlineFileCommentTemplate.cshtml" />
+    <Content Include="Views\PullRequest\_InlineFileCommentTemplate.cshtml" />
+    <Content Include="Views\PullRequest\_MainCommentTemplate.cshtml" />
+    <Content Include="Views\PullRequest\_MainFileCommentTemplate.cshtml" />
+    <Content Include="Views\PullRequest\ViewFiles.cshtml" />
+    <Content Include="Views\PullRequest\ViewPullRequest.cshtml" />
+    <Content Include="Views\PullRequest\PullRequestHeader.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

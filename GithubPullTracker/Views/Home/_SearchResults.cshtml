@@ -13,12 +13,12 @@
                     @(result.RepositoryOwner)/@(result.RepositoryName)
                 </a>
                 }
-                <a href="@Url.Action("ViewPullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
+                <a href="@Url.Action("ViewPullRequest", "PullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
                     @result.Title
                 </a>
             </h2>
             <span>
-                <a href="@Url.Action("ViewPullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
+                <a href="@Url.Action("ViewPullRequest", "PullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
                     #@(result.Number)
                 </a>
                 @switch (result.LastAction)

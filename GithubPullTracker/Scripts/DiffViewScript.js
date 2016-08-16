@@ -1,37 +1,6 @@
 ﻿var diffViewScript = function (currentFilePath, headSha, pathPrefix, sourceFileTree, repoOwner, repoName) {
 
-    var srcmarked = window.marked;
-    srcmarked.setOptions({
-        gfm: true,
-        tables: true,
-        breaks: false,
-        pedantic: false,
-        sanitize: true,
-        smartLists: true,
-        smartypants: false
-    });
-
-    window.marked = function (markdown) {
-
-        var re_issuesWithRepo = /(\s|^)([a-zA-Z0-9][a-zA-Z0-9_]{1,14}\/[a-zA-Z0-9-_.]+)#(\d+)(\s|$)/gm;
-        var subst_issuesWithRepo = '$1[$2#$3](https://github.com/$2/issues/$3)$4';
-
-        var re_issues = /(\s|^)#(\d+)(\s|$)/gm;
-        var subst_issues = '$1[#$2](https://github.com/'+repoOwner+'/'+repoName+'/issues/$2)$3';
-
-        markdown = markdown
-            .replace(re_issuesWithRepo, subst_issuesWithRepo)
-            .replace(re_issues, subst_issues)
-            ;
-
-
-        var html = srcmarked(markdown);
-
-        var re_links = /(<a)( href=")/gm;
-        var subst_links = '$1 target=\'_blank\'$2';
-
-        return html.replace(re_links, subst_links);
-    }
+   
 
 
     var cachedFileTree = sourceFileTree;
@@ -464,43 +433,7 @@
         }, 1);
     }
     //preiodically reload comments and reapply??? on loadPageMaybe???
-    function scrollToLine(line) {
-        function removehighLight() {
-            if (sourceEditor && sourceEditor._hightlightedLine) {
-                sourceEditor.removeLineClass(sourceEditor._hightlightedLine, 'wrap', 'highlighted');
-                sourceEditor._hightlightedLine = null;
-            }
-            if (targetEditor && targetEditor._hightlightedLine) {
-                targetEditor.removeLineClass(targetEditor._hightlightedLine, 'wrap', 'highlighted');
-                targetEditor._hightlightedLine = null;
-            }
-        }
-
-        if (!line) {
-            removehighLight();
-            return;
-        }
-
-        var parts = line.split('-');
-        var editor = targetEditor;
-        if (parts[0] === 's') {
-            editor = sourceEditor;
-        }
-        if (editor) {
-            var line = parseInt(parts[1]) - 1;
-
-            
-            var t = editor.charCoords({ line: line, ch: 0 }, "local").top;
-            var middleHeight = editor.getScrollerElement().offsetHeight / 2;
-            editor.scrollTo(null, t);//- middleHeight - 5);
-
-
-            removehighLight();
-
-            editor.addLineClass(line, 'wrap', 'highlighted');
-            editor._hightlightedLine = line;
-        }
-    }
+   
 
     function inversePatch(patch) {
         for (var i = 0; i < patch.length; i++) {

@@ -1,0 +1,11 @@
+﻿@model GithubPullTracker.Models.PullRequestView
+<div class="title-bar">
+
+    <h2>@Model.Title <span>#@Model.Number</span></h2>
+    <div>
+
+        <span class="prstatus-open">Open</span> <a href="https://github.com/@Model.Creater.login" target="_blank">@Model.Creater.login</a> wants to merge @Model.Commits into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
+
+
+    </div>
+</div>

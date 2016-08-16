@@ -10,7 +10,7 @@ namespace GithubPullTracker.Models
 {
     public class PullRequestView
     {
-        public PullRequestView(PullRequest pr) 
+        public PullRequestView(PullRequest pr)
         {
             HeadSha = pr.Head.Sha;
             BaseSha = pr.Base.Sha;
@@ -39,21 +39,17 @@ namespace GithubPullTracker.Models
                 BaseName = pr.Base.Repository.Name + splitter + pr.Base.Label;
                 splitter = "/";
             }
-            if (pr.Head.User.Login != pr.Base.User.Login )
+            if (pr.Head.User.Login != pr.Base.User.Login)
             {
                 HeadName = pr.Head.User.Login + splitter + HeadName;
                 BaseName = pr.Base.User.Login + splitter + pr.Base.Label;
             }
 
-            HeadNameFull = $"{ pr.Head.User.Login}/{pr.Head.Repository.Name}:{pr.Head.Label}"; ;
-            BaseNameFull = $"{ pr.Base.User.Login}/{pr.Base.Repository.Name}:{pr.Base.Label}"; ;
-            
-        }
+            HeadNameFull = $"{pr.Head.User.Login}/{pr.Head.Repository.Name}:{pr.Head.Label}"; ;
+            BaseNameFull = $"{pr.Base.User.Login}/{pr.Base.Repository.Name}:{pr.Base.Label}"; ;
 
-        public PullRequestView(PullRequest pr, string selectedPath) :this(pr)
-        {
-            CurrentFile = selectedPath;
         }
+        
 
         public string RepositoryOwner { get; set; }
 
@@ -64,8 +60,7 @@ namespace GithubPullTracker.Models
         public string BaseSha { get; set; }
 
         public string HeadSha { get; set; }
-        
-        public string CurrentFile { get; set; }
+
         public string Title { get; private set; }
         public string Details { get; private set; }
         public User Creater { get; private set; }

@@ -1,0 +1,130 @@
+﻿@model GithubPullTracker.Models.PullRequestCommentsView
+@{
+
+    ViewBag.Title = Model.Title + " by " + Model.Creater.login + " · Pull Request #" + Model.Number + " · " + Model.RepositoryOwner + "/" + Model.RepositoryName;
+
+}
+@section header
+{
+    <div class="title-bar">
+        <h1><i class="icon icon-repo"></i><a class="owner" href="~/@Model.RepositoryOwner">@Model.RepositoryOwner</a> / <a class="repo" href="~/@Model.RepositoryOwner/@Model.RepositoryName">@Model.RepositoryName</a></h1>
+    </div>
+}
+@Html.Partial("PullRequestHeader")
+
+        <div id="home">
+            <div class="main-comment" id="description">
+                <a href="https://github.com/@Model.Creater.login" target="_blank" class="user">
+                    <img src="@(Model.Creater.avatarUrl)&s=40" class="avatar" alt="@Model.Creater.login" />
+                </a>
+                <div class="comment">
+                    <div class="header">
+                        <a href="https://github.com/@Model.Creater.login" target="_blank">@Model.Creater.login</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt</time>
+                    </div>
+
+
+                    @if (string.IsNullOrWhiteSpace(Model.Details))
+                    {
+                        <div class="markdown">
+                            <em>No description provided.</em>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="markdown apply-md">@Model.Details</div>
+                    }
+                </div>
+
+            </div>
+
+                @foreach (var c in Model.Comments)
+                {
+                    if (c.isFileComment)
+                    {
+
+                        <div class="file-comment-list event">
+                            <div class="file-diff comment">
+                                <div class='header'>
+                                    @c.path
+                                    @{
+                                        var lineRef = "";
+                                        if (c.targetLineNumber.HasValue)
+                                        {
+                                            lineRef = "t-" + c.targetLineNumber.ToString();
+                                        }
+                                        else if (c.sourceLineNumber.HasValue)
+                                        {
+                                            lineRef = "s-" + c.sourceLineNumber.ToString();
+                                        }
+                                    }
+                                    <a href="@Url.Action("ViewFiles", new { path = c.path })#@lineRef" data-naviagetetree="@c.path#@lineRef">View full file</a>
+                                </div>
+                                <div class="patch apply-patch">@c.patch</div>
+                            </div>
+
+                            @foreach (var b in c.details)
+                            {
+                                <div class="comment ">
+                                    <div class="header">
+                                        <a href="https://github.com/@b.user.login" target="_blank">
+                                            <img src="@b.user.avatarUrl&s=40" class="avatar" />
+                                        </a>
+                                        <a href="https://github.com/@b.user.login" target="_blank">@b.user.login</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
+                                    </div>
+                                    <div class="markdown  apply-md">@b.body</div>
+                                </div>
+                            }
+                        </div>
+
+                                        }
+                                        else
+                                        { 
+                                             foreach (var b in c.details)
+                                            {
+
+                                            <div class="main-comment event">
+                                                <a href="https://github.com/@b.user.login" target="_blank" class="user">
+                                                    <img src="@(b.user.avatarUrl)&s=40" class="avatar" />
+                                                </a>
+                                                <div class="comment">
+                                                    <div class="header">
+                                                        <a href="https://github.com/@(b.user.login)" target="_blank">@(b.user.login)</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
+                                                    </div>
+                                                    <div class="markdown apply-md">@b.body</div>
+                                                </div>
+                                            </div>
+
+                                            }
+                                            }
+                                        }
+
+        </div>
+        
+
+<script type="x-template" id="home-comment-template">
+    @Html.Partial("_MainCommentTemplate")
+</script>
+<script type="x-template" id="home-file-comment-template">
+    @Html.Partial("_MainFileCommentTemplate")
+</script>
+<script type="x-template" id="inline-file-comment-template">
+    @Html.Partial("_InlineFileCommentTemplate")
+</script>
+
+
+
+@section scripts{
+    <style id="mergeHeight">
+        .CodeMirror-merge {
+            height: auto;
+        }
+    </style>
+    <script>
+        window.repocontext = '@(Model.RepositoryOwner)/@(Model.RepositoryName)';
+
+
+
+        @*diffViewScript('@Model.CurrentFile', '@Model.HeadSha', '@Url.Action("ViewPullRequest")', @Html.Raw(Model.TreeData.ToString()), '@Model.RepositoryOwner','@Model.RepositoryName')*@
+
+    </script>
+}

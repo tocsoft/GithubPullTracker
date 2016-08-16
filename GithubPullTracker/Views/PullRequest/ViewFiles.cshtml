@@ -1,0 +1,483 @@
+﻿@model PullRequestFileView
+@{
+    ViewBag.FullWidth = true;
+    ViewBag.Title = Model.Title + " by " + Model.Creater.login + " · Pull Request #" + Model.Number + " · " + Model.RepositoryOwner + "/" + Model.RepositoryName;
+
+}
+@section header
+{
+    <div class="title-bar">
+        <h1><i class="icon icon-repo"></i><a class="owner" href="~/@Model.RepositoryOwner">@Model.RepositoryOwner</a> / <a class="repo" href="~/@Model.RepositoryOwner/@Model.RepositoryName">@Model.RepositoryName</a></h1>
+    </div>
+}
+@Html.Partial("PullRequestHeader")
+
+@helper RenderTree(IEnumerable<PullRequestViewItem> items) { 
+
+   <ul>
+       @foreach (var itm in items)
+       {
+            <li class="status-@itm.Status">
+            @if (itm.IsFile)
+            {
+                    <a href="@Url.Action("ViewFiles", new { path = itm.Path })"><i class="icon icon-file-text"></i>@itm.Name</a>
+            }
+            else
+            {
+                    <span><i class="icon icon-file-directory"></i> @itm.Name</span>
+                    @RenderTree(itm.Children)
+            }
+            </li>
+       }
+   </ul>
+}
+
+
+<div id="splitter">
+    <div class="left-splitter">
+        <div id="file-list">
+            @RenderTree(Model.Items)
+        </div>
+    </div>
+    <div class="right-splitter">       
+        <div id="loader">loading</div>
+        <div id="file_diff">
+            <div class="header">
+                <span id="fileName"></span>
+                <label><input type="checkbox" id="show-inline-comments" checked />show inline comments</label>
+            </div>
+            <div id="editor">
+                @if (Model.IsBinary)
+                {
+                    <div>Cant diff, binary file</div>
+                }
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="x-template" id="home-comment-template">
+    @Html.Partial("_MainCommentTemplate")
+</script>
+<script type="x-template" id="home-file-comment-template">
+    @Html.Partial("_MainFileCommentTemplate")
+</script>
+<script type="x-template" id="inline-file-comment-template">
+    @Html.Partial("_InlineFileCommentTemplate")
+</script>
+
+
+
+@section scripts{
+    <style id="mergeHeight">
+        .CodeMirror-merge {
+            height: auto;
+        }
+
+    </style>
+    <script>
+        (function(){
+            var fixHeightsfilediffElm = $('#file_diff');
+            var fixHeightssplitterElm = $('#splitter');
+            var fixHeightswindowElm = $(window);
+
+            var heightFixerTo;
+            function fixHeights() {
+                clearTimeout(heightFixerTo);
+                heightFixerTo = setTimeout(function () {
+                    //var offset = splitter.position().top;
+                    var winh = fixHeightswindowElm.height();
+
+                    var editorHEader = fixHeightsfilediffElm.find('.header').outerHeight();
+                    $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror, .CodeMirror { height: " + (winh - editorHEader - 15) + "px;}")
+
+                    fixHeightssplitterElm.height(fixHeightsfilediffElm.outerHeight() + 10).trigger("resize");
+                    if(window.reloadEditors){
+                        window.reloadEditors();
+                    }
+                }, 50);
+            }
+            var to1;
+            $(window).resize(function (e) {
+                //diffElm .mergely('resize');
+                if (e.target === window) {
+                    clearTimeout(to1);
+                    to1 = setTimeout(function () {
+                        fixHeights();
+                    });
+                }
+            }).resize();
+            window.fixHeights = fixHeights;
+
+            window.options = lscache.get("options") || { showInlineComments: true, splitterWidth: ($(window).width() * 0.2) };
+
+            $('#show-inline-comments').attr('checked', options.showInlineComments);
+
+            $('#show-inline-comments').change(function () {
+                var checked = $(this).is(':checked');
+                options.showInlineComments = checked;
+                lscache.set("options", options);
+                applyCommentsToEditors();
+            });
+
+            
+            $("#splitter").splitter({
+                sizeLeft: options.splitterWidth
+            });
+            $('#splitter').on("resize", function () {
+                options.splitterWidth = $('.left-splitter').width() - 5;
+                lscache.set('options', options);
+            });
+        })();
+    </script>
+
+    
+    <script>
+
+        //TODO put ajax based interpage naviagtion back in.
+        //TODo put splitter bar back in
+        var sha = @Html.JavascriptString(Model.HeadSha);
+
+        var fileTree = @Html.JavascriptString(Model.FileItems.Select(x=>new { x.Path, x.Status, x.Patch, x.Sha }));
+        var files = {};
+        for(var i in fileTree){
+            var f = fileTree[i];
+            files[f.Path] = f;
+        }
+
+        var editorElm = $('#editor');
+        var targetElm = $('#file_diff');
+        var loaderElm = $('#loader');
+        var targetEditor;
+        var sourceEditor;
+        var currentFilePath = '';
+        var currentLine = '';
+        var pathPrefix = '@Url.Action("ViewPullRequest")';
+
+        @if (Model.CurrentFile != null)
+        {
+            <text>
+            serverResult('@Model.CurrentFile.Path',
+                window.location.hash.replace('#', ''),
+                @Html.JavascriptString(Model.TargetText),
+                @Html.JavascriptString(Model.IsBinary)
+                );
+
+            history.replaceState({ path: '@Model.CurrentFile.Path' }, null, pathPrefix +"/files/@Model.CurrentFile.Path");
+        </text>
+}
+else
+{
+
+        <text>
+        history.replaceState({ path: '' }, null, pathPrefix + "/files/");
+        </text>
+        }
+        $('#file-list a').click(function(e){
+            e.preventDefault();
+            var path = $(this).attr('href').replace(pathPrefix +"/files/", "");
+            loadPath(path);
+        })
+        function loadPath(path, skipNavigation, refresh){
+
+            var parts = path.split('#')
+            path = parts[0];
+            var lineScrollerTarget = parts[1];
+
+
+            var navPath = path;
+            if (navPath) {
+                navPath = '/files/' + navPath;
+            }
+
+            if (!skipNavigation) {
+                var statePath = path;
+
+                var urlLine = lineScrollerTarget;
+                if (parts.length == 1 && currentFilePath == path)
+                {
+                    //we stayed on the same page but we didn't select a new line then pick old line to render on the url
+                    urlLine = currentLine;
+                }
+
+                if (urlLine) {
+                    navPath = navPath + '#' + urlLine;
+                    statePath = statePath + '#' + urlLine;
+                }
+
+                currentLine = urlLine;
+
+
+
+                if (currentFilePath != path) {
+                    history.pushState({ path: statePath }, null, pathPrefix + navPath);
+                } else {
+                    history.replaceState({ path: statePath }, null, pathPrefix + navPath);
+                }
+            }
+            if (currentFilePath == path && !refresh) {
+                scrollToLine(lineScrollerTarget);
+
+                return; //we are allready showing the page remain
+            }
+            if (!path) {
+                //show the child file screen
+                return;
+            }
+
+            $.get(pathPrefix + navPath+"?sha=" + sha, function(data){
+                serverResult(path, lineScrollerTarget, data.contents, data.isBinary);
+            });
+        }
+
+        function serverResult(path, line, targetText, isBinary) {
+            currentFilePath = path;
+            var change = files[path].Status;
+            var patch = files[path].Patch;
+
+            $('#fileName').text(path)
+                .removeClass("status-modified")
+                .removeClass("status-added")
+                .removeClass("status-removed")
+                .addClass("status-" + change);
+
+            //if (data.notfound) {
+            //    editorElm.html("<div>Unable to find '" + path + "' in pull request.</div>");
+            //    return;
+            //}
+            if (isBinary) {
+                editorElm.html("<div>Binary file " + data.change + ", preview unavailible.</div>");
+                return;
+            }
+
+            editorElm.html("");
+            targetElm.show();
+            loaderElm.hide();
+
+
+
+            var fileMode = CodeMirror.findModeByFileName(path);
+
+
+            var sourceText = "";
+            if (change != 'added') {
+                var patch = JsDiff.parsePatch(patch);
+                sourceText = JsDiff.applyPatch(targetText, inversePatch(patch));
+            }
+
+
+
+            var mime = "";
+            if (fileMode) {
+                mime = fileMode.mode;
+            }
+            window.reloadEditors = null;
+            if (!sourceText) {
+
+                targetEditor = CodeMirror(editorElm[0], {
+                    value: targetText,
+                    lineNumbers: true,
+                    mode: mime,
+                    connect: null,
+                    readOnly: 'nocursor',
+                    allowEditingOriginals: false,
+                    collapseIdentical: false,
+                    revertButtons: false,
+                    lineWrapping: true,
+                    gutters: ["CodeMirror-linenumbers", "github-comments"]
+                });
+                window.reloadEditors = function () {
+                    targetEditor.refresh();
+                }
+                var doc = targetEditor.getDoc();
+
+                var lineCount = doc.lineCount();
+                var lastListChar = doc.getLine(lineCount - 1).length;
+                doc.markText({ line: 0, ch: 0 }, { line: lineCount, ch: lastListChar }, { className: 'CodeMirror-merge-l-inserted', inclusiveLeft: true, inclusiveRight: true });
+                //single page code mirror with all green background
+            } else if (!targetText) {
+
+                //single page code mirror with all red background
+                sourceEditor = CodeMirror(editorElm[0], {
+                    value: sourceText,
+                    lineNumbers: true,
+                    mode: mime,
+                    connect: null,
+                    readOnly: 'nocursor',
+                    allowEditingOriginals: false,
+                    collapseIdentical: false,
+                    revertButtons: false,
+                    lineWrapping: true,
+                    gutters: ["CodeMirror-linenumbers", "github-comments"]
+                });
+                window.reloadEditors = function () {
+                    sourceEditor.refresh();
+                }
+                var doc = sourceEditor.getDoc();
+                var lineCount = doc.lineCount();
+                var lastListChar = doc.getLine(lineCount - 1).length;
+                doc.markText({ line: 0, ch: 0 }, { line: lineCount, ch: lastListChar }, { className: 'CodeMirror-merge-l-deleted', inclusiveLeft: true, inclusiveRight: true });
+            } else {
+                var mergView = CodeMirror.MergeView(editorElm[0], {
+                    origLeft: sourceText,
+                    value: targetText,
+                    lineNumbers: true,
+                    mode: mime,
+                    connect: null,
+                    readOnly: 'nocursor',
+                    allowEditingOriginals: false,
+                    collapseIdentical: false,
+                    revertButtons: false,
+                    lineWrapping: true,
+                    gutters: ["CodeMirror-linenumbers", "github-comments"]
+                });
+
+                sourceEditor = mergView.left.orig;
+                targetEditor = mergView.edit;
+                window.reloadEditors = function () {
+                    sourceEditor.refresh();
+                    targetEditor.refresh();
+                    mergView.resize();
+                }
+
+            }
+            if (fileMode) {
+                if (sourceEditor) {
+                    CodeMirror.autoLoadMode(sourceEditor, fileMode.mode);//call this once loaded
+                }
+                if (targetEditor) {
+                    CodeMirror.autoLoadMode(targetEditor, fileMode.mode);//call this once loaded
+                }
+            }
+            function markPatch(editor, map) {
+                if (editor) {
+                    var doc = editor.getDoc();
+                    var lineCount = doc.lineCount();
+
+                    var annotation = [];
+                    var currentAnn = null;
+                    for (var i = 0; i < lineCount; i++) {
+                        var mappedPage = map[i + 1]
+                        if (mappedPage > -1) {
+                            if (currentAnn == null) {
+                                currentAnn = { from: { line: i } };
+                            }
+                            currentAnn.to = { line: i };
+                            //var btn = $('<span class="addcomment"></span>');
+                            //btn.click(function () {
+                            //    addComments(this);
+                            //});
+
+                            //editor.setGutterMarker(i, "github-comments", btn[0]);
+                            //btn.data("patchLine", mappedPage);
+
+                        } else {
+                            if (currentAnn) {
+                                annotation.push(currentAnn);
+                            }
+                            currentAnn = null;
+                            doc.addLineClass(i, "wrap", "not-in-patch");
+                        }
+                    }
+                    if (currentAnn !== null) {
+                        annotation.push(currentAnn);
+                    }
+                    var bar = editor.annotateScrollbar('in-patch');
+
+                    bar.update(annotation);
+                }
+            }
+
+            //markPatch(targetEditor, data.pageMap.TargetFile);
+            //markPatch(sourceEditor, data.pageMap.SourceFile);
+
+            var lineClicked = function (cm, line, gutter) {
+                var type = 's';
+                if (cm == targetEditor) {
+                    type = 't';
+                }
+                var target = type + '-' + (line + 1);
+                if (currentLine == target){
+                    loadPath(path + '#');//removes the selected line !!!
+                }else{
+                    loadPath(path + '#' + target);
+                }
+            }
+
+            if (targetEditor) { targetEditor.on("gutterClick", lineClicked); }
+            if (sourceEditor) { sourceEditor.on("gutterClick", lineClicked); }
+
+            var targetPos = $('#splitter').position().top;
+            var mainSCroller = $("html, body");
+
+            var currentTarget = 0;
+            var scrollerTimeout;
+            var scroll = function (cm) {
+                var info = cm.getScrollInfo();
+                var curentPos = info.top;
+                if (window.scrollY < targetPos) {
+                    mainSCroller.stop(true);
+                    if (info.top > 5) {
+                        mainSCroller.animate({ 'scrollTop': targetPos + 'px' });
+                    }
+                }
+            }
+
+            //editorElm.find('.CodeMirror-scroll').on('scroll', function (e) {
+            //    e.preventDefault();
+
+            //});
+
+            if (targetEditor) { targetEditor.on("scroll", scroll); }
+            if (sourceEditor) { sourceEditor.on("scroll", scroll); }
+
+
+            //applyCommentsToEditors();
+            window.fixHeights();
+            window.reloadEditors();
+            //scrollToLine(lineScrollerTarget);
+
+        }
+
+        function scrollToLine(line) {
+            currentLine = line;
+
+            function removehighLight() {
+                if (sourceEditor && sourceEditor._hightlightedLine) {
+                    sourceEditor.removeLineClass(sourceEditor._hightlightedLine, 'wrap', 'highlighted');
+                    sourceEditor._hightlightedLine = null;
+                }
+                if (targetEditor && targetEditor._hightlightedLine) {
+                    targetEditor.removeLineClass(targetEditor._hightlightedLine, 'wrap', 'highlighted');
+                    targetEditor._hightlightedLine = null;
+                }
+            }
+
+            if (!line) {
+                removehighLight();
+                return;
+            }
+
+            var parts = line.split('-');
+            var editor = targetEditor;
+            if (parts[0] === 's') {
+                editor = sourceEditor;
+            }
+            if (editor) {
+                var line = parseInt(parts[1]) - 1;
+
+
+                var t = editor.charCoords({ line: line, ch: 0 }, "local").top;
+                var middleHeight = editor.getScrollerElement().offsetHeight / 2;
+                editor.scrollTo(null, t);//- middleHeight - 5);
+
+
+                removehighLight();
+
+                editor.addLineClass(line, 'wrap', 'highlighted');
+                editor._hightlightedLine = line;
+            }
+        }
+    </script>
+}
