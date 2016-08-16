@@ -104,24 +104,32 @@ namespace GithubPullTracker.Controllers
         {
             if (Request.IsAjaxRequest())
             {
-                string sourceText = null;
+                string sourceText = "";
+                bool fileMissing = false;
                 bool isBinaryDataType = false;
-                var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, sha);
-                var sourceFile = source.SingleOrDefault();
-                if (sourceFile != null)
+                try
                 {
-                    var data = Convert.FromBase64String(sourceFile.EncodedContent);
-                    isBinaryDataType = isBinary(data);
-                    if (!isBinaryDataType)
+                    var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, sha);
+                    var sourceFile = source.SingleOrDefault();
+                    if (sourceFile != null)
                     {
-                        sourceText = sourceFile.Content;
+                        var data = Convert.FromBase64String(sourceFile.EncodedContent);
+                        isBinaryDataType = isBinary(data);
+                        if (!isBinaryDataType)
+                        {
+                            sourceText = sourceFile.Content;
+                        }
                     }
+                }catch(Exception ex)
+                {
+                    fileMissing = true;
                 }
 
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
                 {
                     contents = sourceText,
                     isBinary = isBinaryDataType,
+                    missing = fileMissing,
                 });
 
                 return Content(json, "application/json");
@@ -135,22 +143,28 @@ namespace GithubPullTracker.Controllers
             {
                 path = path.TrimEnd('/');
 
-                string sourceText = null;
+                string sourceText = "";
                 bool isBinaryDataType = false;
-                
-                var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Head.Sha);
-
-                var sourceFile = source.SingleOrDefault();
-                if (sourceFile != null)
+                bool fileMissing = false;
+                try
                 {
-                    var data = Convert.FromBase64String(sourceFile.EncodedContent);
-                    isBinaryDataType = isBinary(data);
-                    if (!isBinaryDataType)
+                    var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, sha);
+                    var sourceFile = source.SingleOrDefault();
+                    if (sourceFile != null)
                     {
-                        sourceText = sourceFile.Content;
+                        var data = Convert.FromBase64String(sourceFile.EncodedContent);
+                        isBinaryDataType = isBinary(data);
+                        if (!isBinaryDataType)
+                        {
+                            sourceText = sourceFile.Content;
+                        }
                     }
                 }
-                
+                catch (Exception ex)
+                {
+                    fileMissing = true;
+                }
+
                 var vm = new PullRequestFileView(pullRequest, files, path, sourceText, isBinaryDataType);
                
 
