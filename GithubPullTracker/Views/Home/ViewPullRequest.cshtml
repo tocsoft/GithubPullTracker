@@ -2,63 +2,75 @@
 @{
     ViewBag.FullWidth = true;
 
-    ViewBag.Title = Model.Title + " by " + Model.Creater.login + " · Pull Request #"+Model.Number+ " · "+Model.RepositoryOwner+"/"+Model.RepositoryName;
+    ViewBag.Title = Model.Title + " by " + Model.Creater.login + " · Pull Request #" + Model.Number + " · " + Model.RepositoryOwner + "/" + Model.RepositoryName;
 
 }
 @section header
-{ 
-        <div class="title-bar">
-            <h1><i class="icon icon-repo" ></i><a class="owner" href="~/@Model.RepositoryOwner">@Model.RepositoryOwner</a> / <a class="repo" href="~/@Model.RepositoryOwner/@Model.RepositoryName">@Model.RepositoryName</a></h1>
+{
+    <div class="title-bar">
+        <h1><i class="icon icon-repo"></i><a class="owner" href="~/@Model.RepositoryOwner">@Model.RepositoryOwner</a> / <a class="repo" href="~/@Model.RepositoryOwner/@Model.RepositoryName">@Model.RepositoryName</a></h1>
 
-            <h2>@Model.Title <span>#@Model.Number</span></h2>
-        </div>
+    </div>
 }
+<div class="title-bar">
+
+    <h2>@Model.Title <span>#@Model.Number</span></h2>
+    <div>
+       
+       <span class="prstatus-open">Open</span> <a href="https://github.com/@Model.Creater.login" target="_blank">@Model.Creater.login</a> wants to merge @Model.Commits into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
+       
+
+    </div>
+</div>
 <div id="splitter">
     <div class="left-splitter">
         <div id="file-list">
-            <span  data-naviagetetree="" class="header">
+            <span data-naviagetetree="" class="header">
                 <i class="icon icon-git-pull-request"></i>
-                <a href="~/@Model.RepositoryOwner/@Model.RepositoryName/pull/@Model.Number" data-naviagetetree="" >Pull Request</a>
-                <span class="badge">1</span>
-                </span>
+                <a href="~/@Model.RepositoryOwner/@Model.RepositoryName/pull/@Model.Number" data-naviagetetree="">Pull Request</a>
+                <span class="badge" style="display:none"></span>
+            </span>
             <div id="tree">
 
             </div>
         </div>
     </div>
     <div class="right-splitter">
-        <div  id="home">
+        <div id="home">
             <div class="main-comment" id="description">
-                <a href="#" class="user">
-                    <img src="@(Model.Creater.avatarUrl)&s=40" class="avatar" />
+                <a href="https://github.com/@Model.Creater.login" target="_blank" class="user">
+                    <img src="@(Model.Creater.avatarUrl)&s=40" class="avatar" alt="@Model.Creater.login" />
                 </a>
                 <div class="comment">
                     <div class="header">
-                        <a href="~/@Model.Creater.login">@Model.Creater.login</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt</time>                        
+                        <a href="https://github.com/@Model.Creater.login" target="_blank">@Model.Creater.login</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt</time>
                     </div>
-                    @if (string.IsNullOrWhiteSpace(Model.Details))
-                    {
-                        <em>No description provided.</em>
-                    }
-                    else
-                    {
-                        <span class="apply-md">@Model.Details</span>
-                    }
+
+                    <div class="markdown">
+                        @if (string.IsNullOrWhiteSpace(Model.Details))
+                        {
+                            <em>No description provided.</em>
+                        }
+                        else
+                        {
+                            <span class="apply-md">@Model.Details</span>
+                        }
+                    </div>
                 </div>
             </div>
 
         </div>
         <div id="loader">
             loading ...
-            </div>
-            <div id="file_diff">
-                <div class="header">
-                    <span id="fileName"></span>
-                    <label><input type="checkbox" id="show-inline-comments" checked />show inline comments</label>
-                </div>
-                <div class="editor"></div>
-            </div>
         </div>
+        <div id="file_diff">
+            <div class="header">
+                <span id="fileName"></span>
+                <label><input type="checkbox" id="show-inline-comments" checked />show inline comments</label>
+            </div>
+            <div class="editor"></div>
+        </div>
+    </div>
 </div>
 
 <script type="x-template" id="home-comment-template">
@@ -82,9 +94,9 @@
     <script>
 
 
-        
 
-        diffViewScript('@Model.CurrentFile', '@Model.HeadSha', '@Url.Action("ViewPullRequest")', @Html.Raw(Model.TreeData.ToString()))
+
+        diffViewScript('@Model.CurrentFile', '@Model.HeadSha', '@Url.Action("ViewPullRequest")', @Html.Raw(Model.TreeData.ToString()), '@Model.RepositoryOwner','@Model.RepositoryName')
 
     </script>
 }

@@ -25,6 +25,29 @@ namespace GithubPullTracker.Models
             this.Details = pr.Body;
             this.Creater = new User(pr.User);
             this.CreatedAt = pr.CreatedAt;
+            Status = pr.State;
+            Commits = pr.Commits;
+
+            HeadName = pr.Head.Ref;
+            BaseName = pr.Base.Ref;
+
+            var splitter = ":";
+            if (pr.Head.Repository.Name != pr.Base.Repository.Name)
+            {
+
+                HeadName = pr.Head.Repository.Name + splitter + HeadName;
+                BaseName = pr.Base.Repository.Name + splitter + pr.Base.Label;
+                splitter = "/";
+            }
+            if (pr.Head.User.Login != pr.Base.User.Login )
+            {
+                HeadName = pr.Head.User.Login + splitter + HeadName;
+                BaseName = pr.Base.User.Login + splitter + pr.Base.Label;
+            }
+
+            HeadNameFull = $"{ pr.Head.User.Login}/{pr.Head.Repository.Name}:{pr.Head.Label}"; ;
+            BaseNameFull = $"{ pr.Base.User.Login}/{pr.Base.Repository.Name}:{pr.Base.Label}"; ;
+            
         }
 
         public PullRequestView(PullRequest pr, string selectedPath) :this(pr)
@@ -47,5 +70,11 @@ namespace GithubPullTracker.Models
         public string Details { get; private set; }
         public User Creater { get; private set; }
         public DateTimeOffset CreatedAt { get; private set; }
+        public ItemState Status { get; private set; }
+        public int Commits { get; private set; }
+        public string HeadName { get; private set; }
+        public string BaseName { get; private set; }
+        public string HeadNameFull { get; private set; }
+        public string BaseNameFull { get; private set; }
     }
 }

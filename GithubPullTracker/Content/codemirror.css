@@ -30,7 +30,7 @@
 .CodeMirror-linenumbers {}
 .CodeMirror-linenumber {
   padding: 0 3px 0 5px;
-  min-width: 20px;
+  min-width: 30px;
   text-align: right;
   color: #999;
   white-space: nowrap;
@@ -278,7 +278,6 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #f22;}
 .CodeMirror-code {
   outline: none;
 }
-
 /* Force content-box sizing for the elements where we expect it */
 .CodeMirror-scroll,
 .CodeMirror-sizer,

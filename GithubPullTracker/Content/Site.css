@@ -3,6 +3,11 @@
     margin:0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         font-size: 14px;
+    height: 100%;
+}
+html{
+    height: 100%;
+
 }
 
 
@@ -10,7 +15,7 @@
     #splitter {
 	height:  600px;
 	width:100%;
-	
+    min-height: 100%;
     
     top:0;left:0;right:0;bottom:0;
 }
@@ -41,17 +46,6 @@
     width:0px;
 
 }
-
-#tree {
-/*overflow-y:auto;
-overflow-x:hidden;
-position:absolute;
-top:0;left:0;
-right:0;
-bottom:0;
-margin-top: 5px;*/
-}
-
 
 #home {
     display: none;
@@ -132,8 +126,8 @@ div.commentList {
     padding-top: 7px;
         padding-left:10px
     }
-        #file_diff > div.header #fileName {
-        }
+        
+
     #file_diff >  div.header label{
         float:right;
         margin-right:5px;
@@ -225,13 +219,8 @@ div.commentList {
         color:#aaa
 
     }
-    .not-in-patch .CodeMirror-gutter-wrapper{
+    
 
-    }
-
-    .in-patch{
-
-    }
     
     .in-patch::after{
         content:' ';
@@ -244,8 +233,8 @@ div.commentList {
         opacity:0.5;
     }
     
-     a{
-         text-decoration:none;
+     a{    color: #4078c0;
+    text-decoration: none;
      }  a:hover{
          text-decoration:underline;
      }
@@ -394,15 +383,20 @@ div.commentList {
   
 .title-bar {
     overflow:auto;
+    width:980px;
+    margin:0 auto;
 }
-.title-bar h1,.title-bar h2{
-    float:left;
-}
+.body-content .title-bar{ margin-bottom:20px;     padding: 0 15px;}
 
 .highlighted .CodeMirror-linenumber{
         background-color: gold;
     font-weight:bold;
 }
+
+.CodeMirror-code> div{
+    padding-top:0.25em;padding-bottom:0.25em;
+}
+
 
 .file-diff {
     padding:0;
@@ -578,7 +572,7 @@ padding:10px 0 0  35px;
     font-weight:normal;
     font-size: 32px;
     margin:0;
-    margin-left:20px;
+
 }
 .title-bar h2 span{
     font-weight: 300;
@@ -634,6 +628,9 @@ pre code{
         padding-bottom: 0.3em;
     font-size: 2em;
     border-bottom: 1px solid #eee;
+}
+.markdown {
+    overflow: auto;
 }
 
 .markdown h1,

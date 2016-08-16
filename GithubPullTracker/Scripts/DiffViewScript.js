@@ -1,4 +1,38 @@
-﻿var diffViewScript = function (currentFilePath, headSha, pathPrefix, sourceFileTree) {
+﻿var diffViewScript = function (currentFilePath, headSha, pathPrefix, sourceFileTree, repoOwner, repoName) {
+
+    var srcmarked = window.marked;
+    srcmarked.setOptions({
+        gfm: true,
+        tables: true,
+        breaks: false,
+        pedantic: false,
+        sanitize: true,
+        smartLists: true,
+        smartypants: false
+    });
+
+    window.marked = function (markdown) {
+
+        var re_issuesWithRepo = /(\s|^)([a-zA-Z0-9][a-zA-Z0-9_]{1,14}\/[a-zA-Z0-9-_.]+)#(\d+)(\s|$)/gm;
+        var subst_issuesWithRepo = '$1[$2#$3](https://github.com/$2/issues/$3)$4';
+
+        var re_issues = /(\s|^)#(\d+)(\s|$)/gm;
+        var subst_issues = '$1[#$2](https://github.com/'+repoOwner+'/'+repoName+'/issues/$2)$3';
+
+        markdown = markdown
+            .replace(re_issuesWithRepo, subst_issuesWithRepo)
+            .replace(re_issues, subst_issues)
+            ;
+
+
+        var html = srcmarked(markdown);
+
+        var re_links = /(<a)( href=")/gm;
+        var subst_links = '$1 target=\'_blank\'$2';
+
+        return html.replace(re_links, subst_links);
+    }
+
 
     var cachedFileTree = sourceFileTree;
     //will be swapped out
@@ -21,7 +55,12 @@
         lscache.set("options", options);
         applyCommentsToEditors();
     });
-
+    $('.apply-md').each(function () {
+        var $this = $(this);
+        var innerHtml = $this.html();
+        
+        $this.parent().html(marked(innerHtml));
+    })
 
     function reload() {
         loadFileList();
@@ -288,7 +327,7 @@
                 
             }
 
-            $('#home .timeago').timeago();
+            $('.timeago').timeago();
             fixHeights();
             applyCommentsToTree();
             applyCommentsToEditors();
@@ -328,13 +367,14 @@
             } else { node.tags = []; }
 
         }
-        $('#file-list .header .badge').show();
-        $('#file-list .header .badge').text(total + 1);
+        if (total > 0) {
+            $('#file-list .header .badge').show();
+            $('#file-list .header .badge').text(total);
+        }
 
         tree.redraw();
 
     }
-    $('#file-list .header .badge').show();
 
     function applyCommentsToEditors() {
 
@@ -412,6 +452,9 @@
                 }
             }
         }
+
+        $('#file_diff .timeago').timeago();
+
         if (reloadEditors) {
             reloadEditors();
 
@@ -422,7 +465,19 @@
     }
     //preiodically reload comments and reapply??? on loadPageMaybe???
     function scrollToLine(line) {
+        function removehighLight() {
+            if (sourceEditor && sourceEditor._hightlightedLine) {
+                sourceEditor.removeLineClass(sourceEditor._hightlightedLine, 'wrap', 'highlighted');
+                sourceEditor._hightlightedLine = null;
+            }
+            if (targetEditor && targetEditor._hightlightedLine) {
+                targetEditor.removeLineClass(targetEditor._hightlightedLine, 'wrap', 'highlighted');
+                targetEditor._hightlightedLine = null;
+            }
+        }
+
         if (!line) {
+            removehighLight();
             return;
         }
 
@@ -433,19 +488,14 @@
         }
         if (editor) {
             var line = parseInt(parts[1]) - 1;
+
+            
             var t = editor.charCoords({ line: line, ch: 0 }, "local").top;
             var middleHeight = editor.getScrollerElement().offsetHeight / 2;
             editor.scrollTo(null, t);//- middleHeight - 5);
 
 
-            if (sourceEditor && sourceEditor._hightlightedLine) {
-                sourceEditor.removeLineClass(sourceEditor._hightlightedLine, 'wrap', 'highlighted');
-                sourceEditor._hightlightedLine = null;
-            }
-            if (targetEditor && targetEditor._hightlightedLine) {
-                targetEditor.removeLineClass(targetEditor._hightlightedLine, 'wrap', 'highlighted');
-                targetEditor._hightlightedLine = null;
-            }
+            removehighLight();
 
             editor.addLineClass(line, 'wrap', 'highlighted');
             editor._hightlightedLine = line;
@@ -499,7 +549,8 @@
             }
 
             var urlLine = lineScrollerTarget;
-            if (!urlLine && currentFilePath == path) {
+            if (parts.length == 1 && currentFilePath == path)
+            {
                 //we stayed on the same page but we didn't select a new line then pick old line to render on the url
                 urlLine = currentLine;
             }
@@ -731,7 +782,12 @@
                 if (cm == targetEditor) {
                     type = 't';
                 }
-                loadPath(path + '#' + type + '-' + (line + 1));
+                var target = type + '-' + (line + 1);
+                if (currentLine == target){
+                    loadPath(path + '#');//removes the selected line !!!
+                }else{
+                    loadPath(path + '#' + target);
+                }
             }
 
             if (targetEditor) { targetEditor.on("gutterClick", lineClicked); }
