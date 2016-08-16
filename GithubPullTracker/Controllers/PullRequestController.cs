@@ -143,20 +143,26 @@ namespace GithubPullTracker.Controllers
             {
                 path = path.TrimEnd('/');
 
+                var file = files.Where(x => x.FileName == path).Single();
+
+
                 string sourceText = "";
                 bool isBinaryDataType = false;
                 bool fileMissing = false;
                 try
                 {
-                    var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, sha);
-                    var sourceFile = source.SingleOrDefault();
-                    if (sourceFile != null)
+                    if (file.Status != "removed")
                     {
-                        var data = Convert.FromBase64String(sourceFile.EncodedContent);
-                        isBinaryDataType = isBinary(data);
-                        if (!isBinaryDataType)
+                        var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, pullRequest.Head.Sha);
+                        var sourceFile = source.SingleOrDefault();
+                        if (sourceFile != null)
                         {
-                            sourceText = sourceFile.Content;
+                            var data = Convert.FromBase64String(sourceFile.EncodedContent);
+                            isBinaryDataType = isBinary(data);
+                            if (!isBinaryDataType)
+                            {
+                                sourceText = sourceFile.Content;
+                            }
                         }
                     }
                 }
