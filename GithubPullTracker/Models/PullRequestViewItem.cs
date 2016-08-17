@@ -12,8 +12,6 @@ namespace GithubPullTracker.Models
     [DebuggerDisplay("{Path}")]
     public class PullRequestViewItem
     {
-
-
         bool _selected = false;
         private readonly PullRequestFile fileItem;
 

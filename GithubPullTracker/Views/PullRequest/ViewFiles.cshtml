@@ -1,7 +1,7 @@
 ﻿@model PullRequestFileView
 @{
     ViewBag.FullWidth = true;
-    ViewBag.Title = Model.Title + " by " + Model.Creater.login + " · Pull Request #" + Model.Number + " · " + Model.RepositoryOwner + "/" + Model.RepositoryName;
+    ViewBag.Title = Model.Title + " by " + Model.CreatedBy.Login + " · Pull Request #" + Model.Number + " · " + Model.RepositoryOwner + "/" + Model.RepositoryName;
 
 }
 @section header
@@ -41,6 +41,7 @@
     </div>
     <div class="right-splitter">       
         <div id="loader">loading</div>
+        <div id="message"></div>
         <div id="file_diff">
             <div class="header">
                 <span id="fileName"></span>
@@ -88,11 +89,11 @@
                 heightFixerTo = setTimeout(function () {
                     //var offset = splitter.position().top;
                     var winh = fixHeightswindowElm.height();
-
+                    
                     var editorHEader = fixHeightsfilediffElm.find('.header').outerHeight();
                     $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror, .CodeMirror { height: " + (winh - editorHEader - 15) + "px;}")
-
-                    fixHeightssplitterElm.height(fixHeightsfilediffElm.outerHeight() + 10).trigger("resize");
+                    
+                    fixHeightssplitterElm.height(winh).trigger("resize");
                     if(window.reloadEditors){
                         window.reloadEditors();
                     }
@@ -147,8 +148,9 @@
         }
 
         var editorElm = $('#editor');
-        var targetElm = $('#file_diff');
-        var loaderElm = $('#loader');
+        var targetElm = $('#file_diff').hide();
+        var loaderElm = $('#loader').show();
+        var messageElm = $('#message').hide();
         var targetEditor;
         var sourceEditor;
         var currentFilePath = '';
@@ -172,6 +174,8 @@ else
 
         <text>
         history.replaceState({ path: '' }, null, pathPrefix + "/files/");
+        messageElm.html("select a file on the left to see changes").show();
+        loaderElm.hide();
         </text>
         }
         $('#file-list a').click(function(e){
@@ -222,9 +226,16 @@ else
                 return; //we are allready showing the page remain
             }
             if (!path) {
+                
+                messageElm.show();
+                targetElm.hide();
+                loaderElm.hide();
                 //show the child file screen
                 return;
             }
+            messageElm.hide();
+            targetElm.hide();
+            loaderElm.show();
             if(files[path].Status == 'removed' ){
                 serverResult(path, lineScrollerTarget, "", false);
             }else{
@@ -256,6 +267,7 @@ else
 
             editorElm.html("");
             targetElm.show();
+
             loaderElm.hide();
 
 

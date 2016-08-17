@@ -23,7 +23,11 @@ namespace GithubPullTracker.Models
             this.RepositoryOwner = parts[0];
             this.RepositoryName = parts[1];
             this.Details = pr.Body;
-            this.Creater = new User(pr.User);
+            this.CreatedBy = new User(pr.User);
+            if (pr.Assignee != null)
+            {
+                this.Assignee = new User(pr.Assignee);
+            }
             this.CreatedAt = pr.CreatedAt;
             Status = pr.State;
             Commits = pr.Commits;
@@ -47,7 +51,8 @@ namespace GithubPullTracker.Models
 
             HeadNameFull = $"{pr.Head.User.Login}/{pr.Head.Repository.Name}:{pr.Head.Label}"; ;
             BaseNameFull = $"{pr.Base.User.Login}/{pr.Base.Repository.Name}:{pr.Base.Label}"; ;
-
+            Files = pr.ChangedFiles;
+            Comments = pr.Comments;
         }
         
 
@@ -63,13 +68,16 @@ namespace GithubPullTracker.Models
 
         public string Title { get; private set; }
         public string Details { get; private set; }
-        public User Creater { get; private set; }
+        public User CreatedBy { get; private set; }
         public DateTimeOffset CreatedAt { get; private set; }
         public ItemState Status { get; private set; }
         public int Commits { get; private set; }
+        public int Files { get; private set; }
+        public int Comments { get; private set; }
         public string HeadName { get; private set; }
         public string BaseName { get; private set; }
         public string HeadNameFull { get; private set; }
         public string BaseNameFull { get; private set; }
+        public User Assignee { get; private set; }
     }
 }

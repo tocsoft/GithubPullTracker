@@ -89,13 +89,13 @@ namespace GithubPullTracker.Controllers
         {
             var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
 
+            var commits = await Client.PullRequest.Commits(owner, repo, reference);
+
             var comments = await Client.PullRequest.Comment.GetAll(owner, repo, reference);
             
             var issueComments = await Client.Issue.Comment.GetAllForIssue(owner, repo, reference, new ApiOptions { PageSize = 1000 });
-
-           var allComments = Comment.Create(comments).Union(Comment.Create(issueComments)).OrderBy(x => x.createdAt).ToList();
             
-            var pr = new PullRequestCommentsView(pullRequest, allComments);
+            var pr = new PullRequestCommentsView(pullRequest, commits, issueComments, comments);
             return View(pr);
         }
 

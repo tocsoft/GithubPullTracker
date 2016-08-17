@@ -483,6 +483,8 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\TimelineEvents.cs" />
+    <Compile Include="Models\Commit.cs" />
     <Compile Include="Models\PageMap.cs" />
     <Compile Include="Models\Comment.cs" />
     <Compile Include="Models\PullRequestCommentsView.cs" />

@@ -11,97 +11,68 @@ namespace GithubPullTracker.Models
     {
         public User(Octokit.User x)
         {
-            avatarUrl = x.AvatarUrl;
-            login = x.Login;
+            AvatarUrl = x.AvatarUrl;
+            Login = x.Login;
         }
-
-        public string avatarUrl { get; private set; }
-        public string login { get; private set; }
+        public string AvatarUrl { get; private set; }
+        public string Login { get; private set; }
     }
 
-    
-   
 
     public class Comment
     {
-        public class CommentDetails
-        {
-            public string body { get; internal set; }
-            public User user { get; internal set; }
-            public DateTimeOffset createdAt { get; internal set; }
-        }
+        public string Body { get; internal set; }
+        public User CreatedBy { get; internal set; }
+        public DateTimeOffset CreatedAt { get; internal set; }
 
-        public static IEnumerable<Comment> Create(IEnumerable<PullRequestReviewComment> comments)
+        public Comment(IssueComment comment)
         {
-            return comments
-                .GroupBy(x => new { x.Path, x.Position, x.DiffHunk })
-                .Select(x => new Comment()
-                {
-                    isFileComment = true,
-                    lineNumber = x.Key.Position,
-                    patch = x.Key.DiffHunk,
-                    path = x.Key.Path,
-                    createdAt = x.Min(c => c.CreatedAt),
-                    details = x.Select(c => new CommentDetails
-                    {
-                        body = c.Body,
-                        createdAt = c.CreatedAt,
-                        user = new User(c.User)
-                    }).ToList()
-                }).ToList();
+            Body = comment.Body;
+            CreatedAt = comment.CreatedAt;
+            CreatedBy = new User(comment.User);
         }
+    }
 
-        public static IEnumerable<Comment> Create(IEnumerable<IssueComment> comments)
+    public class FileComment
+    {
+        public FileComment(PullRequestReviewComment comment)
         {
-            return comments
-                .Select(c => new Comment()
-                {
-                    isFileComment = false,
-                    lineNumber = null,
-                    patch = null,
-                    path = null,
-                    createdAt = c.CreatedAt,
-                    details = new[] { new CommentDetails
-                    {
-                        body = c.Body,
-                        createdAt = c.CreatedAt,
-                        user = new User(c.User)
-                    } }
-                }).ToList();
+            LineNumber = comment.Position;
+            Patch = comment.DiffHunk;
+            Path = comment.Path;
+            CreatedAt = comment.CreatedAt;
+            CreatedBy = new User(comment.User);
+            Body = comment.Body;
         }
-        public bool isFileComment { get; set; } = false;
-        public int? lineNumber { get; set; }
+        public string Body { get; internal set; }
+        public User CreatedBy { get; internal set; }
+        public DateTimeOffset CreatedAt { get; internal set; }
+        public int? LineNumber { get; set; }
 
         PageMap _map;
         private PageMap map
-        {get
-            {
-                return _map ?? (_map = new PageMap(patch));
-            }
-        }
-        public int? sourceLineNumber
         {
             get
             {
-                return map.PatchToSourceLineNumber(lineNumber);
+                return _map ?? (_map = new PageMap(Patch));
             }
         }
-        public int? targetLineNumber
+        public int? SourceLineNumber
         {
             get
             {
-                return map.PatchToSourceLineNumber(lineNumber);
+                return map.PatchToSourceLineNumber(LineNumber);
+            }
+        }
+        public int? TargetLineNumber
+        {
+            get
+            {
+                return map.PatchToSourceLineNumber(LineNumber);
             }
         }
 
-        public string patch { get; private set; }
-        public string path { get; private set; }
-        public DateTimeOffset createdAt { get; internal set; }
-
-        public IEnumerable<CommentDetails> details { get; set; }
-        private Comment()
-        {
-        }
-     
+        public string Patch { get; private set; }
+        public string Path { get; private set; }
     }
 }

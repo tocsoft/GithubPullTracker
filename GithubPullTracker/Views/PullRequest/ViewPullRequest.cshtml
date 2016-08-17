@@ -1,7 +1,7 @@
 ﻿@model GithubPullTracker.Models.PullRequestCommentsView
 @{
 
-    ViewBag.Title = Model.Title + " by " + Model.Creater.login + " · Pull Request #" + Model.Number + " · " + Model.RepositoryOwner + "/" + Model.RepositoryName;
+    ViewBag.Title = Model.Title + " by " + Model.CreatedBy.Login + " · Pull Request #" + Model.Number + " · " + Model.RepositoryOwner + "/" + Model.RepositoryName;
 
 }
 @section header
@@ -14,12 +14,12 @@
 
         <div id="home">
             <div class="main-comment" id="description">
-                <a href="https://github.com/@Model.Creater.login" target="_blank" class="user">
-                    <img src="@(Model.Creater.avatarUrl)&s=40" class="avatar" alt="@Model.Creater.login" />
+                <a href="https://github.com/@Model.CreatedBy.Login" target="_blank" class="user">
+                    <img src="@(Model.CreatedBy.AvatarUrl)&s=40" class="avatar" alt="@Model.CreatedBy.Login" />
                 </a>
                 <div class="comment">
                     <div class="header">
-                        <a href="https://github.com/@Model.Creater.login" target="_blank">@Model.Creater.login</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt</time>
+                        <a href="https://github.com/@Model.CreatedBy.Login" target="_blank">@Model.CreatedBy.Login</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt</time>
                     </div>
 
 
@@ -37,68 +37,85 @@
 
             </div>
 
-                @foreach (var c in Model.Comments)
+                @foreach (var evnt in Model.Events)
                 {
-                    if (c.isFileComment)
+                    var fileComment = evnt.Item as GithubPullTracker.Models.FileComment;
+                    var issueComment = evnt.Item as GithubPullTracker.Models.Comment;
+                    var commit = evnt.Item as GithubPullTracker.Models.Commit;
+                    if (issueComment != null)
                     {
-
+                        <div class="main-comment event">
+                            <a href="https://github.com/@issueComment.CreatedBy.Login" target="_blank" class="user">
+                                <img src="@(issueComment.CreatedBy.AvatarUrl)&s=40" class="avatar" />
+                            </a>
+                            <div class="comment">
+                                <div class="header">
+                                    <a href="https://github.com/@(@issueComment.CreatedBy.Login)" target="_blank">@(@issueComment.CreatedBy.Login)</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
+                                </div>
+                                <div class="markdown apply-md">@issueComment.Body</div>
+                            </div>
+                        </div>
+                    }
+                    else if (fileComment != null)
+                    {
                         <div class="file-comment-list event">
                             <div class="file-diff comment">
                                 <div class='header'>
-                                    @c.path
+                                    @fileComment.Path
                                     @{
                                         var lineRef = "";
-                                        if (c.targetLineNumber.HasValue)
+                                        if (fileComment.TargetLineNumber.HasValue)
                                         {
-                                            lineRef = "t-" + c.targetLineNumber.ToString();
+                                            lineRef = "t-" + fileComment.TargetLineNumber.ToString();
                                         }
-                                        else if (c.sourceLineNumber.HasValue)
+                                        else if (fileComment.SourceLineNumber.HasValue)
                                         {
-                                            lineRef = "s-" + c.sourceLineNumber.ToString();
+                                            lineRef = "s-" + fileComment.SourceLineNumber.ToString();
                                         }
                                     }
-                                    <a href="@Url.Action("ViewFiles", new { path = c.path })#@lineRef" data-naviagetetree="@c.path#@lineRef">View full file</a>
+                                    <a href="@Url.Action("ViewFiles", new { path = fileComment.Path })#@lineRef" data-naviagetetree="@fileComment.Path#@lineRef">View full file</a>
                                 </div>
-                                <div class="patch apply-patch">@c.patch</div>
+                                <div class="patch apply-patch">@fileComment.Patch</div>
                             </div>
 
-                            @foreach (var b in c.details)
+                            @foreach (var b in evnt.ItemsOf<GithubPullTracker.Models.FileComment>())
                             {
                                 <div class="comment ">
                                     <div class="header">
-                                        <a href="https://github.com/@b.user.login" target="_blank">
-                                            <img src="@b.user.avatarUrl&s=40" class="avatar" />
+                                        <a href="https://github.com/@b.CreatedBy.Login" target="_blank">
+                                            <img src="@b.CreatedBy.AvatarUrl&s=40" class="avatar" />
                                         </a>
-                                        <a href="https://github.com/@b.user.login" target="_blank">@b.user.login</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
+                                        <a href="https://github.com/@b.CreatedBy.Login" target="_blank">@b.CreatedBy.Login</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
                                     </div>
-                                    <div class="markdown  apply-md">@b.body</div>
+                                    <div class="markdown  apply-md">@b.Body</div>
                                 </div>
                             }
                         </div>
-
-                                        }
-                                        else
-                                        { 
-                                             foreach (var b in c.details)
-                                            {
-
-                                            <div class="main-comment event">
-                                                <a href="https://github.com/@b.user.login" target="_blank" class="user">
-                                                    <img src="@(b.user.avatarUrl)&s=40" class="avatar" />
-                                                </a>
-                                                <div class="comment">
-                                                    <div class="header">
-                                                        <a href="https://github.com/@(b.user.login)" target="_blank">@(b.user.login)</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
-                                                    </div>
-                                                    <div class="markdown apply-md">@b.body</div>
-                                                </div>
-                                            </div>
-
-                                            }
                                             }
                                         }
+
 
         </div>
+
+<aside id="sidebar">
+    <section>
+        <h3>Assignee</h3>
+        @if (Model.Assignee != null)
+        {
+            <a href="https://github.com/@Model.Assignee.Login">
+                <img src="@(Model.Assignee.AvatarUrl)&s=40" alt="@Model.Assignee.Login" />
+                @Model.Assignee.Login
+            </a>
+        }
+        else
+        {
+            <span>Unassigned</span>
+        }
+    </section>
+</aside>
+
+
+
         
 
 <script type="x-template" id="home-comment-template">
