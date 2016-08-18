@@ -9,13 +9,21 @@ namespace GithubPullTracker.Models
 {
     public class User
     {
+        public User(GithubClient.Models.User x)
+        {
+            Login = x.login;
+            AvatarUrl = x.avatar_url;
+            ProfileUrl = x.html_url;
+        }
         public User(Octokit.User x)
         {
             AvatarUrl = x.AvatarUrl;
             Login = x.Login;
+            ProfileUrl = x.HtmlUrl;
         }
         public string AvatarUrl { get; private set; }
         public string Login { get; private set; }
+        public string ProfileUrl { get; private set; }
     }
 
 

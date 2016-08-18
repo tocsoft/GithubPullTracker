@@ -490,7 +490,7 @@
     <Compile Include="Models\PullRequestCommentsView.cs" />
     <Compile Include="Models\PullRequestFileView.cs" />
     <Compile Include="Models\PullRequestView.cs" />
-    <Compile Include="Models\PullRequestResult.cs" />
+    <Compile Include="Models\SearchResults.cs" />
     <Compile Include="Models\GithubUser.cs" />
     <Compile Include="AuthAttribute.cs" />
     <Compile Include="Models\PullRequestViewItem.cs" />
@@ -528,6 +528,12 @@
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Views\Auth\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GithubClient\GithubClient.csproj">
+      <Project>{3CC4E190-FFE0-4848-863F-22516DA59C31}</Project>
+      <Name>GithubClient</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

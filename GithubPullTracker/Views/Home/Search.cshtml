@@ -1,8 +1,60 @@
-﻿@model GithubPullTracker.Models.PullRequestResult
+﻿@model GithubPullTracker.Models.UserSearchResults
 
 
 @{
     ViewBag.Title = "Search";
 }
 
-@{Html.RenderPartial("_SearchResults", Model);}
+
+<a href="@Model.GenerateStateUrl(GithubClient.RequestState.Open)">Open</a>
+<a href="@Model.GenerateStateUrl(GithubClient.RequestState.Closed)">Closed</a>
+<a href="@Model.GenerateStateUrl(GithubClient.RequestState.Merged)">Merged</a>
+<br />
+<a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.Assigned)">Assigned</a>
+<a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.Author)">Created</a>
+<a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.Involved)">Involved</a>
+
+<span>@Model.Hits</span>
+@foreach (var result in Model.Items)
+{
+    <div>
+        <div>
+            <h2>
+                @if (ViewBag.HideRepo != true)
+                {
+                    <a href="~/@(result.RepositoryOwner)/@(result.RepositoryName)">
+                        @(result.RepositoryOwner)/@(result.RepositoryName)
+                    </a>
+                }
+                <a href="@Url.Action("ViewPullRequest", "PullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
+                    @result.Title
+                </a>
+            </h2>
+            <span>
+                <a href="@Url.Action("ViewPullRequest", "PullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
+                    #@(result.Number)
+                </a>
+                @if (result.ClosedAt.HasValue)
+                {
+                    <text> by
+                        <a href="@result.CreateBy.ProfileUrl" target="_blank">@result.CreateBy.Login</a>
+                        closed <time class="timeago">@result.CreatedAt.ToString()</time>
+                    </text>
+                }
+                else
+                {
+                    <text>
+                        opened
+                        <time class="timeago">@result.CreatedAt.ToString()</time> by
+                        <a href="@result.CreateBy.ProfileUrl" target="_blank">@result.CreateBy.Login</a>
+                    </text>
+                }
+            </span>
+        </div>
+    </div>
+}
+<nav class="pagination">
+@for (var p = 1; p <= Model.PageCount; p++)
+{
+    <a href="@Model.GeneratePageUrl(p)">@p</a>
+}</nav>

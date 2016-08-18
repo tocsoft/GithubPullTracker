@@ -22,7 +22,7 @@ namespace GithubPullTracker.Controllers
 
         public GithubUser CurrentUser { get { return ViewData["__CurrentUser__"] as GithubUser; } protected set { ViewData["__CurrentUser__"] = value; } }
 
-        public GitHubClient Client { get; private set; }  = new GitHubClient(new ProductHeaderValue("pull-tracker"));
+        public GithubClient.Client Client { get; private set; } = new GithubClient.Client("pull-tracker");
 
         protected override IAsyncResult BeginExecute(RequestContext requestContext, AsyncCallback callback, object state)
         {
@@ -45,7 +45,7 @@ namespace GithubPullTracker.Controllers
 
             if (CurrentUser != null)
             {
-                Client.Credentials = new Credentials(CurrentUser.AuthKey);
+                Client.AccessToken = CurrentUser.AuthKey;
             }
 
             return base.BeginExecute(requestContext, callback, state);

@@ -9,6 +9,7 @@ using System.Web.Security;
 using GithubPullTracker.Models;
 using Octokit;
 using AttributeRouting.Web.Mvc;
+using GithubClient;
 
 namespace GithubPullTracker.Controllers
 {
@@ -30,17 +31,14 @@ namespace GithubPullTracker.Controllers
             string csrf = Membership.GeneratePassword(24, 1);
             TempData["CSRF:State"] = csrf;
             var clientId = SettingsManager.Settings.GetSetting("Github.ClientId");
-            var request = new OauthLoginRequest(clientId)
+
+            var request = new OAuthRedirectUrlBuilder(clientId)
             {
                 Scopes = { "repo" },
                 State = csrf,
             };
-
-            // NOTE: user must be navigated to this URL
-            var oauthLoginUrl = Client.Oauth.GetGitHubLoginUrl(request);
-
-
-            return Redirect(oauthLoginUrl.ToString());
+            
+            return Redirect(request.Build());
         }
 
         [GET("login/github-callback", SitePrecedence = 2)]
@@ -55,20 +53,20 @@ namespace GithubPullTracker.Controllers
             var clientId = SettingsManager.Settings.GetSetting("Github.ClientId");
 
             var clientSecret = SettingsManager.Settings.GetSetting("Github.ClientSecret");
-            
-            var request = new OauthTokenRequest(clientId, clientSecret, code);
-            var token = await Client.Oauth.CreateAccessToken(request);
 
-            Client.Credentials = new Credentials(token.AccessToken);
 
-            var currentUser = await Client.User.Current();
+            var token = await Client.CreateAccessToken(clientId, clientSecret, code);
+
+            Client.AccessToken = token.access_token;
+
+            var currentUser = await Client.CurrentUser();
 
             CurrentUser = new GithubUser()
             {
-                AuthKey = token.AccessToken,
-                UserName = currentUser.Login,
-                AvartarUrl = currentUser.AvatarUrl,
-                ProfileUrl = currentUser.HtmlUrl
+                AuthKey = token.access_token,
+                UserName = currentUser.login,
+                AvartarUrl = currentUser.avatar_url,
+                ProfileUrl = currentUser.html_url
             };
             
             return RedirectToAction("Home", "Home");

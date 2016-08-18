@@ -60,8 +60,8 @@ namespace GithubClient.Models
         public int closed_issues { get; set; }
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
-        public DateTime closed_at { get; set; }
-        public DateTime due_on { get; set; }
+        public DateTime? closed_at { get; set; }
+        public DateTime? due_on { get; set; }
     }
     
 
