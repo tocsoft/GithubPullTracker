@@ -16,9 +16,23 @@ html{
 	height:  600px;
 	width:100%;
     min-height: 100%;
-    
-    top:0;left:0;right:0;bottom:0;
+        position: relative;
 }
+    
+    #splitter .left-splitter{
+           width: 20%;
+    position: relative;
+    height: 100%;
+    box-sizing:padding-box;
+    float: left;
+    }
+    
+    #splitter .right-splitter{
+        width:79%;
+        position: relative;
+    float: right;
+    box-sizing:padding-box;
+    }
 #splitter > div {
 	overflow: auto;
 }
@@ -235,7 +249,7 @@ div.commentList {
         background:#efefef;
     }
     .not-in-patch .CodeMirror-line {
-        opacity:0.7;
+        opacity:0.9;
     }
     .CodeMirror-linenumber
     {
@@ -289,7 +303,8 @@ div.commentList {
     background-color:#795600;
 }
 
-.treeview .status-modified{
+#file-list li.status-modified .node,
+#file-list li.status-mixed .node{
     color:#795600;
 }
 /*.treeview .node-selected.status-modified{
@@ -305,7 +320,7 @@ div.commentList {
 
     background-color:#399539;
 }
-.treeview .status-added{
+#file-list li.status-added .node{
     color:#399539;
 }
 /*.treeview .node-selected.status-added{
@@ -321,9 +336,10 @@ div.commentList {
 
     background-color:#B11919;
 }
-.treeview .status-removed{
-    color:#B11919;
+#file-list li.status-removed .node{
+    color:#b11919;
 }
+
 /*.treeview .node-selected.status-removed{
     background-color:#B11919;
     color:white;
@@ -333,7 +349,7 @@ div.commentList {
     color:white;
 }*/
 
-.treeview .node-selected{
+/*.treeview .node-selected{
     background-color:#428bca;
     color:white;
 }
@@ -353,17 +369,6 @@ div.commentList {
     color: white !important;
 }
 
-#file-list {
-    overflow-x: hidden;
-    overflow-y: hidden;
-    position: absolute;
-    left: 0px;
-    right: 0px;
-    bottom: 5px;
-    top: 5px;
-    border: 1px solid #bfccd1;
-    border-radius: 3px;
-}
   #file-list > .header{
            padding: 10px 10px;
     font-size: 1.2em;
@@ -406,7 +411,7 @@ div.commentList {
 
 .treeview .list-group-item{
     padding:5px 10px;
-}
+}*/
 
   
 .title-bar {
@@ -487,6 +492,9 @@ div.commentList {
 .file-comment-list {
     margin-left:60px;
     margin-bottom:20px;
+}
+.file-comment-list.hidden{
+    display:none;
 }
 .treeview span.icon{
     display:inline-block;
@@ -728,4 +736,98 @@ pre code{
 }
  .CodeMirror-selected {
     opacity: 0.6;
+}
+
+#file-list ul {
+    list-style-type:none;
+    padding:0;
+    margin:0;
+}
+
+
+#file-list {
+    overflow-x: hidden;
+    overflow-y: scroll;
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    bottom: 5px;
+    top: 5px;
+    border: 1px solid #bfccd1;
+    border-radius: 3px;
+}
+
+#file-list ul li .node{
+    padding:5px;
+    display:block;
+    cursor:pointer;
+}
+#file-list ul li a.node
+{
+    font-weight:600;
+}
+#file-list ul li a.visited{
+    font-weight:normal;
+}  
+#file-list ul li > a.selected{  
+    background-color:#f8eec7;
+}  
+
+#file-list ul li a:hover {
+    text-decoration:none;
+}
+
+#file-list ul li a:hover >span {
+    text-decoration:underline;
+}
+
+#file-list ul li .node:hover >span {
+    text-decoration:underline;
+}
+#file-list ul li .node:hover > span.badge {
+    text-decoration:none;
+}
+
+#file-list ul li .icon {
+    margin-right:5px;
+}
+#file-list ul li  {
+    margin:0;
+    display:block;
+    white-space:nowrap;
+}
+
+#file-list ul li .node{
+    padding-left:10px;
+    display:block;
+}
+
+#home .event{
+    border-top:1px solid #efefef;
+    
+    padding:10px;
+    margin:5px 0 5px 60px;
+}
+#home .main-comment{
+    margin:15px 0 5px 0px;
+
+}
+#home .event .icon{
+    margin-right:10px;
+}
+
+#home .commit-list{
+    margin-left:100px;
+}
+#home .commit-list .commit{
+    padding:5px;
+    padding-left:55px;
+    position:relative;
+    
+}
+#home .commit-list .commit img{
+    width:18px;
+    border-radius:3px;
+    position:absolute;
+    left:30px
 }

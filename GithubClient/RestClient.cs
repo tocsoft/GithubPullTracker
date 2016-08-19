@@ -135,8 +135,6 @@ namespace GithubClient
             var message = new HttpRequestMessage(new System.Net.Http.HttpMethod(restRequest.Method.Method), uri);
             
 
-            message.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-
             var rId = message.GetHashCode();
 
             LogTo.Trace("Building Request - {0}", rId);

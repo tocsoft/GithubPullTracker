@@ -13,24 +13,59 @@ namespace GithubPullTracker.Models
 
     public abstract class TimelineEventGroup<T> : TimelineEvent
     {
+        public T Item { get; set; }
         public IEnumerable<T> Items { get; set; }
     }
-    public class TimelineEventCommitComment : TimelineEventGroup<CommitComment> { }
+    public class TimelineEventCommitComment : TimelineEventGroup<CommitComment>
+    {
+        public bool OutdatedFile { get; internal set; }
+    }
     public class TimelineEventComment : TimelineEvent<Comment> { }
-    public class TimelineEventCommit : TimelineEventGroup<Commit> { }
+    public class TimelineEventCommit : TimelineEventGroup<Commit>
+    {
+    }
     public class TimelineEventOther : TimelineEvent<Event> { }
-    public abstract class TimelineEvent
+    
+        public abstract class TimelineEvent
     {
         public static IEnumerable<TimelineEvent> Create(IEnumerable<CommitComment> comments)
         {
             return comments
-                .GroupBy(x => new { x.path, x.position })
+                .GroupBy(x => new { x.path, x.original_position, x.diff_hunk })
                 .Select(x => new TimelineEventCommitComment()
                 {
+                    Item = x.First(),
                     Items = x.ToList(),
+                    OutdatedFile = !x.First().position.HasValue,
                     CreatedAt = x.Select(c => c.created_at).Min(),
                     CreatedBy = null
                 });
+        }
+
+        public static IEnumerable<TimelineEvent> Merge(params IEnumerable<TimelineEvent>[] events)
+        {
+            var all = events.SelectMany(x => x).OrderBy(X => X.CreatedAt).ToList();
+
+            for(var i = 1; i<all.Count; i++)
+            {
+                var prev = all[i - 1] as TimelineEventCommit;
+                var crnt = all[i] as TimelineEventCommit;
+                if(prev != null && crnt != null)
+                {
+                    if(prev.CreatedAt.DayOfYear == crnt.CreatedAt.DayOfYear)
+                    {
+                        //happend on the same day
+                        if(prev.CreatedBy.login == crnt.CreatedBy.login)
+                        {
+                            prev.Items = prev.Items.Union(crnt.Items);
+                            all.Remove(crnt);
+                            i--;
+                        }
+                    }
+                }
+            }
+
+            return all;
         }
 
         public static IEnumerable<TimelineEvent> Create(IEnumerable<Comment> comments)
@@ -48,13 +83,13 @@ namespace GithubPullTracker.Models
         public static IEnumerable<TimelineEvent> Create(IEnumerable<Commit> commits)
         {
             return commits
-                .GroupBy(x=>new { x.commit.committer.date, x.commit.committer.email })
                 .Select(x => {
                     return new TimelineEventCommit()
                     {
-                        Items = x,
-                        CreatedAt = x.Min(c=>c.commit.committer.date),
-                        CreatedBy = x.First().author
+                        Item = x,
+                        Items = new[] { x },
+                        CreatedAt = x.commit.committer.date,
+                        CreatedBy = x.author
                     };
                 });
         }

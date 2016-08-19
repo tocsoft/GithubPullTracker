@@ -94,9 +94,11 @@ namespace GithubPullTracker.Controllers
             
             var issueComments = await Client.Comments(owner, repo, reference);
 
-            var events = await Client.Events(owner, repo, reference);
+           // var events = await Client.Events(owner, repo, reference);
 
-            var pr = new PullRequestCommentsView(pullRequest, commits, issueComments, comments, events);
+            var timeline = await Client.Timeline(owner, repo, reference);
+
+            var pr = new PullRequestCommentsView(pullRequest, commits, issueComments, comments, timeline);
             return View(pr);
         }
 
@@ -136,10 +138,15 @@ namespace GithubPullTracker.Controllers
                 return Content(json, "application/json");
             }
 
+            var files = await Client.Files(owner, repo, reference);
+            if(path == null)
+            {
+                path = files.First().filename;
+                return RedirectToAction("ViewFiles", new { owner, repo, reference, path });
+            }
+
             var pullRequest = await Client.PullRequest(owner, repo, reference);
 
-            var files = await Client.Files(owner, repo, reference);
-            
             if (path != null)
             {
                 path = path.TrimEnd('/');
@@ -169,7 +176,8 @@ namespace GithubPullTracker.Controllers
                 {
                 }
 
-                var vm = new PullRequestFileView(pullRequest, files, path, sourceText, isBinaryDataType);
+                var comments = await Client.FileComments(owner, repo, reference);
+                var vm = new PullRequestFileView(pullRequest, files, path, sourceText, isBinaryDataType, comments);
 
 
                 return View(vm);

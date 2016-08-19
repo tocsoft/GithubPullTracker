@@ -217,10 +217,6 @@
 
     }
 
-    String.prototype.replaceAll = function (search, replacement) {
-        var target = this;
-        return target.replace(new RegExp(search, 'g'), replacement);
-    };
     function loadComments(cb) {
         $.get(pathPrefix + '/comments?expectedSha=' + headSha, function (result) {
 

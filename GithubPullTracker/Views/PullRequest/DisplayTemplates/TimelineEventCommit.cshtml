@@ -3,14 +3,10 @@
 
 
 
-<div class="commit-list event">
-    <div class="header">
-        <a href="@Model.CreatedBy.html_url" target="_blank">
-            <img src="@(Model.CreatedBy.avatar_url)&s=40" class="avatar" alt="@Model.CreatedBy.login" />
-        </a>
-        <a href="@Model.CreatedBy.html_url" target="_blank">@Model.CreatedBy.login</a> added some commits <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
-    </div>
-
+<div class="event">
+    <i class="icon icon-chevron-right"></i> <a href="@Model.CreatedBy.html_url" target="_blank">@Model.CreatedBy.login</a> added some commits <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
+</div>
+<div class="commit-list">
     
     @foreach (var b in Model.Items)
     {

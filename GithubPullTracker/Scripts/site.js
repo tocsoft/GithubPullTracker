@@ -30,11 +30,66 @@ function markdown(markdown) {
 
     return html.replace(re_links, subst_links);
 }
-function inversePatch(patch) {
+
+function mapPatch(patch)
+{
+    var results = {
+        oldLines: {},
+        newLines: {},
+        patchLines: {}
+    };
+
+    var patchLine = 0;
     for (var i = 0; i < patch.length; i++) {
         var p = patch[i];
         for (var j = 0; j < p.hunks.length; j++) {
+            patchLine++
             var h = p.hunks[j];
+            var newLine = h.newStart - 1;
+            var oldLine = h.oldStart - 1;
+            for (var k = 0; k < h.lines.length; k++) {
+                patchLine++;
+                var line = h.lines[k];
+
+                var det = results.patchLines[patchLine] = {}
+                
+                if (line[0] == ' ' || line[0] == '-') {
+                    oldLine++;
+                    
+                    det.oldLine = oldLine;
+                    results.oldLines[oldLine] = patchLine;
+                }
+                if (line[0] == ' ' || line[0] == '+') {
+                    newLine++;
+
+                    det.newLine = newLine;
+                    results.newLines[newLine] = patchLine;
+                }
+               
+            }
+        }
+    }
+    return results;
+}
+function escapeRegExp(str) {
+    return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+}
+String.prototype.replaceAll = function (search, replacement) {
+    var target = this;
+    return target.replace(new RegExp(escapeRegExp(search), 'g'), replacement);
+};
+
+function inversePatch(patchs) {
+    var patchsResult = []
+    for (var i = 0; i < patchs.length; i++) {
+        var p = patchs[i];
+        var pr = { hunks: [] };
+        patchsResult.push(pr);
+        for (var j = 0; j < p.hunks.length; j++) {
+            var h = p.hunks[j];
+            var hr = { lines : [] };
+            pr.hunks.push(hr);
+
             for (var k = 0; k < h.lines.length; k++) {
                 var line = h.lines[k];
 
@@ -43,20 +98,18 @@ function inversePatch(patch) {
                 } else if (line[0] == '+') {
                     line = '-' + line.substring(1);
                 }
-
-                h.lines[k] = line;
+                hr.lines.push(line)
             }
 
-            var t = h.newLines;
-            h.newLines = h.oldLines;
-            h.oldLines = t;
+            hr.oldLines = h.newLines;
+            hr.newLines = h.oldLines;
 
-            var t = h.newStart;
-            h.newStart = h.oldStart;
-            h.oldStart = t;
+            hr.oldStart = h.newStart;
+            hr.newStart = h.oldStart;
         }
     }
-    return patch;
+
+    return patchsResult;
 }
 
 function patchToHtml(patch) {
@@ -107,7 +160,6 @@ function patchToHtml(patch) {
 
     html += "</table>";
     return html;
-
 }
 
 $(document).on('contentReloaded', function (e) {
@@ -151,3 +203,9 @@ $(document).click(function (e) {
     //console.log('clicked off');
 });
 })();
+
+$(function () {
+    $('#file-list li > span').click(function () {
+        $(this).parent().find('> ul').toggle();
+    });
+})

@@ -167,6 +167,7 @@ namespace GithubClient
             return client.ExecuteAsync<SearchResult>(req);
         }
 
+
         public Task<File> FileContents(string owner, string repo, string path, string sha = null)
         {
             var req = new RestRequest($"/repos/{owner}/{repo}/contents/{path.TrimStart('/'):raw}", HttpMethod.Get);
@@ -250,6 +251,18 @@ namespace GithubClient
                 new RestRequest($"/repos/{owner}/{repo}/issues/{issueNumber}/events", HttpMethod.Get)
                     .UpateHeaders(h => {
                         h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
+                    })
+                    .ExecuteWithAsync<IEnumerable<Event>>(client);
+        }
+
+        public Task<IEnumerable<Event>> Timeline(string owner, string repo, int issueNumber)
+        {
+            return
+                new RestRequest($"/repos/{owner}/{repo}/issues/{issueNumber}/timeline", HttpMethod.Get)
+                    .UpateHeaders(h => {
+                        // h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
+                        h.Accept.Clear();
+                        h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.mockingbird-preview"));
                     })
                     .ExecuteWithAsync<IEnumerable<Event>>(client);
         }

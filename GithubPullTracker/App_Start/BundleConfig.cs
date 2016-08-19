@@ -27,6 +27,7 @@ namespace GithubPullTracker
                 .Include("~/Scripts/addon/mode/overlay.js")
                 .Include("~/Scripts/jquery.hotkeys.js")
                 .Include("~/Scripts/addon/scroll/annotatescrollbar.js")
+                .Include("~/Scripts/addon/scroll/scrollpastend.js")
                 .Include("~/Scripts/addon/merge/merge.js")
                 .Include("~/Scripts/site.js"));
 

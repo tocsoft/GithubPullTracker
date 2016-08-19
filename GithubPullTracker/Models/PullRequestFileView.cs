@@ -17,12 +17,12 @@ namespace GithubPullTracker.Models
             rootItem = new PullRequestViewItem(files);
         }
 
-        public PullRequestFileView(PullRequest pr, IEnumerable<CommitFile> files, string selectedPath, string targetText, bool isBinary) : this(pr, files)
+        public PullRequestFileView(PullRequest pr, IEnumerable<CommitFile> files, string selectedPath, string targetText, bool isBinary, IEnumerable<CommitComment> comments) : this(pr, files)
         {
             this.TargetText = targetText;
             this.IsBinary = isBinary;
             CurrentFile = rootItem.GetItem(selectedPath);
-
+            this.CommentList = comments;
         }
         public PullRequestViewItem CurrentFile { get; set; }
 
@@ -39,5 +39,6 @@ namespace GithubPullTracker.Models
         
         public string TargetText { get; private set; }
         public bool IsBinary { get; private set; }
+        public IEnumerable<CommitComment> CommentList { get; private set; }
     }
 }

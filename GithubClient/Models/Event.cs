@@ -16,7 +16,7 @@ namespace GithubClient.Models
         public string commit_id { get; set; }
         public string commit_url { get; set; }
         [JsonProperty("event")]
-        public events EventType { get; set; }
+        public string EventType { get; set; }
         public DateTime created_at { get; set; }
         public Label label { get; set; }
         public User assigner { get; set; }

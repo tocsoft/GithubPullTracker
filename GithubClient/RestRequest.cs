@@ -60,6 +60,8 @@ namespace GithubClient
             Parameters = new List<KeyValuePair<string, object>>();
             Headers = new HttpRequestMessage().Headers;
             Method = HttpMethod.Get;
+
+            Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         /// <summary>

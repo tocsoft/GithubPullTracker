@@ -23,11 +23,14 @@ namespace GithubPullTracker.Models
             this.CommitsList = commits;
             this.FileCommentsList = prComment;
             this.CommentsList = issueComments;
-            this.Events = TimelineEvent.Create(CommitsList)
-                .Union(TimelineEvent.Create(FileCommentsList))
-                .Union(TimelineEvent.Create(FileCommentsList))
-                .Union(TimelineEvent.Create(events))
-                .Union(TimelineEvent.Create(CommentsList)).OrderBy(x => x.CreatedAt).ToList();
+            this.Events =
+                TimelineEvent.Merge(
+                    TimelineEvent.Create(CommitsList),
+                    TimelineEvent.Create(FileCommentsList),
+                    TimelineEvent.Create(events),
+                    TimelineEvent.Create(CommentsList)
+                    )
+                    .ToList();
 
             List<User> users = new List<User>();
 

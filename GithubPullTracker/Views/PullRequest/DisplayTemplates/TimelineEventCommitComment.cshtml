@@ -3,9 +3,28 @@
     var fileDetails = Model.Items.First();
 
 }
+    @if (Model.OutdatedFile)
+    {
+        <div class="event">
+            <i class="icon icon-check"></i> <a href="@Model.Item.user.html_url">@Model.Item.user.login</a> commented  an outdateded file <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time> <a href="#">Show @Model.Items.Count() @(@Model.Items.Count() > 1 ?"comments" : "comment")</a>
 
+        </div>  
+    }
+    else
+    {
+            <div class="event">
+                <i class="icon icon-chevron-right"></i> <a href="@Model.Item.user.html_url">@Model.Item.user.login</a> commented on the file <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
 
-<div class="file-comment-list event">
+            </div> 
+    }
+@{
+    var extraclass = "";
+    if (Model.OutdatedFile)
+    {
+        extraclass = "hidden";
+    }
+}
+<div class="file-comment-list @extraclass" id="filelist_@Model.Item.id">
     <div class="file-diff comment">
         <div class='header'>
             @fileDetails.path

@@ -20,11 +20,11 @@
             <li class="status-@itm.Status">
             @if (itm.IsFile)
             {
-                    <a href="@Url.Action("ViewFiles", new { path = itm.Path })"><i class="icon icon-file-text"></i>@itm.Name</a>
+                    <a href="@Url.Action("ViewFiles", new { path = itm.Path })" data-sha="@itm.Sha" class="node"><i class="icon icon-file-text"></i><span class="fn">@itm.Name</span></a>
             }
             else
             {
-                    <span><i class="icon icon-file-directory"></i> @itm.Name</span>
+                    <span  class="node"><i class="icon icon-file-directory"></i><span class="fn">@itm.Name</span></span>
                     @RenderTree(itm.Children)
             }
             </li>
@@ -84,20 +84,29 @@
             var fixHeightswindowElm = $(window);
 
             var heightFixerTo;
+            var fixHeightFiredOnce = false;
+            function fixHeightsInternal () {
+                fixHeightFiredOnce = true;
+                //var offset = splitter.position().top;
+                var winh = fixHeightswindowElm.height();
+                    
+                var editorHEader = fixHeightsfilediffElm.find('.header').outerHeight();
+                $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror, .CodeMirror { height: " + (winh - editorHEader - 15) + "px;}")
+                    
+                fixHeightssplitterElm.height(winh).trigger("resize");
+                if(window.reloadEditors){
+                    window.reloadEditors();
+                }
+            };
+
+
             function fixHeights() {
-                clearTimeout(heightFixerTo);
-                heightFixerTo = setTimeout(function () {
-                    //var offset = splitter.position().top;
-                    var winh = fixHeightswindowElm.height();
-                    
-                    var editorHEader = fixHeightsfilediffElm.find('.header').outerHeight();
-                    $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror, .CodeMirror { height: " + (winh - editorHEader - 15) + "px;}")
-                    
-                    fixHeightssplitterElm.height(winh).trigger("resize");
-                    if(window.reloadEditors){
-                        window.reloadEditors();
-                    }
-                }, 50);
+                if(!fixHeightFiredOnce){
+                    fixHeightsInternal();
+                }else{
+                    clearTimeout(heightFixerTo);
+                    heightFixerTo = setTimeout(fixHeightsInternal, 50);
+                }
             }
             var to1;
             $(window).resize(function (e) {
@@ -136,9 +145,30 @@
     
     <script>
 
-        //TODO put ajax based interpage naviagtion back in.
-        //TODo put splitter bar back in
         var sha = @Html.JavascriptString(Model.HeadSha);
+
+        var comments = @Html.JavascriptString(Model.CommentList);
+        var filecomments = {};
+        for(var i = 0; i< comments.length; i++){
+            var comment = comments[i];
+            if(!filecomments[comment.path]){
+                filecomments[comment.path] = [];
+            }
+            filecomments[comment.path].push(comment);
+        }
+
+
+        //TODO: move this to a server side version of the tracker!!!
+        var pageTracker = {
+            isVisited : function(sha){
+                return lscache.get(sha);
+            },
+            markVisited: function(sha){
+                lscache.set(sha, true, 60 * 24 * 7 * 52);
+            }
+        };
+
+        pageTracker.markVisited(@Html.JavascriptString(Model.CurrentFile.Sha));
 
         var fileTree = @Html.JavascriptString(Model.FileItems.Select(x=>new { x.Path, x.Status, x.Patch, x.Sha }));
         var files = {};
@@ -160,28 +190,185 @@
         @if (Model.CurrentFile != null)
         {
             <text>
-            serverResult('@Model.CurrentFile.Path',
-                window.location.hash.replace('#', ''),
-                @Html.JavascriptString(Model.TargetText),
-                @Html.JavascriptString(Model.IsBinary)
-                );
+                serverResult('@Model.CurrentFile.Path',
+                    window.location.hash.replace('#', ''),
+                    @Html.JavascriptString(Model.TargetText),
+                    @Html.JavascriptString(Model.IsBinary)
+                    );
 
-            history.replaceState({ path: '@Model.CurrentFile.Path' }, null, pathPrefix +"/files/@Model.CurrentFile.Path");
-        </text>
-}
-else
-{
+                history.replaceState({ path: '@Model.CurrentFile.Path' }, null, pathPrefix +"/files/@Model.CurrentFile.Path");
+            </text>
+        }
+        else
+        {
 
-        <text>
-        history.replaceState({ path: '' }, null, pathPrefix + "/files/");
-        messageElm.html("select a file on the left to see changes").show();
-        loaderElm.hide();
+            <text>
+                history.replaceState({ path: '' }, null, pathPrefix + "/files/");
+                messageElm.html("select a file on the left to see changes").show();
+                loaderElm.hide();
         </text>
         }
-        $('#file-list a').click(function(e){
+        $('#file-list li .node').each(function(){
+            $this = $(this);
+            $this.css('padding-left', ($this.parents('ul').length * parseInt($this.css('padding-left'))) + 'px');
+        });
+
+
+        function applyCommentsToEditors (){
+            var map= files[currentFilePath].patchMap;
+
+            function removeCommentBlocks(editor) {
+                if (!editor) {
+                    return;
+                }
+                var doc = editor.getDoc();
+                for (var i in doc._comments) {
+                    doc._comments[i].widget.clear();
+                }
+                doc._comments = null;
+            }
+            removeCommentBlocks(targetEditor);
+            removeCommentBlocks(sourceEditor);
+
+
+            if (options.showInlineComments) {
+                var templateFile = $('#inline-file-comment-template').html();
+
+                function addComment(doc, line, comment) {
+                    doc._comments = doc._comments || {};
+
+                    var block = doc._comments[line];
+
+                    if (!block) {
+                        var elm = $('<div class="commentList" />');
+                        var widget = doc.addLineWidget(line, elm[0], { coverGutter: true, noHScroll: true, });
+                        doc._comments[line] = block = { elm: elm, widget: widget };
+                    }
+
+                    function flatten(obj){
+                        var result = {};
+                        for(var p in obj){
+                            if(obj.hasOwnProperty(p)){
+
+                                var value = obj[p];
+
+                                if($.isPlainObject(value)){
+                                    value = flatten(value);
+                                    for(var p1 in value){
+                                        result[p+"."+p1] =  value[p1];
+                                    }
+                                }else{
+                                    result[p] = value;
+                                }
+                            }
+                        }
+
+                        return result;
+                    }
+
+                    var html = templateFile;
+                    var flatComment = flatten(comment);
+                    for(var p in flatComment){
+                        html = html.replaceAll("{" + p + "}", flatComment[p]);
+                    }
+
+                    //var html = templateFile
+                    //    .replaceAll("{path}", comment.path)
+                    //    .replaceAll("{fullPath}", pathPrefix + '/files/' + comment.path)
+                    //    .replaceAll("{avatarUrl}", comment.user.avatarUrl)
+                    //    .replaceAll("{username}", comment.user.login)
+                    //        .replaceAll("{change}", comment.change)
+                    //    .replaceAll("{created}", comment.createdAt)
+                    //    .replaceAll("{body}", marked(comment.body))
+
+                    block.elm.append(html);
+                    block.widget.changed();
+                    //dot adda single widget per comment append to the old widget if exists
+
+                }
+
+                var targetDoc = null;
+                if (targetEditor) {
+                    targetDoc = targetEditor.getDoc();
+                }
+                var sourceDoc = null;
+                if (sourceEditor) {
+                    var sourceDoc = sourceEditor.getDoc();
+                }
+                var commentList = filecomments[currentFilePath ];
+                for(var i = 0; i< commentList.length; i++){
+                    var comment = commentList[i];
+                    if(comment.position){
+                        var pos = map.patchLines[comment.position];
+                        if(targetDoc && pos["newLine"]){
+                            addComment(targetDoc, pos.newLine, comment);
+                        }else if(sourceDoc && pos["oldLine"]){
+                            addComment(sourceDoc, pos.oldLine, comment);
+                        }
+                    }
+                }
+            }
+
+            $('#editor').trigger('contentReloaded');
+
+            setTimeout(function () {
+                scrollToLine(currentLine);
+            }, 1);
+        }
+
+        function elementInViewport(el) {
+            var top = el.offsetTop;
+            var left = el.offsetLeft;
+            var width = el.offsetWidth;
+            var height = el.offsetHeight;
+
+            while(el.offsetParent) {
+                el = el.offsetParent;
+                top += el.offsetTop;
+                left += el.offsetLeft;
+            }
+
+            return (
+              top >= window.pageYOffset &&
+              left >= window.pageXOffset &&
+              (top + height) <= (window.pageYOffset + window.innerHeight) &&
+              (left + width) <= (window.pageXOffset + window.innerWidth)
+            );
+        }
+
+        var allLinks = $('#file-list a');
+        allLinks.click(function(e){
             e.preventDefault();
-            var path = $(this).attr('href').replace(pathPrefix +"/files/", "");
+            $this = $(this);
+            var path = $this.attr('data-path');
+
+            allLinks.removeClass("selected");
+
+            $this
+                .addClass("selected")
+                .addClass("visited");//just asume we've visisted it
+
             loadPath(path);
+        }).each(function(){
+            $this = $(this);
+            var path = $this.attr('href').replace(pathPrefix +"/files/", "");
+            $this.attr('data-path', path);
+            if(path == currentFilePath){
+                $('#file-list').scrollTop($this.position().top);
+                $this.addClass("selected");
+                if(!elementInViewport(this)){
+                    $("html,body").scrollTop($this.position().top);
+                }
+            }
+
+            var clist = filecomments[path];
+            if(clist){
+                $this.append($("<span class='badge' />").text(clist.length));
+            }
+            var fileSha = $this.attr('data-sha');
+            if(pageTracker.isVisited(fileSha)){
+                $this.addClass("visited");
+            }
         })
         function loadPath(path, skipNavigation, refresh){
 
@@ -226,7 +413,7 @@ else
                 return; //we are allready showing the page remain
             }
             if (!path) {
-                
+
                 messageElm.show();
                 targetElm.hide();
                 loaderElm.hide();
@@ -249,6 +436,10 @@ else
             currentFilePath = path;
             var change = files[path].Status;
             var patch = files[path].Patch;
+
+            if (typeof patch === 'string') {
+                files[path].Patch = patch = JsDiff.parsePatch(patch);
+            }
 
             $('#fileName').text(path)
                 .removeClass("status-modified")
@@ -277,7 +468,6 @@ else
 
             var sourceText = "";
             if (change != 'added') {
-                var patch = JsDiff.parsePatch(patch);
                 sourceText = JsDiff.applyPatch(targetText, inversePatch(patch));
             }
 
@@ -299,7 +489,7 @@ else
                     allowEditingOriginals: false,
                     collapseIdentical: false,
                     revertButtons: false,
-                    lineWrapping: true,
+                    lineWrapping: false,
                     gutters: ["CodeMirror-linenumbers", "github-comments"]
                 });
                 window.reloadEditors = function () {
@@ -323,7 +513,7 @@ else
                     allowEditingOriginals: false,
                     collapseIdentical: false,
                     revertButtons: false,
-                    lineWrapping: true,
+                    lineWrapping: false,
                     gutters: ["CodeMirror-linenumbers", "github-comments"]
                 });
                 window.reloadEditors = function () {
@@ -344,7 +534,7 @@ else
                     allowEditingOriginals: false,
                     collapseIdentical: false,
                     revertButtons: false,
-                    lineWrapping: true,
+                    lineWrapping: false,
                     gutters: ["CodeMirror-linenumbers", "github-comments"]
                 });
 
@@ -356,7 +546,7 @@ else
                     mergView.resize();
                 }
             }
-            
+
             function loadMode(editor1, editor2, mode){
                 if(!editor1 && !editor2){
                     return ;
@@ -390,13 +580,14 @@ else
                     }
                     if(editor2){
                         editor2.setOption("mode", mode.mime);
-                    }                            
+                    }
                 }
             }
-            
+
             loadMode(sourceEditor,targetEditor, fileMode);//call this once loaded
 
             function markPatch(editor, map) {
+
                 if (editor) {
                     var doc = editor.getDoc();
                     var lineCount = doc.lineCount();
@@ -435,8 +626,12 @@ else
                 }
             }
 
-            //markPatch(targetEditor, data.pageMap.TargetFile);
-            //markPatch(sourceEditor, data.pageMap.SourceFile);
+            var patchMap  = files[path].patchMap = mapPatch(patch)
+
+            markPatch(targetEditor, patchMap.newLines);
+            markPatch(sourceEditor, patchMap.oldLines);
+
+            applyCommentsToEditors ();
 
             var lineClicked = function (cm, line, gutter) {
                 var type = 's';
