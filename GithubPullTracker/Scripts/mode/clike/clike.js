@@ -469,7 +469,8 @@ CodeMirror.defineMode("clike", function(config, parserConfig) {
         stream.eatWhile(/[\w\$_]/);
         return "meta";
       }
-    }
+    },
+    namespaceSeparator: ".",
   });
 
   function tokenTripleString(stream, state) {
