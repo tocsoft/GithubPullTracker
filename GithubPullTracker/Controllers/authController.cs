@@ -7,7 +7,6 @@ using System.Web;
 using System.Web.Mvc;
 using System.Web.Security;
 using GithubPullTracker.Models;
-using Octokit;
 using AttributeRouting.Web.Mvc;
 using GithubClient;
 

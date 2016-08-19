@@ -2,71 +2,82 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
+using GithubClient.Models;
 
 namespace GithubPullTracker.Models
 {
-    public class TimelineEvent
+    public abstract class TimelineEvent<T> : TimelineEvent
     {
-        public static IEnumerable<TimelineEvent> Create(IEnumerable<FileComment> comments)
+        public T Item { get; set; }
+    }
+
+    public abstract class TimelineEventGroup<T> : TimelineEvent
+    {
+        public IEnumerable<T> Items { get; set; }
+    }
+    public class TimelineEventCommitComment : TimelineEventGroup<CommitComment> { }
+    public class TimelineEventComment : TimelineEvent<Comment> { }
+    public class TimelineEventCommit : TimelineEventGroup<Commit> { }
+    public class TimelineEventOther : TimelineEvent<Event> { }
+    public abstract class TimelineEvent
+    {
+        public static IEnumerable<TimelineEvent> Create(IEnumerable<CommitComment> comments)
         {
             return comments
-                .OrderBy(x => x.CreatedAt)
-                .GroupBy(x => new { x.Path, x.LineNumber })
-                .Select(x => {
-                    var src = x.First();
-                    return new TimelineEvent()
-                    {
-                        Item = src,
-                        Items = x.ToList(),
-                        CreatedAt = src.CreatedAt,
-                        CreatedBy = src.CreatedBy
-                    };
+                .GroupBy(x => new { x.path, x.position })
+                .Select(x => new TimelineEventCommitComment()
+                {
+                    Items = x.ToList(),
+                    CreatedAt = x.Select(c => c.created_at).Min(),
+                    CreatedBy = null
                 });
         }
 
         public static IEnumerable<TimelineEvent> Create(IEnumerable<Comment> comments)
         {
             return comments
-                .OrderBy(x => x.CreatedAt)
                 .Select(x => {
-                    return new TimelineEvent()
+                    return new TimelineEventComment()
                     {
                         Item = x,
-                        Items = new[] { x },
-                        CreatedAt = x.CreatedAt,
-                        CreatedBy = x.CreatedBy
+                        CreatedAt = x.created_at,
+                        CreatedBy = x.user
                     };
                 });
         }
         public static IEnumerable<TimelineEvent> Create(IEnumerable<Commit> commits)
         {
             return commits
-                .OrderBy(x => x.CreatedAt)
+                .GroupBy(x=>new { x.commit.committer.date, x.commit.committer.email })
                 .Select(x => {
-                    return new TimelineEvent()
+                    return new TimelineEventCommit()
                     {
-                        Item = x,
-                        Items = new[] { x },
-                        CreatedAt = x.CreatedAt,
-                        CreatedBy = x.Commiter
+                        Items = x,
+                        CreatedAt = x.Min(c=>c.commit.committer.date),
+                        CreatedBy = x.First().author
                     };
                 });
         }
 
-        protected TimelineEvent() { }
 
+        public static IEnumerable<TimelineEvent> Create(IEnumerable<Event> events)
+        {
+            return events
+                    .Select(x =>
+                    {
+                        return new TimelineEventOther()
+                        {
+                            Item = x,
+                            CreatedAt = x.created_at,
+                            CreatedBy = x.assigner ?? x.actor
+                        };
+                    });
+        }
+        
         public DateTimeOffset CreatedAt { get; set; }
 
         public User CreatedBy { get; set; }
 
-        public object Item { get; set; }
-
-        public IEnumerable<object> Items { get; set; }
-
-        public IEnumerable<TValue> ItemsOf<TValue>()
-        {
-            return Items.OfType<TValue>();
-        }
     }
     
 }

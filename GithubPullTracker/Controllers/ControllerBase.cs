@@ -6,9 +6,9 @@ using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
 using System.Web.Security;
+using GithubClient;
 using GithubPullTracker.Models;
 using Newtonsoft.Json;
-using Octokit;
 
 namespace GithubPullTracker.Controllers
 {
@@ -53,11 +53,15 @@ namespace GithubPullTracker.Controllers
 
         protected override void OnException(ExceptionContext filterContext)
         {
-            if(filterContext.Exception is Octokit.AuthorizationException)
+            var ex = filterContext.Exception as RestException;
+            if (ex != null)
             {
-                CurrentUser = null;
-                filterContext.ExceptionHandled = true;
-                filterContext.Result = new HttpUnauthorizedResult();
+                if (ex.Response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    CurrentUser = null;
+                    filterContext.ExceptionHandled = true;
+                    filterContext.Result = new HttpUnauthorizedResult();
+                }
                 return;
             }
             base.OnException(filterContext);

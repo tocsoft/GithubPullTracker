@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Web;
+using GithubClient.Models;
 using Newtonsoft.Json.Linq;
-using Octokit;
 
 namespace GithubPullTracker.Models
 {
@@ -12,12 +12,12 @@ namespace GithubPullTracker.Models
     {
         PullRequestViewItem rootItem;
 
-        public PullRequestFileView(PullRequest pr, IEnumerable<PullRequestFile> files):base(pr)
+        public PullRequestFileView(PullRequest pr, IEnumerable<CommitFile> files):base(pr)
         {
             rootItem = new PullRequestViewItem(files);
         }
 
-        public PullRequestFileView(PullRequest pr, IEnumerable<PullRequestFile> files, string selectedPath, string targetText, bool isBinary) : this(pr, files)
+        public PullRequestFileView(PullRequest pr, IEnumerable<CommitFile> files, string selectedPath, string targetText, bool isBinary) : this(pr, files)
         {
             this.TargetText = targetText;
             this.IsBinary = isBinary;

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Web;
+using GithubClient.Models;
 using Newtonsoft.Json.Linq;
-using Octokit;
 
 namespace GithubPullTracker.Models
 {
@@ -12,47 +12,47 @@ namespace GithubPullTracker.Models
     {
         public PullRequestView(PullRequest pr)
         {
-            HeadSha = pr.Head.Sha;
-            BaseSha = pr.Base.Sha;
+            HeadSha = pr.Head.sha;
+            BaseSha = pr.Base.sha;
 
-            var path = pr.HtmlUrl.GetComponents(UriComponents.Path, UriFormat.SafeUnescaped);
+            var path = new Uri(pr.html_url).GetComponents(UriComponents.Path, UriFormat.SafeUnescaped);
 
             var parts = path.Split('/');
-            this.Title = pr.Title;
+            this.Title = pr.title;
             this.Number = int.Parse(parts[3]);
             this.RepositoryOwner = parts[0];
             this.RepositoryName = parts[1];
-            this.Details = pr.Body;
-            this.CreatedBy = new User(pr.User);
-            if (pr.Assignee != null)
+            this.Details = pr.body_html;
+            this.CreatedBy = pr.user;
+            if (pr.assignee != null)
             {
-                this.Assignee = new User(pr.Assignee);
+                this.Assignee = pr.assignee;
             }
-            this.CreatedAt = pr.CreatedAt;
-            Status = pr.State;
-            Commits = pr.Commits;
+            this.CreatedAt = pr.created_at;
+            Status = pr.state;
+            Commits = pr.commits;
 
             HeadName = pr.Head.Ref;
             BaseName = pr.Base.Ref;
 
             var splitter = ":";
-            if (pr.Head.Repository.Name != pr.Base.Repository.Name)
+            if (pr.Head.repo.name != pr.Base.repo.name)
             {
 
-                HeadName = pr.Head.Repository.Name + splitter + HeadName;
-                BaseName = pr.Base.Repository.Name + splitter + pr.Base.Label;
+                HeadName = pr.Head.repo.name + splitter + HeadName;
+                BaseName = pr.Base.repo.name + splitter + pr.Base.label;
                 splitter = "/";
             }
-            if (pr.Head.User.Login != pr.Base.User.Login)
+            if (pr.Head.user.login != pr.Base.user.login)
             {
-                HeadName = pr.Head.User.Login + splitter + HeadName;
-                BaseName = pr.Base.User.Login + splitter + pr.Base.Label;
+                HeadName = pr.Head.user.login + splitter + HeadName;
+                BaseName = pr.Base.user.login + splitter + pr.Base.label;
             }
 
-            HeadNameFull = $"{pr.Head.User.Login}/{pr.Head.Repository.Name}:{pr.Head.Label}"; ;
-            BaseNameFull = $"{pr.Base.User.Login}/{pr.Base.Repository.Name}:{pr.Base.Label}"; ;
-            Files = pr.ChangedFiles;
-            Comments = pr.Comments;
+            HeadNameFull = $"{pr.Head.user.login}/{pr.Head.repo.name}:{pr.Head.label}";
+            BaseNameFull = $"{pr.Base.user.login}/{pr.Base.repo.name}:{pr.Base.label}";
+            Files = pr.changed_files;
+            Comments = pr.comments;
         }
         
 
@@ -70,7 +70,7 @@ namespace GithubPullTracker.Models
         public string Details { get; private set; }
         public User CreatedBy { get; private set; }
         public DateTimeOffset CreatedAt { get; private set; }
-        public ItemState Status { get; private set; }
+        public string Status { get; private set; }
         public int Commits { get; private set; }
         public int Files { get; private set; }
         public int Comments { get; private set; }

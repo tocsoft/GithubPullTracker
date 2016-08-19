@@ -1,0 +1,29 @@
+﻿@model TimelineEventCommitComment
+@{ 
+    var fileDetails = Model.Items.First();
+
+}
+
+
+<div class="file-comment-list event">
+    <div class="file-diff comment">
+        <div class='header'>
+            @fileDetails.path
+            <a href="@Url.Action("ViewFiles", new { path = fileDetails.path })#p-@fileDetails.position" data-naviagetetree="@fileDetails.path#p-@fileDetails.position">View full file</a>
+        </div>
+        <div class="patch apply-patch">@fileDetails.diff_hunk</div>
+    </div>
+
+    @foreach (var b in Model.Items)
+    {
+        <div class="comment ">
+            <div class="header">
+                <a href="@b.user.html_url" target="_blank">
+                    <img src="@(b.user.avatar_url)&s=40" class="avatar" />
+                </a>
+                <a href="@b.user.html_url" target="_blank">@b.user.login</a> commented <time class="timeago" datetime="@b.created_at.ToString("o")">@b.created_at.ToString()</time>
+            </div>
+            <div class="markdown">@Html.Raw(b.body_html)</div>
+        </div>
+    }
+</div>

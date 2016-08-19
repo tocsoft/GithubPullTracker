@@ -37,7 +37,7 @@
                 @if (result.ClosedAt.HasValue)
                 {
                     <text> by
-                        <a href="@result.CreateBy.ProfileUrl" target="_blank">@result.CreateBy.Login</a>
+                        <a href="@result.CreateBy.html_url" target="_blank">@result.CreateBy.login</a>
                         closed <time class="timeago">@result.CreatedAt.ToString()</time>
                     </text>
                 }
@@ -46,7 +46,7 @@
                     <text>
                         opened
                         <time class="timeago">@result.CreatedAt.ToString()</time> by
-                        <a href="@result.CreateBy.ProfileUrl" target="_blank">@result.CreateBy.Login</a>
+                        <a href="@result.CreateBy.html_url" target="_blank">@result.CreateBy.login</a>
                     </text>
                 }
             </span>

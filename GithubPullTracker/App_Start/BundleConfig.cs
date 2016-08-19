@@ -15,8 +15,6 @@ namespace GithubPullTracker
 
             bundles.Add(new ScriptBundle("~/Site.js")
                 .Include("~/Scripts/jquery-{version}.js")
-                //.Include("~/Scripts/bootstrap.js")
-                //.Include("~/Scripts/bootstrap-treeview.js")
                 .Include("~/Scripts/lscache.js")
                 .Include("~/Scripts/marked.js")
                 .Include("~/Scripts/timeago.js")

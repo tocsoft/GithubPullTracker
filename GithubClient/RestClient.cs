@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -26,11 +27,7 @@ namespace GithubClient
             }
             return handler;
         };
-
-        public string GetHeader(string header)
-        {
-            return Headers.Where(x => x.Key == header).Select(x => x.Value).FirstOrDefault();
-        }
+        
 
         #region Private Members
 
@@ -136,6 +133,7 @@ namespace GithubClient
 
             var uri = restRequest.GetResourceUri(BaseUrl);
             var message = new HttpRequestMessage(new System.Net.Http.HttpMethod(restRequest.Method.Method), uri);
+            
 
             message.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
@@ -151,18 +149,32 @@ namespace GithubClient
                 LogTo.Trace("Building Request - {0} - UserAgent: {1}", rId, UserAgent);
             }
 
-            foreach (var header in Headers)
+            foreach (var header in DefaultHeaders)
             {
-                LogTo.Trace("Building Request - {0} - Set Header: {1}:{2}", rId, header.Key, header.Value);
-                message.Headers.Remove(header.Key);
-                message.Headers.Add(header.Key, header.Value);
+                IEnumerable<string> values;
+                if(message.Headers.TryGetValues(header.Key, out values))
+                {
+                    message.Headers.Remove(header.Key);
+                    message.Headers.Add(header.Key, values.Union(header.Value));
+                }
+                else
+                {
+                    message.Headers.Add(header.Key, header.Value);
+                }
             }
 
             foreach (var header in restRequest.Headers)
             {
-                LogTo.Trace("Building Request - {0} - Set Header: {1}:{2}", rId, header.Key, header.Value);
-                message.Headers.Remove(header.Key);
-                message.Headers.Add(header.Key, header.Value);
+                IEnumerable<string> values;
+                if (message.Headers.TryGetValues(header.Key, out values))
+                {
+                    message.Headers.Remove(header.Key);
+                    message.Headers.Add(header.Key, values.Union(header.Value));
+                }
+                else
+                {
+                    message.Headers.Add(header.Key, header.Value);
+                }
             }
 
             if (restRequest.Method != HttpMethod.Get && restRequest.Method != HttpMethod.Head && restRequest.Method != HttpMethod.Trace)
@@ -248,43 +260,41 @@ namespace GithubClient
         /// </summary>
         public string UserAgent { get; set; }
 
-        /// <summary>
-        /// A list of KeyValuePairs that will be appended to the Headers collection for all requests.
-        /// </summary>
-        protected ICollection<KeyValuePair<string, string>> Headers { get; private set; }
-
+        public HttpRequestHeaders DefaultHeaders { get; }
 
         /// <summary>
         /// Creates a new instance of the RestClient class.
         /// </summary>
         public RestClientBase()
         {
-            Headers = new List<KeyValuePair<string, string>>();
+            HttpRequestMessage msg = new HttpRequestMessage();
+
+            DefaultHeaders = msg.Headers;
         }
 
-        /// <summary>
-        /// Adds a header for a given string key and string value.
-        /// </summary>
-        /// <param name="key">The header to add.</param>
-        /// <param name="value">The value of the header being added.</param>
-        public void SetHeader(string key, string value)
-        {
-            RemoveHeader(key);
-            Headers.Add(new KeyValuePair<string, string>(key, value));
-        }
+        ///// <summary>
+        ///// Adds a header for a given string key and string value.
+        ///// </summary>
+        ///// <param name="key">The header to add.</param>
+        ///// <param name="value">The value of the header being added.</param>
+        //public void SetHeader(string key, string value)
+        //{
+        //    RemoveHeader(key);
+        //    Headers.Add(new KeyValuePair<string, string>(key, value));
+        //}
 
-        /// <summary>
-        /// Adds a header for a given string key and string value.
-        /// </summary>
-        /// <param name="key">The header to add.</param>
-        /// <param name="value">The value of the header being added.</param>
-        public void RemoveHeader(string key)
-        {
-            foreach (var kvp in Headers.Where(x => x.Key == key).ToArray())
-            {
-                Headers.Remove(kvp);
-            }
-        }
+        ///// <summary>
+        ///// Adds a header for a given string key and string value.
+        ///// </summary>
+        ///// <param name="key">The header to add.</param>
+        ///// <param name="value">The value of the header being added.</param>
+        //public void RemoveHeader(string key)
+        //{
+        //    foreach (var kvp in Headers.Where(x => x.Key == key).ToArray())
+        //    {
+        //        Headers.Remove(kvp);
+        //    }
+        //}
 
         public Task<T> ExecuteAnnonAsync<T>(RestRequest restRequest, T annon)
         {

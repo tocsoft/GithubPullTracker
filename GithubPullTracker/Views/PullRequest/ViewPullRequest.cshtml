@@ -1,7 +1,7 @@
 ﻿@model GithubPullTracker.Models.PullRequestCommentsView
 @{
 
-    ViewBag.Title = Model.Title + " by " + Model.CreatedBy.Login + " · Pull Request #" + Model.Number + " · " + Model.RepositoryOwner + "/" + Model.RepositoryName;
+    ViewBag.Title = Model.Title + " by " + Model.CreatedBy.login + " · Pull Request #" + Model.Number + " · " + Model.RepositoryOwner + "/" + Model.RepositoryName;
 
 }
 @section header
@@ -14,12 +14,12 @@
 
         <div id="home">
             <div class="main-comment" id="description">
-                <a href="https://github.com/@Model.CreatedBy.Login" target="_blank" class="user">
-                    <img src="@(Model.CreatedBy.AvatarUrl)&s=40" class="avatar" alt="@Model.CreatedBy.Login" />
+                <a href="@Model.CreatedBy.html_url" target="_blank" class="user">
+                    <img src="@(Model.CreatedBy.avatar_url)&s=40" class="avatar" alt="@Model.CreatedBy.login" />
                 </a>
                 <div class="comment">
                     <div class="header">
-                        <a href="https://github.com/@Model.CreatedBy.Login" target="_blank">@Model.CreatedBy.Login</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt</time>
+                        <a href="@Model.CreatedBy.html_url" target="_blank">@Model.CreatedBy.login</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt</time>
                     </div>
 
 
@@ -31,7 +31,7 @@
                     }
                     else
                     {
-                        <div class="markdown apply-md">@Model.Details</div>
+                        <div class="markdown">@Html.Raw(Model.Details)</div>
                     }
                 </div>
 
@@ -39,61 +39,8 @@
 
                 @foreach (var evnt in Model.Events)
                 {
-                    var fileComment = evnt.Item as GithubPullTracker.Models.FileComment;
-                    var issueComment = evnt.Item as GithubPullTracker.Models.Comment;
-                    var commit = evnt.Item as GithubPullTracker.Models.Commit;
-                    if (issueComment != null)
-                    {
-                        <div class="main-comment event">
-                            <a href="https://github.com/@issueComment.CreatedBy.Login" target="_blank" class="user">
-                                <img src="@(issueComment.CreatedBy.AvatarUrl)&s=40" class="avatar" />
-                            </a>
-                            <div class="comment">
-                                <div class="header">
-                                    <a href="https://github.com/@(@issueComment.CreatedBy.Login)" target="_blank">@(@issueComment.CreatedBy.Login)</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
-                                </div>
-                                <div class="markdown apply-md">@issueComment.Body</div>
-                            </div>
-                        </div>
-                    }
-                    else if (fileComment != null)
-                    {
-                        <div class="file-comment-list event">
-                            <div class="file-diff comment">
-                                <div class='header'>
-                                    @fileComment.Path
-                                    @{
-                                        var lineRef = "";
-                                        if (fileComment.TargetLineNumber.HasValue)
-                                        {
-                                            lineRef = "t-" + fileComment.TargetLineNumber.ToString();
-                                        }
-                                        else if (fileComment.SourceLineNumber.HasValue)
-                                        {
-                                            lineRef = "s-" + fileComment.SourceLineNumber.ToString();
-                                        }
-                                    }
-                                    <a href="@Url.Action("ViewFiles", new { path = fileComment.Path })#@lineRef" data-naviagetetree="@fileComment.Path#@lineRef">View full file</a>
-                                </div>
-                                <div class="patch apply-patch">@fileComment.Patch</div>
-                            </div>
-
-                            @foreach (var b in evnt.ItemsOf<GithubPullTracker.Models.FileComment>())
-                            {
-                                <div class="comment ">
-                                    <div class="header">
-                                        <a href="https://github.com/@b.CreatedBy.Login" target="_blank">
-                                            <img src="@b.CreatedBy.AvatarUrl&s=40" class="avatar" />
-                                        </a>
-                                        <a href="https://github.com/@b.CreatedBy.Login" target="_blank">@b.CreatedBy.Login</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
-                                    </div>
-                                    <div class="markdown  apply-md">@b.Body</div>
-                                </div>
-                            }
-                        </div>
-                                            }
-                                        }
-
+                    @Html.DisplayFor(c=>evnt)
+                }
 
         </div>
 
@@ -102,9 +49,9 @@
         <h3>Assignee</h3>
         @if (Model.Assignee != null)
         {
-            <a href="https://github.com/@Model.Assignee.Login">
-                <img src="@(Model.Assignee.AvatarUrl)&s=40" alt="@Model.Assignee.Login" />
-                @Model.Assignee.Login
+            <a href="@Model.Assignee.html_url">
+                <img src="@(Model.Assignee.avatar_url)&s=40" alt="@Model.Assignee.login" />
+                @Model.Assignee.login
             </a>
         }
         else

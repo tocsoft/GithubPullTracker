@@ -353,16 +353,16 @@ div.commentList {
     color: white !important;
 }
 
-#file-list{
-     overflow-x: hidden;
+#file-list {
+    overflow-x: hidden;
     overflow-y: hidden;
-    position:absolute;
-    left:0px;
-    right:0px;
-    bottom:5px;
-    top:5px;
-        border: 1px solid #bfccd1;
-        border-radius:5px;
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    bottom: 5px;
+    top: 5px;
+    border: 1px solid #bfccd1;
+    border-radius: 3px;
 }
   #file-list > .header{
            padding: 10px 10px;
@@ -719,4 +719,13 @@ pre code{
 }
 .title-bar{
     overflow:auto;
+}
+
+.CodeMirror-merge-2pane .CodeMirror-merge-gap{
+    width:3%;
+}.CodeMirror-merge-2pane .CodeMirror-merge-pane{
+    width:48.5%;
+}
+ .CodeMirror-selected {
+    opacity: 0.6;
 }

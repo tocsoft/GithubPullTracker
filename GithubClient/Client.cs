@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace GithubClient
 {
@@ -12,26 +13,28 @@ namespace GithubClient
     {
         private readonly RestClient client;
 
-        const string auth_prefix = "token ";
+        const string auth_scheme = "token";
         public string AccessToken
         {
             get
             {
-                var row = client.GetHeader("Authorization");
-                if (row != null && row.StartsWith(auth_prefix))
+                if (client.DefaultHeaders.Authorization?.Scheme == auth_scheme)
                 {
-                    return row.Substring(auth_prefix.Length);
+                    return client.DefaultHeaders.Authorization?.Parameter;
                 }
+
                 return null;
             }
             set
             {
+
                 if(value == null)
                 {
-                    client.RemoveHeader("Authorization");
-                }else
+                    client.DefaultHeaders.Authorization = null;
+                }
+                else
                 {
-                    client.SetHeader("Authorization", auth_prefix+value);
+                    client.DefaultHeaders.Authorization = new AuthenticationHeaderValue(auth_scheme, value);
                 }
             }
         }
@@ -41,9 +44,9 @@ namespace GithubClient
             this.client = new RestClient()
             {
                 BaseUrl = "https://api.github.com",
-                UserAgent = useragent,
+                UserAgent = useragent,                
             };
-            //send application/vnd.github.VERSION.html+json  as Accept header to recieve markdown prerendered
+
         }
 
         //public Task<SearchResult> SearchPullRequestsByRepo(int page, int pagesize, RequestState state, SortOrder order, SortOrderDirection direction, string owner, string terms)
@@ -100,9 +103,11 @@ namespace GithubClient
         //    req.AddUrlSegment("repo", repo);
         //}
 
+        
+
         public Task<SearchResult> SearchPullRequests(int page, int pagesize, RequestState state, SortOrder order, SortOrderDirection direction, RequestConnection? connection, string login, string terms, string owner, string repository)
         {
-            var req = new RestRequest("/search/issues", HttpMethod.Get);
+            var req = new RestRequest($"/search/issues", HttpMethod.Get);
             StringBuilder query = new StringBuilder();
             query.Append("type:pr");
             query.AppendFormat($" is:{state.ToString().ToLower()}");
@@ -162,9 +167,19 @@ namespace GithubClient
             return client.ExecuteAsync<SearchResult>(req);
         }
 
+        public Task<File> FileContents(string owner, string repo, string path, string sha = null)
+        {
+            var req = new RestRequest($"/repos/{owner}/{repo}/contents/{path.TrimStart('/'):raw}", HttpMethod.Get);
+            if (!string.IsNullOrWhiteSpace(sha))
+            {
+                req.AddQueryString("ref", sha);
+            }
+            return req.ExecuteWithAsync<File>(client);
+        }
+
         public Task<OAuthAccessToken> CreateAccessToken(string clientId, string clientSecret, string code)
         {
-            var req = new RestRequest("https://github.com/login/oauth/access_token", HttpMethod.Post);
+            var req = new RestRequest($"https://github.com/login/oauth/access_token", HttpMethod.Post);
             req.AddParameter(new
             {
                 client_id = clientId,
@@ -177,41 +192,66 @@ namespace GithubClient
 
         public Task<User> CurrentUser()
         {
-            var req = new RestRequest("/user");
+            var req = new RestRequest($"/user");
             return client.ExecuteAsync<User>(req);
         }
 
         public Task<PullRequest> PullRequest(string owner, string repo, int pullRequestNumber)
         {
-
-            throw new NotImplementedException();
+            return
+                new RestRequest($"/repos/{owner}/{repo}/pulls/{pullRequestNumber}", HttpMethod.Get)
+                    .UpateHeaders(h => {
+                        h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
+                    })
+                    .ExecuteWithAsync<PullRequest>(client);
         }
 
-        public Task<Issue> Isssue(string owner, string repo, int issueNumber)
+        public Task<IEnumerable<Issue>> Isssue(string owner, string repo, int issueNumber)
         {
 
             throw new NotImplementedException();
         }
-        public Task<Commit> Commits(string owner, string repo, int pullRequestNumber)
+        public Task<IEnumerable<Commit>> Commits(string owner, string repo, int pullRequestNumber)
         {
-
-            throw new NotImplementedException();
+            return
+                new RestRequest($"/repos/{owner}/{repo}/pulls/{pullRequestNumber}/commits", HttpMethod.Get)
+                    .UpateHeaders(h => {
+                        h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
+                    })
+                    .ExecuteWithAsync<IEnumerable<Commit>>(client);
         }
         public Task<IEnumerable<CommitFile>> Files(string owner, string repo, int pullRequestNumber)
         {
-            throw new NotImplementedException();
+            return
+                  new RestRequest($"/repos/{owner}/{repo}/pulls/{pullRequestNumber}/files", HttpMethod.Get)
+                      .ExecuteWithAsync<IEnumerable<CommitFile>>(client);
         }
         public Task<IEnumerable< CommitComment>> FileComments(string owner, string repo, int pullRequestNumber)
         {
-            throw new NotImplementedException();
+            return
+                new RestRequest($"/repos/{owner}/{repo}/pulls/{pullRequestNumber}/comments", HttpMethod.Get)
+                    .UpateHeaders(h => {
+                        h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
+                    })
+                    .ExecuteWithAsync<IEnumerable<CommitComment>>(client);
         }
-        public Task<IEnumerable<Commit>> Comments(string owner, string repo, int issueNumber)
+        public Task<IEnumerable<Comment>> Comments(string owner, string repo, int issueNumber)
         {
-            throw new NotImplementedException();
+            return
+                new RestRequest($"/repos/{owner}/{repo}/issues/{issueNumber}/comments", HttpMethod.Get)
+                    .UpateHeaders(h => {
+                        h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
+                    })
+                    .ExecuteWithAsync<IEnumerable<Comment>>(client);
         }
         public Task<IEnumerable<Event>> Events(string owner, string repo, int issueNumber)
         {
-            throw new NotImplementedException();
+            return
+                new RestRequest($"/repos/{owner}/{repo}/issues/{issueNumber}/events", HttpMethod.Get)
+                    .UpateHeaders(h => {
+                        h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
+                    })
+                    .ExecuteWithAsync<IEnumerable<Event>>(client);
         }
     }
 }

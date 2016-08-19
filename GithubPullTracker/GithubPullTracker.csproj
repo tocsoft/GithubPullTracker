@@ -69,10 +69,6 @@
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Octokit, Version=0.21.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Octokit.0.21.1\lib\net45\Octokit.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
@@ -518,6 +514,10 @@
     <Content Include="Views\PullRequest\ViewFiles.cshtml" />
     <Content Include="Views\PullRequest\ViewPullRequest.cshtml" />
     <Content Include="Views\PullRequest\PullRequestHeader.cshtml" />
+    <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventCommitComment.cshtml" />
+    <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventComment.cshtml" />
+    <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventCommit.cshtml" />
+    <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventOther.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace GithubClient.Models
 {
@@ -23,20 +24,23 @@ namespace GithubClient.Models
         public string state { get; set; }
         public string title { get; set; }
         public string body { get; set; }
+        public string body_html { get; set; }
         public User assignee { get; set; }
         public Milestone milestone { get; set; }
         public bool locked { get; set; }
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
-        public DateTime closed_at { get; set; }
-        public DateTime merged_at { get; set; }
-        public Branch head { get; set; }
-        public Branch _base { get; set; }
+        public DateTime? closed_at { get; set; }
+        public DateTime? merged_at { get; set; }
+        [JsonProperty("head")]
+        public Branch Head { get; set; }
+        [JsonProperty("base")]
+        public Branch Base { get; set; }
         public LinksCollection _links { get; set; }
         public User user { get; set; }
         public string merge_commit_sha { get; set; }
         public bool merged { get; set; }
-        public bool mergeable { get; set; }
+        public bool? mergeable { get; set; }
         public User merged_by { get; set; }
         public int comments { get; set; }
         public int commits { get; set; }
@@ -68,7 +72,9 @@ namespace GithubClient.Models
     public class Branch
     {
         public string label { get; set; }
-        public string _ref { get; set; }
+
+        [JsonProperty("ref")]
+        public string Ref { get; set; }
         public string sha { get; set; }
         public User user { get; set; }
         public Repo repo { get; set; }

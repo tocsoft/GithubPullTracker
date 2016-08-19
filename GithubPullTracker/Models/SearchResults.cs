@@ -5,7 +5,6 @@ using System.Text;
 using System.Web;
 using GithubClient;
 using GithubClient.Models;
-using Octokit;
 
 namespace GithubPullTracker.Models
 {
@@ -142,8 +141,8 @@ namespace GithubPullTracker.Models
             this.RepositoryOwner = parts[0];
             this.RepositoryName = parts[1];
 
-            CreateBy = new User(issue.user);
-            if (issue.assignee != null) { Assignee = new User(issue.assignee); }
+            CreateBy = issue.user;
+            if (issue.assignee != null) { Assignee = issue.assignee; }
 
             ClosedAt = issue.closed_at;
             CreatedAt = issue.created_at;

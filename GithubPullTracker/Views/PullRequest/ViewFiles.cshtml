@@ -1,7 +1,7 @@
 ﻿@model PullRequestFileView
 @{
     ViewBag.FullWidth = true;
-    ViewBag.Title = Model.Title + " by " + Model.CreatedBy.Login + " · Pull Request #" + Model.Number + " · " + Model.RepositoryOwner + "/" + Model.RepositoryName;
+    ViewBag.Title = Model.Title + " by " + Model.CreatedBy.login + " · Pull Request #" + Model.Number + " · " + Model.RepositoryOwner + "/" + Model.RepositoryName;
 
 }
 @section header
@@ -285,7 +285,7 @@ else
 
             var mime = "";
             if (fileMode) {
-                mime = fileMode.mode;
+                mime = fileMode.mime;
             }
             window.reloadEditors = null;
             if (!sourceText) {
@@ -355,16 +355,47 @@ else
                     targetEditor.refresh();
                     mergView.resize();
                 }
+            }
+            
+            function loadMode(editor1, editor2, mode){
+                if(!editor1 && !editor2){
+                    return ;
+                }
+                if(!mode){
+                    return ;
+                }
 
-            }
-            if (fileMode) {
-                if (sourceEditor) {
-                    CodeMirror.autoLoadMode(sourceEditor, fileMode.mode);//call this once loaded
+                var url = "/scripts/mode/"+mode.mode+"/"+mode.mode+".js";
+
+                if(!CodeMirror.modes[mode.mode]){
+
+                    var d = document;
+                    script = d.createElement('script');
+                    script.type = 'text/javascript';
+                    script.async = true;
+                    script.onload = function(){
+                        if(editor1){
+                            editor1.setOption("mode", mode.mime);
+                        }
+                        if(editor2){
+                            editor2.setOption("mode", mode.mime);
+                        }
+                    };
+                    script.src = url;
+                    d.getElementsByTagName('head')[0].appendChild(script);
+
+                }else{
+                    if(editor1){
+                        editor1.setOption("mode", mode.mime);
+                    }
+                    if(editor2){
+                        editor2.setOption("mode", mode.mime);
+                    }                            
                 }
-                if (targetEditor) {
-                    CodeMirror.autoLoadMode(targetEditor, fileMode.mode);//call this once loaded
-                }
             }
+            
+            loadMode(sourceEditor,targetEditor, fileMode);//call this once loaded
+
             function markPatch(editor, map) {
                 if (editor) {
                     var doc = editor.getDoc();
@@ -434,7 +465,9 @@ else
                 if (window.scrollY < targetPos) {
                     mainSCroller.stop(true);
                     if (info.top > 5) {
-                        mainSCroller.animate({ 'scrollTop': targetPos + 'px' });
+                        var speed = 1500;
+                        var dist = Math.abs(window.scrollY - targetPos);
+                        mainSCroller.animate({ 'scrollTop': targetPos + 'px' }, (dist * speed)/1000);
                     }
                 }
             }

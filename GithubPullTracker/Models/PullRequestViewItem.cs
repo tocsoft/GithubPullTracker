@@ -1,10 +1,10 @@
 ﻿using Newtonsoft.Json.Linq;
-using Octokit;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Web;
+using GithubClient.Models;
 
 namespace GithubPullTracker.Models
 {
@@ -13,18 +13,18 @@ namespace GithubPullTracker.Models
     public class PullRequestViewItem
     {
         bool _selected = false;
-        private readonly PullRequestFile fileItem;
+        private readonly CommitFile fileItem;
 
-        private static IEnumerable<PullRequestViewItem> Convert(PullRequestViewItem parent, IEnumerable<PullRequestFile> children)
+        private static IEnumerable<PullRequestViewItem> Convert(PullRequestViewItem parent, IEnumerable<CommitFile> children)
         {
             var path = parent?.Path ?? "";
 
             var groupsByFile = children
-                .Where(c => c.FileName != path)
-                .Select(x => new { x, x.FileName }).ToList();
+                .Where(c => c.filename != path)
+                .Select(x => new { x, x.filename}).ToList();
 
             var inFolder = groupsByFile
-                .Select(x => new { x.x, x.FileName, parts = x.FileName.Substring(path.Length).TrimStart('/').Split('/') }).ToList();
+                .Select(x => new { x.x, x.filename, parts = x.filename.Substring(path.Length).TrimStart('/').Split('/') }).ToList();
 
             var grouped = inFolder.GroupBy(x => x.parts[0]).ToList();
 
@@ -33,20 +33,20 @@ namespace GithubPullTracker.Models
             return converted;
         }
 
-        public PullRequestViewItem(IEnumerable<PullRequestFile> children)
+        public PullRequestViewItem(IEnumerable<CommitFile> children)
         {
             this.Name = null;
             this.Children = Convert(this, children);
         }
         
 
-        public PullRequestViewItem(string name, PullRequestViewItem parent, IEnumerable<PullRequestFile> children)
+        public PullRequestViewItem(string name, PullRequestViewItem parent, IEnumerable<CommitFile> children)
         {
             this.Name = name;
             this.Parent = parent;
             this.Children = Convert(this, children);
 
-            fileItem = children.SingleOrDefault(x => x.FileName == Path);
+            fileItem = children.SingleOrDefault(x => x.filename == Path);
         }
 
         public bool IsFile
@@ -67,8 +67,8 @@ namespace GithubPullTracker.Models
         }
 
         public string Name { get; private set; }
-        public string Patch { get { return fileItem?.Patch; } }
-        public string Sha { get { return fileItem?.Sha; } }
+        public string Patch { get { return fileItem?.patch; } }
+        public string Sha { get { return fileItem?.sha; } }
         public PullRequestViewItem Parent { get; private set; }
         public IEnumerable<PullRequestViewItem> Children { get; private set; }
         public IEnumerable<PullRequestViewItem> Decendents
@@ -106,7 +106,7 @@ namespace GithubPullTracker.Models
             {
                 if (IsFile)
                 {
-                    return fileItem.Status;
+                    return fileItem.status;
                 }
                 else
                 {
@@ -134,9 +134,9 @@ namespace GithubPullTracker.Models
                             //type = IsFile ? "file" : "folder",
                             //we can infer the type based on if it has children or not as there  are no rway of mapping folders in git anyway
                             path = Path,
-                        patch = fileItem.Patch,
-                        sha = fileItem.Sha,
-                        change = fileItem.Status
+                        patch = Patch,
+                        sha = Sha,
+                        change = Status
                     });
                     return obj;
                 }

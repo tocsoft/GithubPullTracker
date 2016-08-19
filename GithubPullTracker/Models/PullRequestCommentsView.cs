@@ -3,24 +3,30 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Web;
+using GithubClient.Models;
 using Newtonsoft.Json.Linq;
-using Octokit;
 
 namespace GithubPullTracker.Models
 {
     public class PullRequestCommentsView : PullRequestView
     {
+        private readonly IEnumerable<Event> events;
+
         public PullRequestCommentsView(PullRequest pr,
-            IEnumerable<PullRequestCommit> commits,
-            IEnumerable<IssueComment> issueComments, 
-            IEnumerable<PullRequestReviewComment> prComment
-            ):base(pr)
+            IEnumerable<Commit> commits,
+            IEnumerable<Comment> issueComments,
+            IEnumerable<CommitComment> prComment,
+            IEnumerable<Event> events
+            ) :base(pr)
         {
-            this.CommitsList = commits.Select(x => new Commit(x));
-            this.FileCommentsList= prComment.Select(x => new FileComment(x));
-            this.CommentsList = issueComments.Select(x => new Comment(x));
+            this.events = events;
+            this.CommitsList = commits;
+            this.FileCommentsList = prComment;
+            this.CommentsList = issueComments;
             this.Events = TimelineEvent.Create(CommitsList)
                 .Union(TimelineEvent.Create(FileCommentsList))
+                .Union(TimelineEvent.Create(FileCommentsList))
+                .Union(TimelineEvent.Create(events))
                 .Union(TimelineEvent.Create(CommentsList)).OrderBy(x => x.CreatedAt).ToList();
 
             List<User> users = new List<User>();
@@ -31,14 +37,15 @@ namespace GithubPullTracker.Models
             }
 
             users.Add(CreatedBy);
-            users.AddRange(CommitsList.Select(x=>x.Commiter));
-            users.AddRange(CommentsList.Select(x=>x.CreatedBy));
-            users.AddRange(FileCommentsList.Select(x=>x.CreatedBy));
+            users.AddRange(CommitsList.Select(x=>x.committer));
+            users.AddRange(CommitsList.Select(x=>x.author));
+            users.AddRange(CommentsList.Select(x=>x.user));
+            users.AddRange(FileCommentsList.Select(x=>x.user));
             
-            Participents = users.GroupBy(x => x.Login).Select(x => x.First());
+            Participents = users.GroupBy(x => x.login).Select(x => x.First());
         }
 
-        public IEnumerable<FileComment> FileCommentsList { get; private set; }
+        public IEnumerable<CommitComment> FileCommentsList { get; private set; }
         public IEnumerable<Comment> CommentsList { get; private set; }
         public IEnumerable<Commit> CommitsList { get; private set; }
         public IEnumerable<TimelineEvent> Events { get; private set; }

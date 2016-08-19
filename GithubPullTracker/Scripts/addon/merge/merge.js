@@ -552,18 +552,33 @@
 
   var dmp = new diff_match_patch();
   function getDiff(a, b) {
+      //var jsdiff = JsDiff.diffTrimmedLines(a, b);
+      //var diff = [];
+      //for (var i = 0; i < jsdiff.length; i++) {
+      //    var itm = jsdiff[i];
+      //    if (itm.added) {
+      //        diff.push([1, itm.value]);
+      //    } else if (itm.removed) {
+      //        diff.push([1, itm.value]);
+      //    } else {
+      //        diff.push([0, itm.value]);
+
+      //    }
+      //}
+      //return diff;
+
     var diff = dmp.diff_main(a, b);
     dmp.diff_cleanupSemantic(diff);
-    // The library sometimes leaves in empty parts, which confuse the algorithm
+          // The library sometimes leaves in empty parts, which confuse the algorithm
     for (var i = 0; i < diff.length; ++i) {
       var part = diff[i];
       if (!part[1]) {
         diff.splice(i--, 1);
-      } else if (i && diff[i - 1][0] == part[0]) {
+      } else if (i && diff[i -1][0] == part[0]) {
         diff.splice(i--, 1);
         diff[i][1] += part[1];
-      }
     }
+      }
     return diff;
   }
 
