@@ -1,0 +1,49 @@
+﻿@model TimelineEventOther
+@{
+    var added =  Model.Items.Where(x => x.EventType == "assigned").Select(x=>new { x.assignee.html_url, x.assignee.login }).Distinct();
+    var removed = Model.Items.Where(x => x.EventType == "unassigned").Select(x => new { x.assignee.html_url, x.assignee.login }).Distinct();
+    var showAnd = added.Any() && removed.Any();
+
+}
+@if (!showAnd)
+{
+    //single event
+
+    //coule be self assigned/ self removed 
+    //assgined other/ removed other
+}
+
+
+<div class="event">
+    <i class="icon icon-chevron-right"></i> <a href="@Model.CreatedBy.html_url" target="_blank">@Model.CreatedBy.login</a>
+    @if (added.Any())
+    {
+        <text>assigned
+
+            @foreach (var e in added)
+            {
+                <a href="@e.html_url" class="username">@e.login</a>
+                
+            }
+        </text>
+    }
+
+    @if (showAnd)
+    {
+        <text>and</text>
+    }
+    @if (removed.Any())
+    {
+        <text>unassigned
+
+            @foreach (var e in removed)
+            {
+                <a href="@e.html_url" class="username">@e.login</a>
+            }
+        </text>
+    }
+ 
+
+    <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
+</div>
+

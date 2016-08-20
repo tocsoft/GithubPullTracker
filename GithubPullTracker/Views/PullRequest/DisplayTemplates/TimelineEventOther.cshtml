@@ -1,1 +1,31 @@
 ﻿@model TimelineEventOther
+@switch (Model.Item.EventType)
+{
+    case "labeled":
+    case "unlabeled":
+        @Html.Partial("DisplayTemplates/TimelineEventOther_labeled", Model)
+        break;
+    case "milestoned":
+    case "demilestoned":
+        @Html.Partial("DisplayTemplates/TimelineEventOther_milestoned", Model)
+        break;
+    case "cross-referenced":
+        @Html.Partial("DisplayTemplates/TimelineEventOther_referenced", Model)
+        break;
+    case "renamed":
+        @Html.Partial("DisplayTemplates/TimelineEventOther_renamed", Model)
+        break;
+    case "assigned":
+    case "unassigned":
+        @Html.Partial("DisplayTemplates/TimelineEventOther_assigned", Model)
+        break;
+    case "reopened":
+    case "locked":
+    case "unlocked":
+    case "closed":
+    case "merged":
+        @Html.Partial("DisplayTemplates/TimelineEventOther_status", Model)
+        break;
+    default:
+        break;
+}

@@ -13,12 +13,14 @@ namespace GithubClient.Models
         public int id { get; set; }
         public string url { get; set; }
         public User actor { get; set; }
+        public User user { get; set; }        
         public string commit_id { get; set; }
         public string commit_url { get; set; }
         [JsonProperty("event")]
         public string EventType { get; set; }
         public DateTime created_at { get; set; }
         public Label label { get; set; }
+        public User assignee { get; set; }
         public User assigner { get; set; }
         public Milestone milestone { get; set; }
         public RenameDetails rename { get; set; }

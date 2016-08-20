@@ -70,7 +70,13 @@ html{
 #sidebar{
     float:right;
     width:20%;
-} 
+}
+    #sidebar.fixed {
+        left: 50%;
+        margin-left: 298px;
+        position:fixed;
+        top:0;
+    }
 
 #sidebar section{
     border-bottom:1px solid #efefef;
@@ -826,7 +832,7 @@ pre code{
     
 }
 #home .commit-list .commit img{
-    width:18px;
+    width:16px;
     border-radius:3px;
     position:absolute;
     left:30px

@@ -46,6 +46,11 @@ namespace GithubClient.Models
         public string url { get; set; }
         public string name { get; set; }
         public string color { get; set; }
+
+        public bool AreSame(Label l)
+        {
+            return l.name == name && l.color == color;
+        }
     }
 
 }

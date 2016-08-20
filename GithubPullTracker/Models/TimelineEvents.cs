@@ -8,25 +8,69 @@ namespace GithubPullTracker.Models
 {
     public abstract class TimelineEvent<T> : TimelineEvent
     {
-        public T Item { get; set; }
-    }
 
-    public abstract class TimelineEventGroup<T> : TimelineEvent
-    {
         public T Item { get; set; }
-        public IEnumerable<T> Items { get; set; }
+        public IEnumerable<T> Items { get; set; } = Enumerable.Empty<T>();
+
+
+
+        public override bool Merge(TimelineEvent evnt)
+        {
+            return false;
+        }
     }
-    public class TimelineEventCommitComment : TimelineEventGroup<CommitComment>
+    
+    public abstract class TimelineEventGroup<T> : TimelineEvent<T>
+    {
+        public override bool Merge(TimelineEvent evnt)
+        {
+            if(evnt is TimelineEventGroup<T>)
+            {
+                if (CreatedBy.login == evnt.CreatedBy.login)
+                {
+                    if (UpdatedAt.AddMinutes(60) >= evnt.CreatedAt)
+                    {
+                        this.Items = this.Items.Union(((TimelineEventGroup<T>)evnt).Items);
+                        UpdatedAt = evnt.UpdatedAt;//slide the window
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
+    public class TimelineEventCommitComment : TimelineEvent<CommitComment>
     {
         public bool OutdatedFile { get; internal set; }
+
     }
-    public class TimelineEventComment : TimelineEvent<Comment> { }
-    public class TimelineEventCommit : TimelineEventGroup<Commit>
+    public class TimelineEventComment : TimelineEvent<Comment>
     {
     }
-    public class TimelineEventOther : TimelineEvent<Event> { }
-    
-        public abstract class TimelineEvent
+    public class TimelineEventCommit : TimelineEventGroup<Commit>
+    {
+        public override bool Merge(TimelineEvent evnt)
+        {
+            if (evnt is TimelineEventCommit)
+            {
+                if (CreatedBy.login == evnt.CreatedBy.login)
+                {
+                    if (UpdatedAt.DayOfYear == evnt.CreatedAt.DayOfYear)
+                    {
+                        this.Items = this.Items.Union(((TimelineEventCommit)evnt).Items);
+                        UpdatedAt = evnt.UpdatedAt;//slide the window
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
+    public class TimelineEventOther : TimelineEvent<Event>
+    {
+    }
+
+    public abstract class TimelineEvent
     {
         public static IEnumerable<TimelineEvent> Create(IEnumerable<CommitComment> comments)
         {
@@ -38,7 +82,8 @@ namespace GithubPullTracker.Models
                     Items = x.ToList(),
                     OutdatedFile = !x.First().position.HasValue,
                     CreatedAt = x.Select(c => c.created_at).Min(),
-                    CreatedBy = null
+                    UpdatedAt = x.Select(c => c.created_at).Max(),
+                    CreatedBy = x.First().user
                 });
         }
 
@@ -46,24 +91,17 @@ namespace GithubPullTracker.Models
         {
             var all = events.SelectMany(x => x).OrderBy(X => X.CreatedAt).ToList();
 
-            for(var i = 1; i<all.Count; i++)
-            {
-                var prev = all[i - 1] as TimelineEventCommit;
-                var crnt = all[i] as TimelineEventCommit;
-                if(prev != null && crnt != null)
+                for (var i = 1; i < all.Count; i++)
                 {
-                    if(prev.CreatedAt.DayOfYear == crnt.CreatedAt.DayOfYear)
+                    var prev = all[i - 1];
+
+                    if (prev.Merge(all[i]))
                     {
-                        //happend on the same day
-                        if(prev.CreatedBy.login == crnt.CreatedBy.login)
-                        {
-                            prev.Items = prev.Items.Union(crnt.Items);
-                            all.Remove(crnt);
-                            i--;
-                        }
+                        all.Remove(all[i]);
+                        i--;
                     }
+
                 }
-            }
 
             return all;
         }
@@ -71,11 +109,13 @@ namespace GithubPullTracker.Models
         public static IEnumerable<TimelineEvent> Create(IEnumerable<Comment> comments)
         {
             return comments
-                .Select(x => {
+                .Select(x =>
+                {
                     return new TimelineEventComment()
                     {
                         Item = x,
                         CreatedAt = x.created_at,
+                        UpdatedAt = x.created_at,
                         CreatedBy = x.user
                     };
                 });
@@ -83,12 +123,14 @@ namespace GithubPullTracker.Models
         public static IEnumerable<TimelineEvent> Create(IEnumerable<Commit> commits)
         {
             return commits
-                .Select(x => {
+                .Select(x =>
+                {
                     return new TimelineEventCommit()
                     {
                         Item = x,
                         Items = new[] { x },
                         CreatedAt = x.commit.committer.date,
+                        UpdatedAt = x.commit.committer.date,
                         CreatedBy = x.author
                     };
                 });
@@ -97,21 +139,60 @@ namespace GithubPullTracker.Models
 
         public static IEnumerable<TimelineEvent> Create(IEnumerable<Event> events)
         {
-            return events
-                    .Select(x =>
+            Dictionary<string, string> _eventMap = new Dictionary<string, string> {
+                { "labeled", "unlabeled" },
+                { "assigned", "unassigned" },
+                { "milestoned", "demilestoned" }
+            };
+
+            var mergable = new[] { "unlabeled", "unassigned", "demilestoned" };
+            
+            var all =  events
+                    .Select(x=>new TimelineEventOther()
+                         {
+                             Item = x,
+                             Items = new[] { x },
+                             CreatedAt = x.created_at,
+                             UpdatedAt = x.created_at,
+                             CreatedBy = x.assigner ?? x.actor ?? x.user
+                    }).ToList();
+            
+
+            for (var i = 1; i < all.Count; i++)
+            {
+                var prev = all[i - 1];
+                var nxt = all[i];
+
+                var prevType = _eventMap.ContainsKey(prev.Item.EventType) ? _eventMap[prev.Item.EventType] : prev.Item.EventType;
+                if (mergable.Contains(prevType)) {
+                    var nxtType = _eventMap.ContainsKey(nxt.Item.EventType) ? _eventMap[nxt.Item.EventType] : nxt.Item.EventType;
+
+                    if (prevType == nxtType)
                     {
-                        return new TimelineEventOther()
+                        if (prev.CreatedBy?.login == nxt.CreatedBy?.login)
                         {
-                            Item = x,
-                            CreatedAt = x.created_at,
-                            CreatedBy = x.assigner ?? x.actor
-                        };
-                    });
+                            if(prev.UpdatedAt.DayOfYear == prev.UpdatedAt.DayOfYear)
+                            {
+                                prev.Items = prev.Items.Union(nxt.Items).ToArray();
+                                prev.UpdatedAt = nxt.UpdatedAt;
+                                all.Remove(nxt);
+                                i--;
+                            }
+                        }
+                    }
+                }
+            }
+            var removedEvents = new[] { "committed"};
+            return all.Where(x=> !removedEvents.Contains( x.Item.EventType)).ToList();
         }
-        
+
         public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset UpdatedAt { get; set; }
 
         public User CreatedBy { get; set; }
+        
+        public abstract bool Merge(TimelineEvent evnt);
+        
 
     }
     

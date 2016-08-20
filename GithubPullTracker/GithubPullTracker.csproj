@@ -518,6 +518,12 @@
     <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventComment.cshtml" />
     <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventCommit.cshtml" />
     <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventOther.cshtml" />
+    <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventOther_status.cshtml" />
+    <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventOther_assigned.cshtml" />
+    <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventOther_renamed.cshtml" />
+    <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventOther_referenced.cshtml" />
+    <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventOther_milestoned.cshtml" />
+    <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventOther_labeled.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

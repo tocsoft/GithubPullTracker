@@ -85,8 +85,19 @@
     </style>
     <script>
         window.repocontext = '@(Model.RepositoryOwner)/@(Model.RepositoryName)';
+        var itm = $('#sidebar');
+        var posTop = itm.position().top;
+        var posleft = itm.position().left;
 
+        $(window).on('scroll', function () {
+            
+            if (window.scrollY > posTop) {
+                itm.addClass('fixed');
+            } else {
+                itm.removeClass('fixed');
+            }
 
+        });
 
         @*diffViewScript('@Model.CurrentFile', '@Model.HeadSha', '@Url.Action("ViewPullRequest")', @Html.Raw(Model.TreeData.ToString()), '@Model.RepositoryOwner','@Model.RepositoryName')*@
 
