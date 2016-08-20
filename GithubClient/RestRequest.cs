@@ -218,5 +218,9 @@ namespace GithubClient
         {
             return client.ExecuteAsync<T>(req);
         }
+        public static Task<HttpResponseMessage> ExecuteWithAsync(this RestRequest req, RestClientBase client)
+        {
+            return client.ExecuteAsync(req);
+        }
     }
 }

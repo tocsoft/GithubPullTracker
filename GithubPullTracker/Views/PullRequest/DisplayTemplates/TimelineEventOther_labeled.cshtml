@@ -6,8 +6,9 @@
 }
 
 
+
 <div class="event">
-    <i class="icon icon-chevron-right"></i> <a href="@Model.CreatedBy.html_url" target="_blank">@Model.CreatedBy.login</a>
+    <i class="icon icon-tag"></i> <a href="@Model.CreatedBy.html_url" target="_blank" class="user">@Model.CreatedBy.login</a>
     @if (added.Any())
     {
         <text>added
@@ -17,7 +18,7 @@
         }
             @foreach (var e in added)
             {
-                <span class="label" style="background-color:@e.color">@e.name</span>
+                <span class="label" style="background-color:#@e.color">@e.name</span>
             }
         </text>
     }
@@ -35,7 +36,7 @@
     }
             @foreach (var e in removed)
             {
-                <span class="label" style="background-color:@e.color">@e.name</span>
+                <span class="label" style="background-color:#@e.color">@e.name</span>
             }
         </text>
     }

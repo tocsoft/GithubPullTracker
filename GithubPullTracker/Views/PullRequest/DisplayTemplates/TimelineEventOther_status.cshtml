@@ -1,21 +1,38 @@
 ﻿@model TimelineEventOther
     @{
         string message = Model.Item.EventType;
+        string icon = "";
         switch (Model.Item.EventType)
         {
             case "locked":
                 message = "locked and limited conversation to collaborators";
+                icon = "lock";
+                break;
+            case "unlocked":
+                message = "locked and limited conversation to collaborators";
+                icon = "key";
                 break;
             case "closed":
                 message = "closed this";
+                icon = "circle-slash";    
+                break;
+            case "reopened":
+                message = "reopened this";
+                icon = "primitive-dot";
                 break;
             default:
                 break;
         }
 
+
+
      }
 
 
 <div class="event">
-    <i class="icon icon-chevron-right"></i> <a href="@Model.CreatedBy.html_url" target="_blank">@Model.CreatedBy.login</a> @message <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
+    <i class="icon icon-@icon"></i> <a href="@Model.CreatedBy.html_url" target="_blank" class="user">@Model.CreatedBy.login</a> @message <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
 </div>
+@if (Model.Item.EventType == "closed")
+{
+    <hr />
+}

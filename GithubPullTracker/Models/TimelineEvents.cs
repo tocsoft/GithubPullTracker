@@ -47,7 +47,7 @@ namespace GithubPullTracker.Models
     public class TimelineEventComment : TimelineEvent<Comment>
     {
     }
-    public class TimelineEventCommit : TimelineEventGroup<Commit>
+    public class TimelineEventCommit : TimelineEvent<Commit>
     {
         public override bool Merge(TimelineEvent evnt)
         {
@@ -128,7 +128,7 @@ namespace GithubPullTracker.Models
                     return new TimelineEventCommit()
                     {
                         Item = x,
-                        Items = new[] { x },
+                        Items = new[]{ x },
                         CreatedAt = x.commit.committer.date,
                         UpdatedAt = x.commit.committer.date,
                         CreatedBy = x.author
@@ -145,15 +145,15 @@ namespace GithubPullTracker.Models
                 { "milestoned", "demilestoned" }
             };
 
-            var mergable = new[] { "unlabeled", "unassigned", "demilestoned" };
+            var mergable = new[] { "unlabeled", "unassigned", "demilestoned", "committed" };
             
             var all =  events
                     .Select(x=>new TimelineEventOther()
                          {
                              Item = x,
                              Items = new[] { x },
-                             CreatedAt = x.created_at,
-                             UpdatedAt = x.created_at,
+                             CreatedAt = x.committer?.date ?? x.created_at,
+                             UpdatedAt = x.committer?.date ?? x.created_at,
                              CreatedBy = x.assigner ?? x.actor ?? x.user
                     }).ToList();
             
@@ -182,7 +182,7 @@ namespace GithubPullTracker.Models
                     }
                 }
             }
-            var removedEvents = new[] { "committed"};
+            var removedEvents = new string[] { };// "committed"};
             return all.Where(x=> !removedEvents.Contains( x.Item.EventType)).ToList();
         }
 

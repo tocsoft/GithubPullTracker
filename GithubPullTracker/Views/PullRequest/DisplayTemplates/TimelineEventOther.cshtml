@@ -19,11 +19,11 @@
     case "unassigned":
         @Html.Partial("DisplayTemplates/TimelineEventOther_assigned", Model)
         break;
-    case "reopened":
     case "locked":
     case "unlocked":
-    case "closed":
     case "merged":
+    case "reopened": 
+    case "closed":   
         @Html.Partial("DisplayTemplates/TimelineEventOther_status", Model)
         break;
     default:

@@ -14,8 +14,8 @@
 
         <div id="home">
             <div class="main-comment" id="description">
-                <a href="@Model.CreatedBy.html_url" target="_blank" class="user">
-                    <img src="@(Model.CreatedBy.avatar_url)&s=40" class="avatar" alt="@Model.CreatedBy.login" />
+                <a href="@Model.CreatedBy.html_url" target="_blank" class="avatar">
+                    <img src="@(Model.CreatedBy.avatar_url)&s=40"  alt="@Model.CreatedBy.login" />
                 </a>
                 <div class="comment">
                     <div class="header">
@@ -58,7 +58,7 @@
         {
             <span>Unassigned</span>
         }
-    </section>
+    </section><a href="http://github.com/@Model.RepositoryOwner/@Model.RepositoryName/pull/@Model.Number" target="_blank" class="right show-fixed">view on github</a>
 </aside>
 
 
@@ -88,16 +88,34 @@
         var itm = $('#sidebar');
         var posTop = itm.position().top;
         var posleft = itm.position().left;
-
+        var fixSize = function () {
+            if (itm.hasClass('fixed')) {
+                itm.removeClass('fixed');
+                var pos = itm.position().left - lastScrollX;
+                var width = itm.width();
+                itm.css({ "left": pos + 'px', width: width + 'px' });
+                itm.addClass('fixed');
+            }
+        }
+        $(window).resize(fixSize);
+        var lastScrollX = 0;
         $(window).on('scroll', function () {
             
+            if (window.scrollX > 0 && window.scrollX != lastScrollX)
+            {
+                lastScrollX = window.scrollX;
+                fixSize();
+            }
             if (window.scrollY > posTop) {
                 itm.addClass('fixed');
+                fixSize();
             } else {
+                itm.attr('style', '');
                 itm.removeClass('fixed');
             }
 
         });
+
 
         @*diffViewScript('@Model.CurrentFile', '@Model.HeadSha', '@Url.Action("ViewPullRequest")', @Html.Raw(Model.TreeData.ToString()), '@Model.RepositoryOwner','@Model.RepositoryName')*@
 

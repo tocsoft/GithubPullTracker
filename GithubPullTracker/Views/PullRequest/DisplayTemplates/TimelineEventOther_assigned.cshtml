@@ -13,16 +13,15 @@
     //assgined other/ removed other
 }
 
-
 <div class="event">
-    <i class="icon icon-chevron-right"></i> <a href="@Model.CreatedBy.html_url" target="_blank">@Model.CreatedBy.login</a>
+    <i class="icon icon-person"></i> <a href="@Model.CreatedBy.html_url" target="_blank"  class="user">@Model.CreatedBy.login</a>
     @if (added.Any())
     {
         <text>assigned
 
             @foreach (var e in added)
             {
-                <a href="@e.html_url" class="username">@e.login</a>
+                <a href="@e.html_url" class="user">@e.login</a>
                 
             }
         </text>
@@ -38,7 +37,7 @@
 
             @foreach (var e in removed)
             {
-                <a href="@e.html_url" class="username">@e.login</a>
+                <a href="@e.html_url" class="user">@e.login</a>
             }
         </text>
     }

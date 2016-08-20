@@ -6,14 +6,14 @@
     @if (Model.OutdatedFile)
     {
         <div class="event">
-            <i class="icon icon-check"></i> <a href="@Model.Item.user.html_url">@Model.Item.user.login</a> commented  an outdateded file <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time> <a href="#">Show @Model.Items.Count() @(@Model.Items.Count() > 1 ?"comments" : "comment")</a>
+            <i class="icon icon-check"></i> <a href="@Model.Item.user.html_url" class="user">@Model.Item.user.login</a> commented on an outdateded file <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time> <a href="#" class="extra"><i class="icon icon-unfold"></i>Show @Model.Items.Count() @(@Model.Items.Count() > 1 ?"comments" : "comment")</a>
 
         </div>  
     }
     else
     {
             <div class="event">
-                <i class="icon icon-chevron-right"></i> <a href="@Model.Item.user.html_url">@Model.Item.user.login</a> commented on the file <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
+                <i class="icon icon-chevron-right"></i> <a href="@Model.Item.user.html_url" class="user">@Model.Item.user.login</a> commented on the file <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt.ToString()</time>
 
             </div> 
     }
@@ -40,7 +40,7 @@
                 <a href="@b.user.html_url" target="_blank">
                     <img src="@(b.user.avatar_url)&s=40" class="avatar" />
                 </a>
-                <a href="@b.user.html_url" target="_blank">@b.user.login</a> commented <time class="timeago" datetime="@b.created_at.ToString("o")">@b.created_at.ToString()</time>
+                <a href="@b.user.html_url" target="_blank" class="user">@b.user.login</a> commented <time class="timeago" datetime="@b.created_at.ToString("o")">@b.created_at.ToString()</time>
             </div>
             <div class="markdown">@Html.Raw(b.body_html)</div>
         </div>

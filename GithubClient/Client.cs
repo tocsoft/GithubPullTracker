@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using Newtonsoft.Json;
 
 namespace GithubClient
 {
@@ -255,16 +256,39 @@ namespace GithubClient
                     .ExecuteWithAsync<IEnumerable<Event>>(client);
         }
 
-        public Task<IEnumerable<Event>> Timeline(string owner, string repo, int issueNumber)
+        public async Task<IEnumerable<Event>> Timeline(string owner, string repo, int issueNumber)
         {
-            return
-                new RestRequest($"/repos/{owner}/{repo}/issues/{issueNumber}/timeline", HttpMethod.Get)
-                    .UpateHeaders(h => {
+            IEnumerable<Event> allResults = Enumerable.Empty<Event>();
+            var nextUrl = $"/repos/{Uri.EscapeUriString(owner)}/{Uri.EscapeUriString(repo)}/issues/{issueNumber}/timeline";
+            int counter = 0;
+            while (nextUrl != null && counter < 10)
+            {
+                counter++;
+                //get top 10 pages
+                var response = await
+                    new RestRequest($"{nextUrl:raw}", HttpMethod.Get)
+                        .UpateHeaders(h =>
+                        {
                         // h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
                         h.Accept.Clear();
-                        h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.mockingbird-preview"));
-                    })
-                    .ExecuteWithAsync<IEnumerable<Event>>(client);
+                            h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.mockingbird-preview"));
+                        })
+                        .ExecuteWithAsync(client);
+
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                var pageOfResults = JsonConvert.DeserializeObject<IEnumerable<Event>>(responseContent, client.JsonSerializerSettings);
+                allResults = allResults.Union(pageOfResults);
+
+                IEnumerable<string> links;
+                if (response.Headers.TryGetValues("Link", out links))
+                {
+                    nextUrl = links.First().Split(',').Select(x => x.Split(';')).Where(x => x[1].Contains("\"next\"")).Select(x => x[0].Substring(1, x[0].Length - 2)).FirstOrDefault();
+                }
+                else { nextUrl = null; }
+            }
+            return allResults.ToList();
         }
     }
 }

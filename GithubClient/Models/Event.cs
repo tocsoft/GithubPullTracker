@@ -24,6 +24,11 @@ namespace GithubClient.Models
         public User assigner { get; set; }
         public Milestone milestone { get; set; }
         public RenameDetails rename { get; set; }
+        public CommitUser author { get; set; }
+        public CommitUser committer { get; set; }
+        public string sha { get; set; }
+        public string message { get; set; }
+
     }
 
     public enum events

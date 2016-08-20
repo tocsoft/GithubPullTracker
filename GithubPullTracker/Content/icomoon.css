@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'icomoon';
-  src:  url('fonts/icomoon.eot?a4v6hn');
-  src:  url('fonts/icomoon.eot?a4v6hn#iefix') format('embedded-opentype'),
-    url('fonts/icomoon.ttf?a4v6hn') format('truetype'),
-    url('fonts/icomoon.woff?a4v6hn') format('woff'),
-    url('fonts/icomoon.svg?a4v6hn#icomoon') format('svg');
+  src:  url('fonts/icomoon.eot?uogtto');
+  src:  url('fonts/icomoon.eot?uogtto#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?uogtto') format('truetype'),
+    url('fonts/icomoon.woff?uogtto') format('woff'),
+    url('fonts/icomoon.svg?uogtto#icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
 }
@@ -27,6 +27,9 @@
 .icon-logo:before {
   content: "\e900";
 }
+.icon-bookmark:before {
+  content: "\f07b";
+}
 .icon-check:before {
   content: "\f03a";
 }
@@ -35,6 +38,12 @@
 }
 .icon-chevron-right:before {
   content: "\f078";
+}
+.icon-circle-slash:before {
+  content: "\f084";
+}
+.icon-code:before {
+  content: "\f05f";
 }
 .icon-comment:before {
   content: "\f02b";
@@ -51,19 +60,61 @@
 .icon-file-text:before {
   content: "\f011";
 }
+.icon-gear:before {
+  content: "\f02f";
+}
+.icon-git-commit:before {
+  content: "\f01f";
+}
 .icon-git-merge:before {
   content: "\f023";
 }
 .icon-git-pull-request:before {
   content: "\f009";
 }
+.icon-key:before {
+  content: "\f049";
+}
+.icon-lock:before {
+  content: "\f06a";
+}
 .icon-mark-github:before {
   content: "\f00a";
+}
+.icon-mention:before {
+  content: "\f0be";
+}
+.icon-milestone:before {
+  content: "\f075";
 }
 .icon-pencil:before {
   content: "\f058";
 }
+.icon-person:before {
+  content: "\f018";
+}
+.icon-primitive-dot:before {
+  content: "\f052";
+}
 .icon-repo:before {
   content: "\f001";
+}
+.icon-repo-push:before {
+  content: "\f005";
+}
+.icon-sign-in:before {
+  content: "\f036";
+}
+.icon-sign-out:before {
+  content: "\f032";
+}
+.icon-tag:before {
+  content: "\f015";
+}
+.icon-unfold:before {
+  content: "\f039";
+}
+.icon-x:before {
+  content: "\f081";
 }
 
