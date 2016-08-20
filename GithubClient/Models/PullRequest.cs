@@ -42,6 +42,8 @@ namespace GithubClient.Models
         public bool merged { get; set; }
         public bool? mergeable { get; set; }
         public User merged_by { get; set; }
+        public User closed_by { get; set; }
+        
         public int comments { get; set; }
         public int commits { get; set; }
         public int additions { get; set; }

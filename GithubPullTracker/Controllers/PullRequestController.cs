@@ -86,19 +86,23 @@ namespace GithubPullTracker.Controllers
         [GET("{owner}/{repo}/pull/{reference}")]
         public async Task<ActionResult> ViewPullRequest(string owner, string repo, int reference)
         {
-            var pullRequest = await Client.PullRequest(owner, repo, reference);
+            var pullRequestTask = Client.PullRequest(owner, repo, reference);
 
-            var commits = await Client.Commits(owner, repo, reference);
+            var issueTask = Client.Issue(owner, repo, reference);
 
-            var comments = await Client.FileComments(owner, repo, reference);
+            var commitsTask =  Client.Commits(owner, repo, reference);
+
+            var commentsTask =  Client.FileComments(owner, repo, reference);
             
-            var issueComments = await Client.Comments(owner, repo, reference);
+            var issueCommentsTask =  Client.Comments(owner, repo, reference);
 
            // var events = await Client.Events(owner, repo, reference);
 
-            var timeline = await Client.Timeline(owner, repo, reference);
+            var timelineTask =  Client.Timeline(owner, repo, reference);
 
-            var pr = new PullRequestCommentsView(pullRequest, commits, issueComments, comments, timeline);
+            await Task.WhenAll(pullRequestTask, issueTask, commitsTask, commentsTask, issueCommentsTask, timelineTask);
+
+            var pr = new PullRequestCommentsView(pullRequestTask.Result, issueTask.Result, commitsTask.Result, issueCommentsTask.Result, commentsTask.Result, timelineTask.Result);
             return View(pr);
         }
 

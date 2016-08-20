@@ -207,12 +207,16 @@ namespace GithubClient
                     })
                     .ExecuteWithAsync<PullRequest>(client);
         }
-
-        public Task<IEnumerable<Issue>> Isssue(string owner, string repo, int issueNumber)
+        public Task<Issue> Issue(string owner, string repo, int issue)
         {
-
-            throw new NotImplementedException();
+            return
+                new RestRequest($"/repos/{owner}/{repo}/issues/{issue}", HttpMethod.Get)
+                    .UpateHeaders(h => {
+                        h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
+                    })
+                    .ExecuteWithAsync<Issue>(client);
         }
+        
         public Task<IEnumerable<Commit>> Commits(string owner, string repo, int pullRequestNumber)
         {
             return

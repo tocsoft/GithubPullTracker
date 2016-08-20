@@ -190,13 +190,16 @@
         @if (Model.CurrentFile != null)
         {
             <text>
+                var lineTOStart = window.location.hash.replace('#', '');
                 serverResult('@Model.CurrentFile.Path',
-                    window.location.hash.replace('#', ''),
+                    lineTOStart,
                     @Html.JavascriptString(Model.TargetText),
                     @Html.JavascriptString(Model.IsBinary)
                     );
-
-                history.replaceState({ path: '@Model.CurrentFile.Path' }, null, pathPrefix +"/files/@Model.CurrentFile.Path");
+        if(lineTOStart){
+            lineTOStart = '#' + lineTOStart;
+        }
+        history.replaceState({ path: '@Model.CurrentFile.Path' }, null, pathPrefix +"/files/@Model.CurrentFile.Path"+lineTOStart);
             </text>
         }
         else
@@ -679,7 +682,7 @@
             //applyCommentsToEditors();
             window.fixHeights();
             window.reloadEditors();
-            //scrollToLine(lineScrollerTarget);
+            scrollToLine(line);
 
         }
 
@@ -703,10 +706,23 @@
             }
 
             var parts = line.split('-');
-            var editor = targetEditor;
-            if (parts[0] === 's') {
-                editor = sourceEditor;
+            if (parts[0] === 'p') {
+                var map = files[currentFilePath].patchMap.patchLines[parseInt(parts[1])+1];
+                if(map.newLine){
+                    parts[0] = "t";
+                    parts[1] = map.newLine;
+                }else if(map.oldLine){
+                    parts[0] = "s";
+                    parts[1] = map.oldLine;
+                }
             }
+
+            var editor = null;
+            if (parts[0] === 't') {
+                editor = targetEditor;
+            } else if (parts[0] === 's') {
+                editor = sourceEditor;
+            } 
             if (editor) {
                 var line = parseInt(parts[1]) - 1;
 
@@ -720,6 +736,11 @@
 
                 editor.addLineClass(line, 'wrap', 'highlighted');
                 editor._hightlightedLine = line;
+
+                var highlightedLine= $('.CodeMirror-code .highlighted');
+                    setTimeout(function(){
+                        $('html, body').scrollTop($(window).height());
+                    },100);
             }
         }
     </script>

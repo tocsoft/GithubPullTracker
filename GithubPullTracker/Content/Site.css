@@ -66,11 +66,12 @@ html{
     box-sizing:border-box;
 }
 
-
-#sidebar{
+#sidebar
+{
     float:right;
     width:20%;
 }
+#sidebar .label{ display:block; margin-bottom:5px;}
     #sidebar.fixed {
         position:fixed;
         top:0;
@@ -87,6 +88,7 @@ html{
     }
 
 #sidebar section{
+    padding-bottom:10px;
     border-bottom:1px solid #efefef;
 }
 #sidebar section a{
@@ -432,7 +434,7 @@ div.commentList {
     width:980px;
     margin:0 auto;
 }
-.body-content .title-bar{ margin-bottom:20px;     padding: 0 15px;}
+.body-content .title-bar{ margin-bottom:15px;   }
 
 .highlighted .CodeMirror-linenumber{
         background-color: gold;
@@ -522,6 +524,7 @@ div.commentList {
 padding:10px 0 0  35px;
     margin-bottom:10px;
     display: inline-block;
+    margin-left: 6px;
 }
 .navbar-brand .icon {
     position:absolute;
@@ -543,7 +546,6 @@ padding:10px 0 0  35px;
     float:right;
     position:relative;
     margin-top:4px;
-    margin-right: 9px;
 }
 .navbar .user .avatar{
     padding-right:15px;
@@ -590,7 +592,7 @@ padding:10px 0 0  35px;
 .header-content{
     background-color:#fafafa ;
         position: relative;
-    padding-top: 10px;
+    padding-top: 4px;
     padding-bottom: 20px;
     border-bottom: 1px solid #eee;
 }
@@ -598,7 +600,7 @@ padding:10px 0 0  35px;
 .title-bar h1 .icon{
     color:#bbb;
     font-size:16px;
-    margin-right:5px
+    margin-right: 6px;
 }
 .title-bar h1 {
     font-size: 18px;
@@ -617,7 +619,7 @@ padding:10px 0 0  35px;
     font-weight:normal;
     font-size: 32px;
     margin:0;
-
+    margin-bottom:6px;
 }
 .title-bar h2 span{
     font-weight: 300;
@@ -844,7 +846,8 @@ pre code{
     width: 32px;
     height: 29px;
     margin-top: -7px;
-    margin-left: -28px;
+    margin-left: -33px;
+
     line-height: 28px;
     color: #767676;
     text-align: center;
@@ -955,4 +958,64 @@ pre code{
     
     font-size: 12px;
     font-weight: 600;
+    }
+
+    .branchname{    
+        position: relative;
+    display: inline-block;
+    padding: 0 5px;
+    font: 0.75em/2 Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    color: #336479;
+    white-space: nowrap;
+    background-color: #e8f0f8;
+    border-radius: 3px;
+}
+    .title-bar .user{
+            font-weight: bold;
+            color:#555;
+    }
+
+    .prstatus-opened,
+    .prstatus-closed,
+    .prstatus-merged{
+            display:inline-block;
+    padding: 4px 8px;
+    font-weight: 600;
+    line-height: 20px;
+    color: #fff;
+    text-align: center;
+    border-radius: 3px;
+  position:relative;
+  padding-left:25px;
+  margin-right:5px;
+    }
+.prstatus-opened {
+    background-color: #6cc644;
+}
+.prstatus-closed {
+    background-color: #bd2c00;
+}
+.prstatus-merged {
+    background-color: #6e5494;
+}
+    
+    .prstatus-opened:before,
+    .prstatus-closed:before,
+    .prstatus-merged:before{
+          font-family: 'icomoon' !important;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  margin-right:5px;
+  font-size: 1.3em;
+  
+        left:6px;
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position:absolute;
+        content:'\f009';
     }

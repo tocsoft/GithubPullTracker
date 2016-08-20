@@ -1,10 +1,41 @@
 ﻿@model GithubPullTracker.Models.PullRequestView
+
 <div class="title-bar">
     <h2>@Model.Title <span>#@Model.Number</span></h2>
     <div>
+        
+        @if (Model.MergedAt.HasValue)
+        {
 
-        <span class="prstatus-open">Open</span> <a href="@Model.CreatedBy.html_url" target="_blank">@Model.CreatedBy.login</a> wants to merge @Model.Commits into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
+            <text>
+                <span class="prstatus-merged">Merged</span>
+                <a href="@Model.MergedBy.html_url" target="_blank" class="user">@Model.MergedBy.login</a> merged @Model.Commits into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
+                <time datetime="@Model.MergedAt.Value.ToString("o")">@Model.MergedAt.Value.ToString()</time>
+            </text>
 
+
+        }
+        else if (Model.ClosedDate.HasValue)
+        {
+
+            <text>
+                <span class="prstatus-closed">Closed</span>
+                <a href="@Model.ClosedBy.html_url" target="_blank" class="user">@Model.ClosedBy.login</a> merged @Model.Commits into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>    
+            </text>
+
+
+        }
+        else
+        {
+
+            <text>
+                <span class="prstatus-opened">Opened</span>
+                <a href="@Model.CreatedBy.html_url" target="_blank" class="user">@Model.CreatedBy.login</a> wants to merge  @Model.Commits into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
+            </text>
+    }
+
+
+     
     </div>
     </div>
 <div class="tab-bar">

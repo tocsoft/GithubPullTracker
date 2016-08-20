@@ -13,6 +13,7 @@ namespace GithubPullTracker.Models
         private readonly IEnumerable<Event> events;
 
         public PullRequestCommentsView(PullRequest pr,
+            Issue issue,
             IEnumerable<Commit> commits,
             IEnumerable<Comment> issueComments,
             IEnumerable<CommitComment> prComment,
@@ -46,7 +47,11 @@ namespace GithubPullTracker.Models
             users.AddRange(FileCommentsList.Select(x=>x.user));
             
             Participents = users.GroupBy(x => x.login).Select(x => x.First());
+
+            Labels = issue.labels ?? Enumerable.Empty<Label>();
+            
         }
+        public IEnumerable<Label> Labels { get; private set; }
 
         public IEnumerable<CommitComment> FileCommentsList { get; private set; }
         public IEnumerable<Comment> CommentsList { get; private set; }

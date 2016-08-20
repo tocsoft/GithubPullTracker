@@ -53,6 +53,10 @@ namespace GithubPullTracker.Models
             BaseNameFull = $"{pr.Base.user.login}/{pr.Base.repo.name}:{pr.Base.label}";
             Files = pr.changed_files;
             Comments = pr.comments;
+            ClosedDate = pr.closed_at;
+            ClosedBy = pr.closed_by;
+            this.MergedBy = pr.merged_by;
+            this.MergedAt = pr.merged_at;
         }
         
 
@@ -79,5 +83,10 @@ namespace GithubPullTracker.Models
         public string HeadNameFull { get; private set; }
         public string BaseNameFull { get; private set; }
         public User Assignee { get; private set; }
+        public bool IsMerged { get; private set; }
+        public DateTime? ClosedDate { get; private set; }
+        public DateTime? MergedAt { get; private set; }
+        public User MergedBy { get; private set; }
+        public User ClosedBy { get; private set; }
     }
 }
