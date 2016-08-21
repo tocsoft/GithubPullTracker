@@ -52,6 +52,10 @@
                     {
                         <span class="label" style="background-color:#@l.color">@l.name</span>
                     }
+                    @if (result.Assignee != null)
+                    {
+                    <a class="user" target="_blank"  href="@result.Assignee.html_url"><img alt="@result.Assignee.login" src="@(result.Assignee.avatar_url)&s=40"></a>
+                    }
                 </div>
                 <div class="meta">
                     #@(result.Number)

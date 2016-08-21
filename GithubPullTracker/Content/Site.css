@@ -1095,8 +1095,17 @@ pre code{
 #searchResults .rows .title {
         font-size: 16px ;
         font-weight:600;
-        padding:10px 5px 5px 40px;
+        padding:10px 45px 5px 40px;
         position:relative;
+}
+#searchResults .rows .title .user{
+    position:absolute;
+    right:10px;
+    top:14px;
+}
+#searchResults .rows .title .user img{
+    width:25px;
+    border-radius:3px;
 }
 
 #searchResults .rows .title .icon{
@@ -1320,4 +1329,48 @@ pre code{
             color: #d3d3d3;
             cursor: default;
             background-color: #fafafa;
+        }
+
+        a.button{
+            display:inline-block;
+            color:black;
+            border:1px solid black;
+            padding: 0.4em 0.8em;
+            border-radius:3px;
+        }
+        
+        a:hover.button{
+            color:white;
+            background-color:#333;
+            text-decoration:none;
+            
+        }
+        
+        .navbar a.button{
+            color:white;
+            float:right;
+            border:1px solid white;
+            padding: 0.4em 0.8em;
+            border-radius:3px;
+        }
+        .navbar a.button:hover{
+            color:#333;
+            background:white;
+            text-decoration:none;
+        }
+
+
+        .hero{
+            text-align:center;
+            margin-top:20px;
+            margin-bottom:20px;
+        }
+        
+        .hero p{
+            font-size:35px;
+            line-height:1.8em
+        }
+        
+        .hero a.button{
+            font-size:18px;
         }

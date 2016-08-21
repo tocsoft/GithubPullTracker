@@ -30,23 +30,27 @@
         </div>
     </div>
     <div class="rows">
-        @foreach (var result in Model.Items)
-        {
-            <div class="@(result.ClosedAt.HasValue ? "closed" : null)">
-                <div class="title">
-                    <i class="icon icon-git-pull-request"></i>
-                    <a href="~/@(result.RepositoryOwner)/@(result.RepositoryName)" class="repo">
-                        @(result.RepositoryOwner)/@(result.RepositoryName)
-                    </a>
+    @foreach (var result in Model.Items)
+    {
+        <div class="@(result.ClosedAt.HasValue ? "closed" : null)">
+            <div class="title">
+                <i class="icon icon-git-pull-request"></i>
+                <a href="~/@(result.RepositoryOwner)/@(result.RepositoryName)" class="repo">
+                    @(result.RepositoryOwner)/@(result.RepositoryName)
+                </a>
 
-                    <a class="pull" href="@Url.Action("ViewPullRequest", "PullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
-                        @result.Title
-                    </a>
-                    @foreach (var l in result.Labels)
-                    {
-                        <span class="label" style="background-color:#@l.color">@l.name</span>
-                    }
-                </div>
+                <a class="pull" href="@Url.Action("ViewPullRequest", "PullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
+                    @result.Title
+                </a>
+                @foreach (var l in result.Labels)
+                {
+                    <span class="label" style="background-color:#@l.color">@l.name</span>
+                }
+                @if (result.Assignee != null)
+                {
+                <a class="user" target="_blank" href="@result.Assignee.html_url"><img alt="@result.Assignee.login" src="@(result.Assignee.avatar_url)&s=40"></a>
+                }
+        </div>
                 <div class="meta">
                         #@(result.Number)
                     @if (result.ClosedAt.HasValue)

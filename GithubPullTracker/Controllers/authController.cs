@@ -15,12 +15,12 @@ namespace GithubPullTracker.Controllers
     public class AuthController : ControllerBase
     {
 
-        [GET("logout", SitePrecedence = 2)]
+        [GET("logout", SitePrecedence = 1)]
         public ActionResult SignOut()
         {
             CurrentUser = null;
 
-            return RedirectToAction("signin");
+            return Redirect("/");
         }
 
         [GET("login", SitePrecedence = 1)]
@@ -67,8 +67,8 @@ namespace GithubPullTracker.Controllers
                 AvartarUrl = currentUser.avatar_url,
                 ProfileUrl = currentUser.html_url
             };
-            
-            return RedirectToAction("Home", "Home");
+
+            return Redirect("/");
         }
     }
 }
