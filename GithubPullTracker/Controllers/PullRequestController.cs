@@ -11,76 +11,12 @@ using System.IO;
 using System.Text;
 using System.Net;
 using AttributeRouting.Web.Mvc;
+using System.Data.Entity;
 
 namespace GithubPullTracker.Controllers
 {
     public class PullRequestController : ControllerBase
     {
-
-        //[Auth]
-        //[GET("{owner}/{repo}/pull/{reference}/contents/{*path}")]
-        //public async Task<ActionResult> GetFile(string owner, string repo, int reference, string path, string expectedSha)
-        //{
-        //    string sourceText = null;
-        //    bool isBinaryDataType = false;
-
-        //    var source = await Client.Repository.Content.GetAllContentsByRef(owner, repo, path, expectedSha);
-
-        //    var sourceFile = source.SingleOrDefault();
-        //    if (sourceFile != null)
-        //    {
-        //        var data = Convert.FromBase64String(sourceFile.EncodedContent);
-        //        isBinaryDataType = isBinary(data);
-        //        if (!isBinaryDataType)
-        //        {
-        //            sourceText = sourceFile.Content;
-        //        }
-        //    }
-            
-        //    var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
-        //    {
-        //        target = sourceText,
-        //        isBinary = isBinaryDataType
-        //    });
-        //    return Content(json, "application/json");
-        //}
-
-        //[Auth]
-        //[GET("{owner}/{repo}/pull/{reference}/comments")]
-        //public async Task<ActionResult> GetFileComments(string owner, string repo, int reference, string expectedSha)
-        //{
-        //    var pullRequest = await Client.PullRequest.Get(owner, repo, reference);
-
-        //    if (pullRequest.Head.Sha != expectedSha)
-        //    {
-        //        return Content(Newtonsoft.Json.JsonConvert.SerializeObject(new
-        //        {
-        //            headSha = pullRequest.Head.Sha
-        //        }), "application/json");
-        //    }
-
-        //    var files = await Client.PullRequest.Files(owner, repo, reference);
-
-        //    var comments = await Client.PullRequest.Comment.GetAll(owner, repo, reference);
-            
-        //    var commentedFiles = comments.Select(x => x.Path).ToList();
-        //    var issueComments = await Client.Issue.Comment.GetAllForIssue(owner, repo, reference, new ApiOptions { PageSize = 1000 });
-
-        //    var maps = files
-        //                .Where(x=> commentedFiles.Contains(x.FileName))//only parse patch files we will need
-        //                .ToDictionary(x => x.FileName, x => new PageMap(x.Patch));
-
-        //    var convertedComments = comments.Select(x => new Comment(x, maps[x.Path]));
-        //    var allComments = convertedComments.Union(issueComments.Select(x => new Comment(x))).OrderBy(x=>x.createdAt);
-
-        //    var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
-        //    {
-        //        headSha = pullRequest.Head.Sha,
-        //        comments = allComments
-        //    });
-        //    return Content(json, "application/json");
-
-        //}
 
         [Auth]
         [GET("{owner}/{repo}/pull/{reference}")]
@@ -100,6 +36,7 @@ namespace GithubPullTracker.Controllers
 
             var timelineTask =  Client.Timeline(owner, repo, reference);
 
+
             await Task.WhenAll(pullRequestTask, issueTask, commitsTask, commentsTask, issueCommentsTask, timelineTask);
 
             var pr = new PullRequestCommentsView(pullRequestTask.Result, issueTask.Result, commitsTask.Result, issueCommentsTask.Result, commentsTask.Result, timelineTask.Result);
@@ -109,62 +46,20 @@ namespace GithubPullTracker.Controllers
         [GET("{owner}/{repo}/pull/{reference}/files/{*path}")]
         public async Task<ActionResult> ViewFiles(string owner, string repo, int reference, string path = null, string sha = null)
         {
-            if (Request.IsAjaxRequest())
+            //markas visited in tabel storage
+            using (var db = new DatabaseContext())
             {
-                string sourceText = "";
-                bool fileMissing = false;
-                bool isBinaryDataType = false;
-                try
+
+                if (Request.IsAjaxRequest())
                 {
-                    var sourceFile = await Client.FileContents(owner, repo, path, sha);
-                    if (sourceFile != null)
+
+
+                    string sourceText = "";
+                    bool fileMissing = false;
+                    bool isBinaryDataType = false;
+                    try
                     {
-                        if (sourceFile.encoding == "base64")
-                        {
-                            var data = Convert.FromBase64String(sourceFile.content);
-                            
-                            sourceText = readData(data, out isBinaryDataType);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    fileMissing = true;
-                }
-
-                var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
-                {
-                    contents = sourceText,
-                    isBinary = isBinaryDataType,
-                    missing = fileMissing,
-                });
-
-                return Content(json, "application/json");
-            }
-
-            var files = await Client.Files(owner, repo, reference);
-            if(path == null)
-            {
-                path = files.First().filename;
-                return RedirectToAction("ViewFiles", new { owner, repo, reference, path });
-            }
-
-            var pullRequest = await Client.PullRequest(owner, repo, reference);
-
-            if (path != null)
-            {
-                path = path.TrimEnd('/');
-
-                var file = files.Where(x => x.filename == path).Single();
-                
-                string sourceText = "";
-                bool isBinaryDataType = false;
-                
-                try
-                {
-                    if (file.status != "removed")
-                    {
-                        var sourceFile = await Client.FileContents(owner, repo, path, pullRequest.Head.sha);
+                        var sourceFile = await Client.FileContents(owner, repo, path, sha);
                         if (sourceFile != null)
                         {
                             if (sourceFile.encoding == "base64")
@@ -173,22 +68,81 @@ namespace GithubPullTracker.Controllers
 
                                 sourceText = readData(data, out isBinaryDataType);
                             }
-                        }                        
+
+                            db.Views.Add(new FileView(CurrentUser.UserName, owner, repo, reference, sourceFile.sha));
+                        }
                     }
+                    catch (Exception ex)
+                    {
+                        fileMissing = true;
+                    }
+
+                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
+                    {
+                        contents = sourceText,
+                        isBinary = isBinaryDataType,
+                        missing = fileMissing,
+                    });
+
+                    await db.SaveChangesAsync();
+
+                    return Content(json, "application/json");
                 }
-                catch (Exception ex)
+
+                var files = await Client.Files(owner, repo, reference);
+                if (path == null)
                 {
+                    path = files.First().filename;
+                    return RedirectToAction("ViewFiles", new { owner, repo, reference, path });
                 }
 
-                var comments = await Client.FileComments(owner, repo, reference);
-                var vm = new PullRequestFileView(pullRequest, files, path, sourceText, isBinaryDataType, comments);
+                var pullRequest = await Client.PullRequest(owner, repo, reference);
+
+                if (path != null)
+                {
+                    path = path.TrimEnd('/');
+
+                    var file = files.Where(x => x.filename == path).Single();
+                    db.Views.Add(new FileView(CurrentUser.UserName, owner, repo, reference, file.sha));
+
+                    string sourceText = "";
+                    bool isBinaryDataType = false;
+
+                    try
+                    {
+                        if (file.status != "removed")
+                        {
+                            var sourceFile = await Client.FileContents(owner, repo, path, pullRequest.Head.sha);
+                            if (sourceFile != null)
+                            {
+                                if (sourceFile.encoding == "base64")
+                                {
+                                    var data = Convert.FromBase64String(sourceFile.content);
+
+                                    sourceText = readData(data, out isBinaryDataType);
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                    
+                    await db.SaveChangesAsync();
+                    var visistedFiles = await db.Views.Where(x => x.Owner == owner && repo == x.Repo && reference == x.Number && CurrentUser.UserName == x.Login)
+                        .Select(x => x.FileSha)
+                        .ToListAsync();
+
+                    var comments = await Client.FileComments(owner, repo, reference);
+                    var vm = new PullRequestFileView(pullRequest, files, path, sourceText, isBinaryDataType, comments, visistedFiles);
 
 
-                return View(vm);
+                    return View(vm);
+                }
+
+                var pr = new PullRequestFileView(pullRequest, files);
+                return View(pr);
             }
-
-            var pr = new PullRequestFileView(pullRequest, files);
-            return View(pr);
         }
 
         public static string readData(byte[] data, out bool isBinary)

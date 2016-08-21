@@ -20,7 +20,7 @@
             <li class="status-@itm.Status">
             @if (itm.IsFile)
             {
-                    <a href="@Url.Action("ViewFiles", new { path = itm.Path })" data-sha="@itm.Sha" class="node">
+                    <a href="@Url.Action("ViewFiles", new { path = itm.Path })" data-sha="@itm.Sha" class="node  @(Model.VisitedFiles.Contains(itm.Sha, StringComparer.OrdinalIgnoreCase) ? "visited" : null)">
                         @for (var i = 0; i < depth; i++)
                         {
                             <span class="spacer"></span>
@@ -201,7 +201,7 @@
         }
 
 
-        //TODO: move this to a server side version of the tracker!!!
+        @*//TODO: move this to a server side version of the tracker!!!
         var pageTracker = {
             isVisited : function(sha){
                 return lscache.get(sha);
@@ -211,7 +211,7 @@
             }
         };
 
-        pageTracker.markVisited(@Html.JavascriptString(Model.CurrentFile.Sha));
+        pageTracker.markVisited(@Html.JavascriptString(Model.CurrentFile.Sha));*@
 
         var fileTree = @Html.JavascriptString(Model.FileItems.Select(x=>new { x.Path, x.Status, x.Patch, x.Sha }));
         var files = {};
@@ -411,10 +411,10 @@
             if(clist){
                 $this.append($("<span class='badge' />").text(clist.length));
             }
-            var fileSha = $this.attr('data-sha');
-            if(pageTracker.isVisited(fileSha)){
-                $this.addClass("visited");
-            }
+            //var fileSha = $this.attr('data-sha');
+            //if(pageTracker.isVisited(fileSha)){
+            //    $this.addClass("visited");
+            //}
         })
         function loadPath(path, skipNavigation, refresh){
 
@@ -470,7 +470,7 @@
             targetElm.hide();
             loaderElm.show();
             if(files[path].Status == 'removed' ){
-                serverResult(path, lineScrollerTarget, "", false);
+                serverResult(path, lineScrollerTarget, "", (!files[path].patch));
             }else{
                 $.get(pathPrefix + navPath+"?sha=" + sha, function(data){
                     serverResult(path, lineScrollerTarget, data.contents, data.isBinary);

@@ -10,6 +10,8 @@ namespace GithubPullTracker
 {
     public class MvcApplication : System.Web.HttpApplication
     {
+     
+
         protected void Application_Start()
         {
             AreaRegistration.RegisterAllAreas();
@@ -20,6 +22,7 @@ namespace GithubPullTracker
                 .AddEnvironmentVariables()
                 .AddDevlopmentSettings("GithubPullTracker")
                 .AddFromConfig();
+            
         }
     }
 }
