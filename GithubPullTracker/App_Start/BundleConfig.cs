@@ -13,7 +13,7 @@ namespace GithubPullTracker
         public static void RegisterBundles(BundleCollection bundles)
         {
 
-            bundles.Add(new ScriptBundle("~/SiteJS")
+            bundles.Add(new ScriptBundle("~/Scripts/SiteJS")
                 .Include("~/Scripts/jquery-{version}.js")
                 .Include("~/Scripts/lscache.js")
                 .Include("~/Scripts/marked.js")
@@ -31,7 +31,7 @@ namespace GithubPullTracker
                 .Include("~/Scripts/addon/merge/merge.js")
                 .Include("~/Scripts/site.js"));
 
-            bundles.Add(new StyleBundle("~/SiteCss")
+            bundles.Add(new StyleBundle("~/Content/SiteCss")
                 .Include("~/Content/codemirror.css")
                 .Include("~/Content/addon/merge/merge.css")
                 .Include("~/Content/addon/merge/merge.css")

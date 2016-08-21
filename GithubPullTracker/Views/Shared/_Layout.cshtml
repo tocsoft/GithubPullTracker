@@ -14,7 +14,7 @@
     <meta name="application-name" content="Pull Tracker">
     <meta name="theme-color" content="#f5f5f5">
 
-    @Styles.Render("~/SiteCss")
+    @Styles.Render("~/Content/SiteCss")
     @{
 
         var user = ViewData["__CurrentUser__"] as GithubPullTracker.Models.GithubUser;
@@ -68,7 +68,7 @@
 
 
 
-    @Scripts.Render("~/SiteJs")
+    @Scripts.Render("~/Scripts/SiteJs")
     <script>
         CodeMirror.modeURL = "/Scripts/mode/%N/%N.js";
     </script>
