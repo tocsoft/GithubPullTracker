@@ -173,6 +173,7 @@ div.commentList {
 	border: 1px solid #bfccd1;
         margin-right: 5px;
         margin-top: 5px;
+        display:none;
     }
     #file_diff >  div.header 
     {
@@ -776,6 +777,10 @@ pre code{
     padding:5px;
     display:block;
     cursor:pointer;
+}
+#file-list ul li .node .spacer{
+    display:inline-block;
+    width:10px; height:1em;
 }
 #file-list ul li a.node
 {

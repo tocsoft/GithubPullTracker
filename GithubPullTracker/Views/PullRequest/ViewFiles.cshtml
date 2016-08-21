@@ -12,7 +12,7 @@
 }
 @Html.Partial("PullRequestHeader")
 
-@helper RenderTree(IEnumerable<PullRequestViewItem> items) { 
+@helper RenderTree(IEnumerable<PullRequestViewItem> items, int depth) { 
 
    <ul>
        @foreach (var itm in items)
@@ -20,12 +20,22 @@
             <li class="status-@itm.Status">
             @if (itm.IsFile)
             {
-                    <a href="@Url.Action("ViewFiles", new { path = itm.Path })" data-sha="@itm.Sha" class="node"><i class="icon icon-file-text"></i><span class="fn">@itm.Name</span></a>
+                    <a href="@Url.Action("ViewFiles", new { path = itm.Path })" data-sha="@itm.Sha" class="node">
+                        @for (var i = 0; i < depth; i++)
+                        {
+                            <span class="spacer"></span>
+                        }
+                <i class="icon icon-file-text"></i><span class="fn">@itm.Name</span></a>
             }
             else
             {
-                    <span  class="node"><i class="icon icon-file-directory"></i><span class="fn">@itm.Name</span></span>
-                    @RenderTree(itm.Children)
+                    <span  class="node">
+                @for (var i = 0; i < depth; i++)
+                {
+                <span class="spacer"></span>
+                }
+                <i class="icon icon-file-directory"></i><span class="fn">@itm.Name</span></span>
+                    @RenderTree(itm.Children, depth+1)
             }
             </li>
        }
@@ -36,7 +46,7 @@
 <div id="splitter">
     <div class="left-splitter">
         <div id="file-list">
-            @RenderTree(Model.Items)
+            @RenderTree(Model.Items, 0)
         </div>
     </div>
     <div class="right-splitter">       
@@ -77,8 +87,25 @@
         }
 
     </style>
-    <script>
+
+    <script async>
         var spliiterELm = $('#splitter');
+        
+        window.options = lscache.get("options") || { showInlineComments: true, splitterWidth: ($(window).width() * 0.2) };
+
+        $('.left-splitter').width(options.splitterWidth);
+
+        spliiterELm.splitter({
+            sizeLeft: options.splitterWidth
+        }).on("resize", function () {
+            options.splitterWidth = $('.left-splitter').width() - 5;
+            lscache.set('options', options);
+        });
+
+    </script>
+    <script async>
+       
+
         var editorTargetPos = spliiterELm.position().top;
             
         var mainScrollerELm  = $("html, body");
@@ -97,7 +124,6 @@
             }
         }
 
-        (function(){
             var fixHeightsfilediffElm = $('#file_diff');
             var fixHeightssplitterElm = $('#splitter');
             var fixHeightswindowElm = $(window);
@@ -139,30 +165,26 @@
             }).resize();
             window.fixHeights = fixHeights;
 
-            window.options = lscache.get("options") || { showInlineComments: true, splitterWidth: ($(window).width() * 0.2) };
 
-            $('#show-inline-comments').attr('checked', options.showInlineComments);
-
-            $('#show-inline-comments').change(function () {
-                var checked = $(this).is(':checked');
-                options.showInlineComments = checked;
-                lscache.set("options", options);
-                applyCommentsToEditors();
-            });
-
+            $('#show-inline-comments')
+                .attr('checked', options.showInlineComments)
+                .change(function () {
+                    var checked = $(this).is(':checked');
+                    options.showInlineComments = checked;
+                    lscache.set("options", options);
+                    applyCommentsToEditors();
+                });
+        
             
-            $("#splitter").splitter({
-                sizeLeft: options.splitterWidth
-            });
-            $('#splitter').on("resize", function () {
-                options.splitterWidth = $('.left-splitter').width() - 5;
-                lscache.set('options', options);
-            });
-        })();
     </script>
 
     
-    <script>
+    <script async>
+        
+        var editorElm = $('#editor');
+        var targetElm = $('#file_diff').hide();
+        var loaderElm = $('#loader').show();
+        var messageElm = $('#message').hide();
 
         var sha = @Html.JavascriptString(Model.HeadSha);
 
@@ -196,10 +218,6 @@
             files[f.Path] = f;
         }
 
-        var editorElm = $('#editor');
-        var targetElm = $('#file_diff').hide();
-        var loaderElm = $('#loader').show();
-        var messageElm = $('#message').hide();
         var targetEditor;
         var sourceEditor;
         var currentFilePath = '';
@@ -210,15 +228,20 @@
         {
             <text>
                 var lineTOStart = window.location.hash.replace('#', '');
-                serverResult('@Model.CurrentFile.Path',
-                    lineTOStart,
-                    @Html.JavascriptString(Model.TargetText),
-                    @Html.JavascriptString(Model.IsBinary)
-                    );
-        if(lineTOStart){
-            lineTOStart = '#' + lineTOStart;
-        }
-        history.replaceState({ path: '@Model.CurrentFile.Path' }, null, pathPrefix +"/files/@Model.CurrentFile.Path"+lineTOStart);
+
+                setTimeout(function(){ 
+                    serverResult('@Model.CurrentFile.Path',
+                        lineTOStart,
+                        @Html.JavascriptString(Model.TargetText),
+                        @Html.JavascriptString(Model.IsBinary)
+                        );
+
+                },10);
+
+                if(lineTOStart){
+                    lineTOStart = '#' + lineTOStart;
+                }
+                history.replaceState({ path: '@Model.CurrentFile.Path' }, null, pathPrefix +"/files/@Model.CurrentFile.Path"+lineTOStart);
             </text>
         }
         else
@@ -230,10 +253,7 @@
                 loaderElm.hide();
         </text>
         }
-        $('#file-list li .node').each(function(){
-            $this = $(this);
-            $this.css('padding-left', ($this.parents('ul').length * parseInt($this.css('padding-left'))) + 'px');
-        });
+
 
 
         function applyCommentsToEditors (){
@@ -479,9 +499,6 @@
             }
 
             editorElm.html("");
-            targetElm.show();
-
-            loaderElm.hide();
 
 
 
@@ -696,9 +713,14 @@
             if (targetEditor) { targetEditor.on("scroll", scroll); }
             if (sourceEditor) { sourceEditor.on("scroll", scroll); }
 
+            
 
             //applyCommentsToEditors();
             window.fixHeights();
+            
+            targetElm.show();
+            loaderElm.hide();
+
             window.reloadEditors();
             scrollToLine(line);
 
