@@ -78,6 +78,25 @@
 
     </style>
     <script>
+        var spliiterELm = $('#splitter');
+        var editorTargetPos = spliiterELm.position().top;
+            
+        var mainScrollerELm  = $("html, body");
+
+        var animatingscrollToEditor = false;
+            
+        function scrollToEditor(){
+            if(!animatingscrollToEditor){
+                
+                var speed = 1500;
+                var dist = Math.abs(window.scrollY - editorTargetPos);
+
+                animatingscrollToEditor = true;
+                mainScrollerELm.stop(true);
+                mainScrollerELm.animate({ 'scrollTop': editorTargetPos + 'px' }, (dist * speed)/1000, function(){ animatingscrollToEditor= false;});
+            }
+        }
+
         (function(){
             var fixHeightsfilediffElm = $('#file_diff');
             var fixHeightssplitterElm = $('#splitter');
@@ -651,21 +670,20 @@
 
             if (targetEditor) { targetEditor.on("gutterClick", lineClicked); }
             if (sourceEditor) { sourceEditor.on("gutterClick", lineClicked); }
-
-            var targetPos = $('#splitter').position().top;
-            var mainSCroller = $("html, body");
-
+            
             var currentTarget = 0;
             var scrollerTimeout;
+
             var scroll = function (cm) {
                 var info = cm.getScrollInfo();
                 var curentPos = info.top;
-                if (window.scrollY < targetPos) {
-                    mainSCroller.stop(true);
+                if (window.scrollY < editorTargetPos) {
                     if (info.top > 5) {
-                        var speed = 1500;
-                        var dist = Math.abs(window.scrollY - targetPos);
-                        mainSCroller.animate({ 'scrollTop': targetPos + 'px' }, (dist * speed)/1000);
+                        scrollToEditor();
+                    }
+                }else if(window.scrollY  > editorTargetPos){
+                    if ((info.top + info.clientHeight)+5 < info.height) {
+                        scrollToEditor();
                     }
                 }
             }
@@ -743,5 +761,66 @@
                     },100);
             }
         }
+
+        // left: 37, up: 38, right: 39, down: 40,
+        // spacebar: 32, pageup: 33, pagedown: 34, end: 35, home: 36
+        var keys = {37: 1, 38: 1, 39: 1, 40: 1};
+
+        var delay =250;
+        var delayTo;
+        function preventDefault(e) {
+            e = e || window.event;
+            if (e.preventDefault)
+                e.preventDefault();
+            e.returnValue = false;  
+            clearTimeout(delayTo);  
+            delayTo = setTimeout(enableScroll, delay);
+        }
+
+        function preventDefaultForScrollKeys(e) {
+            if (keys[e.keyCode]) {
+                preventDefault(e);
+                clearTimeout(delayTo);  
+                delayTo = setTimeout(enableScroll, delay);
+                return false;
+            }
+        }
+
+        function disableScroll() {
+            
+            clearTimeout(delayTo);  
+            delayTo = setTimeout(enableScroll, delay);
+
+            if (window.addEventListener) // older FF
+                window.addEventListener('DOMMouseScroll', preventDefault, false);
+            window.onwheel = preventDefault; // modern standard
+            window.onmousewheel = document.onmousewheel = preventDefault; // older browsers, IE
+            window.ontouchmove  = preventDefault; // mobile
+            document.onkeydown  = preventDefaultForScrollKeys;
+        }
+
+        function enableScroll() {
+            if (window.removeEventListener)
+                window.removeEventListener('DOMMouseScroll', preventDefault, false);
+            window.onmousewheel = document.onmousewheel = null; 
+            window.onwheel = null; 
+            window.ontouchmove = null;  
+            document.onkeydown = null;  
+        }
+
+        var deadZonePos = $('#splitter').position().top
+        var scrollLockTo;
+        var lastPos = window.scrollY;
+        $(window).on("scroll", function(e){
+            clearTimeout(scrollLockTo);
+            
+            if(lastPos < deadZonePos && window.scrollY >deadZonePos){
+                disableScroll();
+                scrollToEditor();
+            }
+            scrollLockTo = setTimeout(function(){
+                lastPos= window.scrollY;
+            },100);
+        })
     </script>
 }

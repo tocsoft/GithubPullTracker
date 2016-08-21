@@ -516,6 +516,7 @@ div.commentList {
     padding-top: 10px;
     background-color: #f5f5f5;
     border-bottom: 1px solid #e5e5e5;
+    background-color:#333
 }
 
 .navbar-brand 
@@ -525,6 +526,7 @@ padding:10px 0 0  35px;
     margin-bottom:10px;
     display: inline-block;
     margin-left: 6px;
+    color:white;
 }
 .navbar-brand .icon {
     position:absolute;
@@ -532,6 +534,7 @@ padding:10px 0 0  35px;
     color: black;
     left:0;
     top: 0;
+    color:white;
 }
 
 .navbar-default .navbar-brand:hover .icon, .navbar-default .navbar-brand:focus .icon{
@@ -555,6 +558,7 @@ padding:10px 0 0  35px;
     position:absolute;
     top: 4px;
     right: 5px;
+    color:white;
 }
 .navbar .user img
 {
@@ -1018,4 +1022,15 @@ pre code{
   -moz-osx-font-smoothing: grayscale;
   position:absolute;
         content:'\f009';
+    }
+
+    .body-content{ overflow:auto;}
+
+    footer{
+        display:block;
+        width:980px;
+        margin:0 auto;
+        margin-top:20px;
+        border-top : 1px solid;
+        padding:20px 0;
     }
