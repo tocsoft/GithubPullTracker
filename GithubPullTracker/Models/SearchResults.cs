@@ -158,8 +158,14 @@ namespace GithubPullTracker.Models
             SearchTerm = term;
             Page = page;
             PageSize = pagesize;
-
-            Hits = results.total_count;
+            if (state == RequestState.Open)
+            {
+                OpenHits = results.total_count;
+            }
+            if (state == RequestState.Closed)
+            {
+                ClosedHits = results.total_count;
+            }
 
             PageCount = (int)Math.Ceiling(results.total_count / (float)pagesize);
 
@@ -226,7 +232,8 @@ namespace GithubPullTracker.Models
         public RequestState State { get; private set; }
         public SortOrder Order { get; private set; }
         public SortOrderDirection Direction { get; private set; }
-        public int Hits { get; private set; }
+        public int? OpenHits { get; private set; }
+        public int? ClosedHits { get; private set; }
         public string SearchTerm { get; private set; }
     }
 
@@ -248,6 +255,7 @@ namespace GithubPullTracker.Models
             ClosedAt = issue.closed_at;
             CreatedAt = issue.created_at;
             Comments = issue.comments;
+            Labels = issue.labels ?? Enumerable.Empty<Label>();
         }
         
         
@@ -266,6 +274,7 @@ namespace GithubPullTracker.Models
         public DateTimeOffset? ClosedAt { get; private set; }
         
         public int Comments { get; private set; }
+        public IEnumerable<Label> Labels { get; private set; }
     }
     public enum Status
     {

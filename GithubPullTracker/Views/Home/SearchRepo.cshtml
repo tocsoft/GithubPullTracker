@@ -14,58 +14,117 @@
     </div>
 }
 
+    <div id="searchResults" class="noRepos">
 
-<a href="@Model.GenerateStateUrl(GithubClient.RequestState.Open)">Open</a>
-<a href="@Model.GenerateStateUrl(GithubClient.RequestState.Closed)">Closed</a>
-<a href="@Model.GenerateStateUrl(GithubClient.RequestState.Merged)">Merged</a>
-<br />
-<a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.All)">All</a>
-<a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.Assigned)">Assigned</a>
-<a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.Author)">Created</a>
-<a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.Involved)">Involved</a>
 
-<span>@Model.Hits</span>
-@foreach (var result in Model.Items)
-{
-    <div>
-        <div>
-            <h2>
-                @if (ViewBag.HideRepo != true)
-                {
-                    <a href="~/@(result.RepositoryOwner)/@(result.RepositoryName)">
-                        @(result.RepositoryOwner)/@(result.RepositoryName)
-                    </a>
-                }
-                <a href="@Url.Action("ViewPullRequest", "PullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
-                    @result.Title
+        <div class='header'>
+            <div class="left">
+                <a href="@Model.GenerateStateUrl(GithubClient.RequestState.Open)" class="@(Model.State == GithubClient.RequestState.Open?"selected" : null)">
+                    <i class="icon icon-git-pull-request"></i>
+                    <span>@Model.OpenHits</span>
+                    Open
                 </a>
-            </h2>
-            <span>
-                <a href="@Url.Action("ViewPullRequest", "PullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
-                    #@(result.Number)
+                <a href="@Model.GenerateStateUrl(GithubClient.RequestState.Closed)" class="@(Model.State == GithubClient.RequestState.Closed?"selected" : null)">
+                    <i class="icon icon-check"></i>
+                    <span>@Model.ClosedHits</span>
+                    Closed
                 </a>
-                @if (result.ClosedAt.HasValue)
-                {
-                    <text> by
-                        <a href="@result.CreateBy.html_url" target="_blank">@result.CreateBy.login</a>
-                        closed <time class="timeago">@result.CreatedAt.ToString()</time>
-                    </text>
-                }
-                else
-                {
-                    <text>
-                        opened
-                        <time class="timeago">@result.CreatedAt.ToString()</time> by
-                        <a href="@result.CreateBy.html_url" target="_blank">@result.CreateBy.login</a>
-                    </text>
-                }
-            </span>
+            </div>
+            <div class="right">
+                <a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.All)" class="@(Model.ConnectionType == GithubClient.RequestConnection.All?"selected" : null)">All</a>
+                <a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.Assigned)" class="@(Model.ConnectionType == GithubClient.RequestConnection.Assigned?"selected" : null)">Assigned</a>
+                <a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.Author)" class="@(Model.ConnectionType == GithubClient.RequestConnection.Author?"selected" : null)">Created</a>
+                <a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.Involved)" class="@(Model.ConnectionType == GithubClient.RequestConnection.Involved?"selected" : null)">Involved</a>
+            </div>
         </div>
+        <div class="rows">
+            @foreach (var result in Model.Items)
+            {
+                <div class="@(result.ClosedAt.HasValue ? "closed" : null)">
+                    <div class="title">
+                        <i class="icon icon-git-pull-request"></i>
+                        <a href="~/@(result.RepositoryOwner)/@(result.RepositoryName)" class="repo">
+                            @(result.RepositoryOwner)/@(result.RepositoryName)
+                        </a>
+
+                        <a class="pull" href="@Url.Action("ViewPullRequest", "PullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
+                            @result.Title
+                        </a>
+                        @foreach (var l in result.Labels)
+                        {
+                            <span class="label" style="background-color:#@l.color">@l.name</span>
+                        }
+                    </div>
+                    <div class="meta">
+                        #@(result.Number)
+                        @if (result.ClosedAt.HasValue)
+                {
+                            <text> by
+                                <a href="@result.CreateBy.html_url" target="_blank">@result.CreateBy.login</a>
+                                was closed <time class="timeago" datetime="@result.CreatedAt.ToString("o")">@result.CreatedAt.ToString()</time>
+                            </text>
+                        }
+                        else
+                        {
+                            <text>
+                                opened
+                                <time class="timeago" datetime="@result.CreatedAt.ToString("o")">@result.CreatedAt.ToString()</time> by
+                                <a href="@result.CreateBy.html_url" target="_blank">@result.CreateBy.login</a>
+                            </text>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+        @if (Model.PageCount > 1)
+        {
+            //sectinos top draw
+
+            List<int> pages = new List<int>();
+
+            pages.Add(1);
+            pages.Add(2);
+            pages.Add(3);
+
+            pages.Add(Model.Page - 3);
+            pages.Add(Model.Page - 2);
+            pages.Add(Model.Page - 1);
+            pages.Add(Model.Page);
+            pages.Add(Model.Page + 1);
+            pages.Add(Model.Page + 2);
+            pages.Add(Model.Page + 3);
+
+            pages.Add(Model.PageCount - 1);
+            pages.Add(Model.PageCount);
+            pages = pages.Where(x => x >= 1 && x <= Model.PageCount).Distinct().ToList();
+
+            <div class="pagination">
+                <nav>
+                    @if (Model.Page > 1)
+                {
+                        <a href="@Model.GeneratePageUrl(Model.Page -1)">Previous</a>
+                    }
+                    else
+                    {
+                        <span>Previous</span>
+                    }
+                    @for (var i = 0; i < pages.Count; i++)
+                    {
+                        if (i > 0 && pages[i - 1] + 1 != pages[i])
+                        {
+                            //we skeipped some
+                            <span>&hellip;</span>
+                        }
+                        <a href="@Model.GeneratePageUrl(pages[i])" class="@(pages[i] == Model.Page ? "selected" : null)">@pages[i]</a>
+                    }
+                    @if (Model.Page < Model.PageCount)
+                {
+                        <a href="@Model.GeneratePageUrl(Model.Page +1)">Next</a>
+                    }
+                    else
+                    {
+                        <span>Next</span>}
+                </nav>
+            </div>
+        }
     </div>
-}
-<nav class="pagination">
-    @for (var p = 1; p <= Model.PageCount; p++)
-    {
-        <a href="@Model.GeneratePageUrl(p)">@p</a>
-    }
-</nav>

@@ -208,4 +208,96 @@ $(function () {
     $('#file-list li > span').click(function () {
         $(this).parent().find('> ul').toggle();
     });
+
+
+    //lets inject  a repo search box
+
+    $('#repoList').each(function () {
+
+
+        var searcher = $(".searcher input")
+
+
+        var repoList = $('[data-repo]', this);
+        var ownerList = $('h3[data-owner]', this);
+        var allItems = $('h3[data-owner], a', this);
+        var searchTo;
+        searcher.on("keyup keypress change", function (e) {
+            clearTimeout(searchTo);
+            searchTo = setTimeout(function () {
+                var toFind = searcher.val();
+              
+                if (toFind === "") {
+                    allItems.show();
+                } else {
+                    var foundOwners = [];
+                    var terms = toFind.split(' ');
+                        repoList.each(function () {
+                            var $this = $(this);
+                            var repo = $this.attr('data-repo');
+                            var owner  = $this.attr('data-owner') || '';
+                            var show = true;
+                            for (var i in terms) {
+                                var term = terms[i];
+                                
+
+                                if (!(repo.indexOf(term) > -1 || owner.indexOf(term) > -1)) {
+                                    show = false;
+                                }
+                            };
+                           if(show){
+                                $this.parent().show();
+                                foundOwners.push($this.attr('data-owner'));
+                            } else {
+                                $this.parent().hide();
+                            }
+                        });
+                    ownerList.each(function () {
+                        var $this = $(this);
+                        var n = $this.attr('data-owner');
+                        if (foundOwners.indexOf(n) > -1) {
+                            $this.show();
+                        } else {
+                            $this.hide();
+                        }
+                    })
+                }
+            }, 100);
+        })
+    });
+
+
+    (function ($) {
+        $.fn.contrastingText = function () {
+            var el = this,
+                transparent;
+            transparent = function (c) {
+                var m = c.match(/[0-9]+/g);
+                if (m !== null) {
+                    return !!m[3];
+                }
+                else return false;
+            };
+            while (transparent(el.css('background-color'))) {
+                el = el.parent();
+            }
+            parts = el.css('background-color').match(/[0-9]+/g);
+            this.lightBackground = !!Math.round(
+                (
+                    parseInt(parts[0], 10) + // red
+                    parseInt(parts[1], 10) + // green
+                    parseInt(parts[2], 10) // blue
+                ) / 765 // 255 * 3, so that we avg, then normalise to 1
+            );
+            if (this.lightBackground) {
+                this.css('color', 'black');
+            } else {
+                this.css('color', 'white');
+            }
+            return this;
+        };
+    }(jQuery));
+
+    $('.label').contrastingText();
 })
+

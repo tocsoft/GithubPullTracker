@@ -192,10 +192,12 @@
         var filecomments = {};
         for(var i = 0; i< comments.length; i++){
             var comment = comments[i];
-            if(!filecomments[comment.path]){
-                filecomments[comment.path] = [];
+            if(comment.position){
+                if(!filecomments[comment.path]){
+                    filecomments[comment.path] = [];
+                }
+                filecomments[comment.path].push(comment);
             }
-            filecomments[comment.path].push(comment);
         }
 
 

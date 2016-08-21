@@ -33,8 +33,8 @@ namespace GithubPullTracker
 
             bundles.Add(new StyleBundle("~/Content/SiteCss")
                 .Include("~/Content/codemirror.css")
-                .Include("~/Content/addon/merge/merge.css")
-                .Include("~/Content/addon/merge/merge.css")
+                .Include("~/Content/merge.css")
+                .Include("~/Content/merge.css")
                 //.Include("~/Content/bootstrap.css")
                 //.Include("~/Content/bootstrap-theme.css")
                 //.Include("~/Content/bootstrap-treeview.css")
