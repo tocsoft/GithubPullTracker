@@ -140,7 +140,10 @@
     <Content Include="Content\bootstrap-theme.css" />
     <Content Include="Content\bootstrap-treeview.css" />
     <Content Include="Content\bootstrap.css" />
+    <Content Include="Content\fonts\icomoon.eot" />
     <Content Include="Content\fonts\icomoon.svg" />
+    <Content Include="Content\fonts\icomoon.ttf" />
+    <Content Include="Content\fonts\icomoon.woff" />
     <Content Include="Content\icomoon.css" />
     <Content Include="Content\Site.css" />
     <Content Include="favicon-16x16.png" />
@@ -165,9 +168,6 @@
     <Content Include="Scripts\addon\scroll\scrollpastend.js" />
     <Content Include="Scripts\addon\scroll\simplescrollbars.css" />
     <Content Include="Scripts\addon\scroll\simplescrollbars.js" />
-    <Content Include="Content\fonts\icomoon.eot" />
-    <Content Include="Content\fonts\icomoon.ttf" />
-    <Content Include="Content\fonts\icomoon.woff" />
     <Content Include="manifest.json" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
     <Content Include="Content\codemirror.css" />
