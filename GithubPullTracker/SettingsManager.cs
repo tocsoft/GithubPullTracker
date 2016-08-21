@@ -98,14 +98,16 @@ namespace GithubPullTracker
             public JsonSettingsManagerProvider(string path)
             {
                 this.filePath = Path.GetFullPath(path);
-
                 var dir = Path.GetDirectoryName(path);
-                var fsw = new FileSystemWatcher(dir, "*.json");
-                fsw.Changed += Fsw_CallBack;
-                fsw.Created+= Fsw_CallBack;
-                fsw.Deleted += Fsw_CallBack;
-                fsw.Renamed += Fsw_CallBack;
-                fsw.EnableRaisingEvents = true;
+                if (Directory.Exists(dir))
+                {
+                    var fsw = new FileSystemWatcher(dir, "*.json");
+                    fsw.Changed += Fsw_CallBack;
+                    fsw.Created += Fsw_CallBack;
+                    fsw.Deleted += Fsw_CallBack;
+                    fsw.Renamed += Fsw_CallBack;
+                    fsw.EnableRaisingEvents = true;
+                }
                 
             }
 
