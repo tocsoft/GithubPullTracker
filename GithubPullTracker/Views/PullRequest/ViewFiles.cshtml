@@ -338,14 +338,16 @@
                     var sourceDoc = sourceEditor.getDoc();
                 }
                 var commentList = filecomments[currentFilePath ];
-                for(var i = 0; i< commentList.length; i++){
-                    var comment = commentList[i];
-                    if(comment.position){
-                        var pos = map.patchLines[comment.position];
-                        if(targetDoc && pos["newLine"]){
-                            addComment(targetDoc, pos.newLine, comment);
-                        }else if(sourceDoc && pos["oldLine"]){
-                            addComment(sourceDoc, pos.oldLine, comment);
+                if(commentList){
+                    for(var i = 0; i< commentList.length; i++){
+                        var comment = commentList[i];
+                        if(comment.position){
+                            var pos = map.patchLines[comment.position];
+                            if(targetDoc && pos["newLine"]){
+                                addComment(targetDoc, pos.newLine, comment);
+                            }else if(sourceDoc && pos["oldLine"]){
+                                addComment(sourceDoc, pos.oldLine, comment);
+                            }
                         }
                     }
                 }

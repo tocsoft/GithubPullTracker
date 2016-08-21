@@ -466,7 +466,6 @@
     <Content Include="Scripts\timeago.js" />
     <Content Include="Web.config" />
     <Content Include="Views\Home\Search.cshtml" />
-    <Content Include="Views\Home\ViewPullRequest.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\AttributeRoutingConfig.cs" />
@@ -537,7 +536,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GithubClient\GithubClient.csproj">
-      <Project>{3CC4E190-FFE0-4848-863F-22516DA59C31}</Project>
+      <Project>{3cc4e190-ffe0-4848-863f-22516da59c31}</Project>
       <Name>GithubClient</Name>
     </ProjectReference>
   </ItemGroup>

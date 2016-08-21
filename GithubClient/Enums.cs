@@ -9,6 +9,7 @@ namespace GithubClient
 
     public enum RequestConnection
     {
+        All,
         Involved,
         Author,
         Assigned

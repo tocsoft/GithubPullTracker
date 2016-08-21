@@ -1,10 +1,71 @@
-﻿@model GithubPullTracker.Models.SearchResults
+﻿@model GithubPullTracker.Models.RepoSearchResults
 
 
 @{
     ViewBag.Title = "Search";
     ViewBag.HideRepo = true;
 }
-<h1><a href="~/@Model.Owner">@Model.Owner</a> /<a href="~/@Model.Owner/@Model.RepoName">@Model.RepoName</a></h1>
 
-@{Html.RenderPartial("_SearchResults", Model);}
+@section header
+{
+    <div class="title-bar">
+        <h1><i class="icon icon-repo"></i><a class="owner" href="~/@Model.Repo.owner.login">@Model.Repo.owner.login</a> / <a class="repo" href="~/@Model.Repo.owner.login/@Model.Repo.name">@Model.Repo.name</a></h1>
+
+    </div>
+}
+
+
+<a href="@Model.GenerateStateUrl(GithubClient.RequestState.Open)">Open</a>
+<a href="@Model.GenerateStateUrl(GithubClient.RequestState.Closed)">Closed</a>
+<a href="@Model.GenerateStateUrl(GithubClient.RequestState.Merged)">Merged</a>
+<br />
+<a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.All)">All</a>
+<a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.Assigned)">Assigned</a>
+<a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.Author)">Created</a>
+<a href="@Model.GenerateConnectionUrl(GithubClient.RequestConnection.Involved)">Involved</a>
+
+<span>@Model.Hits</span>
+@foreach (var result in Model.Items)
+{
+    <div>
+        <div>
+            <h2>
+                @if (ViewBag.HideRepo != true)
+                {
+                    <a href="~/@(result.RepositoryOwner)/@(result.RepositoryName)">
+                        @(result.RepositoryOwner)/@(result.RepositoryName)
+                    </a>
+                }
+                <a href="@Url.Action("ViewPullRequest", "PullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
+                    @result.Title
+                </a>
+            </h2>
+            <span>
+                <a href="@Url.Action("ViewPullRequest", "PullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
+                    #@(result.Number)
+                </a>
+                @if (result.ClosedAt.HasValue)
+                {
+                    <text> by
+                        <a href="@result.CreateBy.html_url" target="_blank">@result.CreateBy.login</a>
+                        closed <time class="timeago">@result.CreatedAt.ToString()</time>
+                    </text>
+                }
+                else
+                {
+                    <text>
+                        opened
+                        <time class="timeago">@result.CreatedAt.ToString()</time> by
+                        <a href="@result.CreateBy.html_url" target="_blank">@result.CreateBy.login</a>
+                    </text>
+                }
+            </span>
+        </div>
+    </div>
+}
+<nav class="pagination">
+    @for (var p = 1; p <= Model.PageCount; p++)
+    {
+        <a href="@Model.GeneratePageUrl(p)">@p</a>
+    }
+</nav>

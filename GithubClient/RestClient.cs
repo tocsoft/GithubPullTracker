@@ -94,13 +94,42 @@ namespace GithubClient
         }
 
 
-        public override async Task<T> ExecuteAsync<T>(RestRequest restRequest)
+        public async Task<T> ExecuteAsync<T>(RestRequest restRequest)
         {
             var response = await BaseExecuteAsync(restRequest);
 
             var responseContent = await response.Content.ReadAsStringAsync();
 
             return JsonConvert.DeserializeObject<T>(responseContent, JsonSerializerSettings);
+        }
+
+        public async Task<IEnumerable<T>> ExecutePagesAsync<T>(RestRequest restRequest, int maxPages)
+        {
+            IEnumerable<T> allResults = Enumerable.Empty<T>();
+
+            int counter = 0;
+            var hasNextPage = true;
+            while (hasNextPage && counter < maxPages)
+            {
+
+                var response = await BaseExecuteAsync(restRequest);
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                var pageOfResults = JsonConvert.DeserializeObject<IEnumerable<T>>(responseContent, JsonSerializerSettings);
+                allResults = allResults.Union(pageOfResults);
+
+                IEnumerable<string> links;
+                if (response.Headers.TryGetValues("Link", out links))
+                {
+                    var nextUrl = links.First().Split(',').Select(x => x.Split(';')).Where(x => x[1].Contains("\"next\"")).Select(x => x[0].Substring(1, x[0].Length - 2)).FirstOrDefault();
+                    hasNextPage = nextUrl !=null;
+                    restRequest.Resource = $"{nextUrl:raw}";
+                }
+                else { hasNextPage = false; }
+            }
+
+            return allResults;
         }
 
         public override async Task<Stream> ExecuteStreamAsync(RestRequest restRequest)
@@ -110,7 +139,7 @@ namespace GithubClient
             return await req.Content.ReadAsStreamAsync();
         }
 
-        public override Task<HttpResponseMessage> ExecuteAsync(RestRequest restRequest)
+        public Task<HttpResponseMessage> ExecuteAsync(RestRequest restRequest)
         {
             return  BaseExecuteAsync(restRequest);
         }
@@ -293,20 +322,10 @@ namespace GithubClient
         //        Headers.Remove(kvp);
         //    }
         //}
-
-        public Task<T> ExecuteAnnonAsync<T>(RestRequest restRequest, T annon)
-        {
-            return ExecuteAsync<T>(restRequest);
-        }
-
-        public abstract Task<T> ExecuteAsync<T>(RestRequest restRequest);
+        
+            
         public abstract Task<Stream> ExecuteStreamAsync(RestRequest restRequest);
-        public abstract Task<HttpResponseMessage> ExecuteAsync(RestRequest restRequest);
-
-        public Task ExecuteEmptyAsync(RestRequest restRequest)
-        {
-            return ExecuteAsync(restRequest);
-        }
+        
 
     }
 

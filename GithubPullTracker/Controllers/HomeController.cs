@@ -18,15 +18,13 @@ namespace GithubPullTracker.Controllers
     public class HomeController : ControllerBase
     {
         [GET("")]
-        public async Task<ActionResult> Home(string query, int page = 1, RequestState? state = null, RequestConnection? type = null, SortOrder? order = null, SortOrderDirection? dir = null)
+        public async Task<ActionResult> Search(string query, int page = 1, RequestState? state = null, RequestConnection? type = null, SortOrder? order = null, SortOrderDirection? dir = null)
         {
             if(CurrentUser == null)
             {
                 return View("SignIn");
             }
-
-            string viewPage = "Search";
-
+            
 
             var realState = state ?? RequestState.Open;
             var realType = type ?? RequestConnection.Assigned;
@@ -34,36 +32,65 @@ namespace GithubPullTracker.Controllers
             var realdir = dir ?? SortOrderDirection.Decending;
             int pagesize = 30;
 
-            var results = await Client.SearchPullRequests(page, pagesize, realState, realOrder, realdir, realType, CurrentUser.UserName, query, null, null);
+            var resultsTask = Client.SearchPullRequests(page, pagesize, realState, realOrder, realdir, realType, CurrentUser.UserName, query, null, null);
 
-            
+            var userRepoTask = Client.CurrentUsersRepos();
+
+            await Task.WhenAll(resultsTask, userRepoTask);
             //var results = await this.Client.Search.SearchIssues(request);
             //var results = new SearchIssuesResult(); 
-            var vm = new UserSearchResults(page, pagesize, results, realState, realOrder, realdir, realType, query);
+            var vm = new UserSearchResults(userRepoTask.Result,  page, pagesize, resultsTask.Result, realState, realOrder, realdir, realType, query);
 
-            return View(viewPage, vm);
+            return View(vm);
         }
 
-        [GET("{owner}")]
         [GET("{owner}/{repo}")]
-        public async Task<ActionResult> ByOwner(string query, string owner, string repo = null, int page = 1, RequestState? state = null, SortOrder? order = null, SortOrderDirection? dir = null, RequestConnection? type = null)
+        public async Task<ActionResult> SearchRepo(string query, string owner, string repo, int page = 1, RequestState? state = null, SortOrder? order = null, SortOrderDirection? dir = null, RequestConnection? type = null)
         {
 
             var realState = state ?? RequestState.Open;
             var realOrder = order ?? SortOrder.bestmatch;
             var realdir = dir ?? SortOrderDirection.Decending;
+            var realType = type ?? RequestConnection.All;
             int pagesize = 25;
 
+            var resultsTask = Client.SearchPullRequests(page, pagesize, realState, realOrder, realdir, realType, CurrentUser.UserName, query, owner, repo);
+            var repoTask = Client.Repo(owner, repo);
 
-            var results = await Client.SearchPullRequests(page, pagesize, realState, realOrder, realdir, type, CurrentUser.UserName, query, owner, repo);
+            await Task.WhenAll(resultsTask, repoTask);
 
-            var vm = new SearchResults(page, pagesize, results, realState, realOrder, realdir, type, query);
-            var view = "SearchOwner";
-            if (!string.IsNullOrWhiteSpace(repo))
-            {
-                view = "SearchRepo";
-            }
-            return View(view, vm);
+            var vm = new RepoSearchResults(repoTask.Result, page, pagesize, resultsTask.Result, realState, realOrder, realdir, realType, query);
+
+            return View(vm);
+        }
+
+
+
+        [GET("{owner}")]
+        public async Task<ActionResult> SearchOwner(string query, string owner, int page = 1, RequestState? state = null, SortOrder? order = null, SortOrderDirection? dir = null, RequestConnection? type = null)
+        {
+
+            var realState = state ?? RequestState.Open;
+            var realOrder = order ?? SortOrder.bestmatch;
+            var realdir = dir ?? SortOrderDirection.Decending;
+            var realType = type ?? RequestConnection.All;
+            int pagesize = 25;
+
+            var resultsTask = Client.SearchPullRequests(page, pagesize, realState, realOrder, realdir, realType, CurrentUser.UserName, query, owner, null);
+            var repoTask = Client.AllRepos(owner);
+            var userRepoTask = Client.CurrentUsersRepos();
+            var ownerTask =  Client.User(owner);
+
+            await Task.WhenAll(resultsTask, repoTask, ownerTask, userRepoTask);
+
+            var repoList = userRepoTask.Result.Where(x => x.owner.login.Equals(owner, StringComparison.InvariantCultureIgnoreCase))
+                .Union(repoTask.Result)
+                .GroupBy(x => x.name)
+                .Select(x => x.First());
+
+            var vm = new OwnerSearchResults(ownerTask.Result, repoList, page, pagesize, resultsTask.Result, realState, realOrder, realdir, realType, query);
+
+            return View(vm);
         }
 
         //[Auth]

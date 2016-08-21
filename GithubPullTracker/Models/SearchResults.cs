@@ -10,9 +10,12 @@ namespace GithubPullTracker.Models
 {
     public class UserSearchResults : SearchResults
     {
-        public UserSearchResults(int page, int pagesize, SearchResult results, RequestState state, SortOrder order, SortOrderDirection dir, RequestConnection connection, string term) :base(page, pagesize, results, state, order, dir, connection, term) 
+        public UserSearchResults(IEnumerable<Repo> repos, int page, int pagesize, SearchResult results, RequestState state, SortOrder order, SortOrderDirection dir, RequestConnection connection, string term) :base(page, pagesize, results, state, order, dir, connection, term) 
         {
+            this.Repos = repos;
         }
+
+        public IEnumerable<Repo> Repos { get; private set; }
 
         public override string GenerateUrl(int? page, RequestState? state, SortOrder? order, SortOrderDirection? dir, RequestConnection? connection, string term)
         {
@@ -48,7 +51,107 @@ namespace GithubPullTracker.Models
         }
     }
 
-    public class SearchResults
+    public class RepoSearchResults : SearchResults
+    {
+        public RepoSearchResults(Repo repo, int page, int pagesize, SearchResult results, RequestState state, SortOrder order, SortOrderDirection dir, RequestConnection connection, string term)
+            : base(page, pagesize, results, state, order, dir, connection, term)
+        {
+            this.Repo = repo;
+        }
+
+        public Repo Repo { get; private set; }
+
+        public override string GenerateUrl(int? page, RequestState? state, SortOrder? order, SortOrderDirection? dir, RequestConnection? connection, string term)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            state = state ?? State;
+            order = order ?? Order;
+            dir = dir ?? Direction;
+            connection = connection ?? ConnectionType;
+            term = term ?? SearchTerm;
+            page = page ?? Page;
+            if (page > 1)
+            {
+                sb.AppendFormat($"&page={page}");
+            }
+            if (state != RequestState.Open)//skip defaults
+            {
+                sb.AppendFormat($"&state={state}");
+            }
+            if (order != SortOrder.bestmatch)//skip defaults
+            {
+                sb.AppendFormat($"&order={order}");
+            }
+            if (dir != SortOrderDirection.Decending)//skip defaults
+            {
+                sb.AppendFormat($"&dir={dir}");
+            }
+            if (connection.HasValue && connection.Value != RequestConnection.All)
+            {
+                sb.AppendFormat($"&type={connection.Value}");
+            }
+            var qs = sb.ToString().TrimStart('&');
+            if (qs.Length > 0)
+            {
+                qs = "?" + qs;
+            }
+            return "/" + Repo.owner.login + "/" + Repo.name + qs;
+        }
+    }
+
+    public class OwnerSearchResults : SearchResults
+    {
+        public OwnerSearchResults(User owner, IEnumerable<Repo> repos, int page, int pagesize, SearchResult results, RequestState state, SortOrder order, SortOrderDirection dir, RequestConnection connection, string term)
+            : base(page, pagesize, results, state, order, dir, connection, term)
+        {
+            this.Repos = repos;
+            this.Owner = owner;
+        }
+
+        public User Owner { get; private set; }
+        public IEnumerable< Repo> Repos { get; private set; }
+
+        public override string GenerateUrl(int? page, RequestState? state, SortOrder? order, SortOrderDirection? dir, RequestConnection? connection, string term)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            state = state ?? State;
+            order = order ?? Order;
+            dir = dir ?? Direction;
+            connection = connection ?? ConnectionType;
+            term = term ?? SearchTerm;
+            page = page ?? Page;
+            if (page > 1)
+            {
+                sb.AppendFormat($"&page={page}");
+            }
+            if (state != RequestState.Open)//skip defaults
+            {
+                sb.AppendFormat($"&state={state}");
+            }
+            if (order != SortOrder.bestmatch)//skip defaults
+            {
+                sb.AppendFormat($"&order={order}");
+            }
+            if (dir != SortOrderDirection.Decending)//skip defaults
+            {
+                sb.AppendFormat($"&dir={dir}");
+            }
+            if (connection.HasValue && connection.Value != RequestConnection.All)
+            {
+                sb.AppendFormat($"&type={connection.Value}");
+            }
+            var qs = sb.ToString().TrimStart('&');
+            if (qs.Length > 0)
+            {
+                qs = "?" + qs;
+            }
+            return "/" + Owner.login + qs;
+        }
+    }
+
+    public abstract class SearchResults
     {
         public SearchResults(int page, int pagesize, SearchResult results, RequestState state,  SortOrder order, SortOrderDirection dir, RequestConnection? connection, string term)
         {
@@ -105,7 +208,7 @@ namespace GithubPullTracker.Models
             {
                 sb.AppendFormat($"&dir={dir}");
             }
-            if (connection.HasValue )
+            if (connection.HasValue)
             {
                 sb.AppendFormat($"&type={connection.Value}");
             }
@@ -120,8 +223,6 @@ namespace GithubPullTracker.Models
         public int Page = 1;
 
         public IEnumerable<PullRequestItem> Items { get; set; }
-        public string RepoName { get; internal set; }
-        public string Owner { get; internal set; }
         public RequestState State { get; private set; }
         public SortOrder Order { get; private set; }
         public SortOrderDirection Direction { get; private set; }

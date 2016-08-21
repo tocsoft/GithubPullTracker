@@ -20,12 +20,10 @@
     <div>
         <div>
             <h2>
-                @if (ViewBag.HideRepo != true)
-                {
                     <a href="~/@(result.RepositoryOwner)/@(result.RepositoryName)">
                         @(result.RepositoryOwner)/@(result.RepositoryName)
                     </a>
-                }
+                
                 <a href="@Url.Action("ViewPullRequest", "PullRequest", new { owner = result.RepositoryOwner, repo = result.RepositoryName, reference = result.Number })">
                     @result.Title
                 </a>
@@ -58,3 +56,13 @@
 {
     <a href="@Model.GeneratePageUrl(p)">@p</a>
 }</nav>
+
+
+
+<nav class="repolist">
+    @foreach (var repo in Model.Repos)
+    {
+        <a href="/@repo.owner.login/@repo.name">@repo.name</a>
+    }
+
+</nav>

@@ -214,11 +214,15 @@ namespace GithubClient
 
     public static class RestRequestExtension
     {
-        public static Task<T> ExecuteWithAsync<T>(this RestRequest req, RestClientBase client)
+        public static Task<T> ExecuteWithAsync<T>(this RestRequest req, RestClient client)
         {
             return client.ExecuteAsync<T>(req);
         }
-        public static Task<HttpResponseMessage> ExecuteWithAsync(this RestRequest req, RestClientBase client)
+        public static Task<IEnumerable<T>> ExecutePagesWithAsync<T>(this RestRequest req, RestClient client, int maxPagesToGet = 10)
+        {
+            return client.ExecutePagesAsync<T>(req, maxPagesToGet);
+        }
+        public static Task<HttpResponseMessage> ExecuteWithAsync(this RestRequest req, RestClient client)
         {
             return client.ExecuteAsync(req);
         }
