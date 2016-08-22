@@ -44,7 +44,7 @@ namespace GithubPullTracker.Controllers
         }
 
         [GET("{owner}/{repo}/pull/{reference}/files/{*path}")]
-        public async Task<ActionResult> ViewFiles(string owner, string repo, int reference, string path = null, string sha = null)
+        public async Task<ActionResult> ViewFiles(string owner, string repo, int reference, string path = null, string sha = null, string filesha = null)
         {
             //markas visited in tabel storage
             using (var db = new DatabaseContext())
@@ -68,8 +68,7 @@ namespace GithubPullTracker.Controllers
 
                                 sourceText = readData(data, out isBinaryDataType);
                             }
-
-                            db.Views.Add(new FileView(CurrentUser.UserName, owner, repo, reference, sourceFile.sha));
+                            
                         }
                     }
                     catch (Exception ex)
@@ -77,6 +76,10 @@ namespace GithubPullTracker.Controllers
                         fileMissing = true;
                     }
 
+                    if (!string.IsNullOrEmpty(filesha))
+                    {
+                        db.Views.Add(new FileView(CurrentUser.UserName, owner, repo, reference, filesha));
+                    }
                     var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
                     {
                         contents = sourceText,

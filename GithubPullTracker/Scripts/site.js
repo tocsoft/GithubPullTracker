@@ -270,7 +270,7 @@ $(function () {
     (function ($) {
         $.fn.contrastingText = function () {
             this.each(function () {
-                var el = this,
+                var el = $(this),
                     transparent;
                 transparent = function (c) {
                     var m = c.match(/[0-9]+/g);
@@ -283,17 +283,17 @@ $(function () {
                     el = el.parent();
                 }
                 parts = el.css('background-color').match(/[0-9]+/g);
-                this.lightBackground = !!Math.round(
+                var lightBackground = !!Math.round(
                     (
                         parseInt(parts[0], 10) + // red
                         parseInt(parts[1], 10) + // green
                         parseInt(parts[2], 10) // blue
                     ) / 765 // 255 * 3, so that we avg, then normalise to 1
                 );
-                if (this.lightBackground) {
-                    this.css('color', 'black');
+                if (lightBackground) {
+                    el.css('color', 'black');
                 } else {
-                    this.css('color', 'white');
+                    el.css('color', 'white');
                 }
             });
             return this;

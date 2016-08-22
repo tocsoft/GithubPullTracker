@@ -469,13 +469,18 @@
             messageElm.hide();
             targetElm.hide();
             loaderElm.show();
-            if(files[path].Status == 'removed' ){
-                serverResult(path, lineScrollerTarget, "", (!files[path].patch));
-            }else{
-                $.get(pathPrefix + navPath+"?sha=" + sha, function(data){
-                    serverResult(path, lineScrollerTarget, data.contents, data.isBinary);
+            //if(files[path].Status == 'removed' ){
+            //    serverResult(path, lineScrollerTarget, "", (!files[path].patch));
+            //}else{
+            $.get(pathPrefix + navPath+"?sha=" + sha + "&filesha="+files[path].Sha, function(data)
+                {
+                    var isBinary = data.isBinary;
+                    if(data.fileMissing){
+                        isBinary = (!files[path].patch);
+                    }
+                    serverResult(path, lineScrollerTarget, data.contents, isBinary);
                 });
-            }
+            //}
         }
 
         function serverResult(path, line, targetText, isBinary) {
