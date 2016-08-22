@@ -17,29 +17,36 @@ namespace GithubPullTracker.Controllers
 {
     public class PullRequestController : ControllerBase
     {
+        private async Task<PullRequestView> GetPullRequestDetails(string owner, string repo, int number)
+        {
+            var prTask = Client.PullRequest(owner, repo, number);
+            var comments = Client.Comments(owner, repo, number);
+            var commits= Client.Commits(owner, repo, number);
+            var assignees = Client.Assignees(owner, repo, number);
+
+
+            await Task.WhenAll(prTask, comments, commits, assignees);
+
+            return new PullRequestView(CurrentUser, prTask.Result, comments.Result, commits.Result, assignees.Result);
+        }
+
 
         [Auth]
         [GET("{owner}/{repo}/pull/{reference}")]
         public async Task<ActionResult> ViewPullRequest(string owner, string repo, int reference)
         {
-            var pullRequestTask = Client.PullRequest(owner, repo, reference);
+            var pullRequestTask = GetPullRequestDetails(owner, repo, reference);
 
             var issueTask = Client.Issue(owner, repo, reference);
-
-            var commitsTask =  Client.Commits(owner, repo, reference);
-
-            var commentsTask =  Client.FileComments(owner, repo, reference);
             
-            var issueCommentsTask =  Client.Comments(owner, repo, reference);
-
-           // var events = await Client.Events(owner, repo, reference);
-
+            var commentsTask =  Client.FileComments(owner, repo, reference);            
+            
             var timelineTask =  Client.Timeline(owner, repo, reference);
 
 
-            await Task.WhenAll(pullRequestTask, issueTask, commitsTask, commentsTask, issueCommentsTask, timelineTask);
+            await Task.WhenAll(pullRequestTask, issueTask, commentsTask, timelineTask);
 
-            var pr = new PullRequestCommentsView(pullRequestTask.Result, issueTask.Result, commitsTask.Result, issueCommentsTask.Result, commentsTask.Result, timelineTask.Result);
+            var pr = new PullRequestCommentsView(pullRequestTask.Result, issueTask.Result, commentsTask.Result, timelineTask.Result);
             return View(pr);
         }
 
@@ -98,11 +105,11 @@ namespace GithubPullTracker.Controllers
                     path = files.First().filename;
                     return RedirectToAction("ViewFiles", new { owner, repo, reference, path });
                 }
-
-                var pullRequest = await Client.PullRequest(owner, repo, reference);
-
-                if (path != null)
+                else
                 {
+
+                    var pullRequest = await GetPullRequestDetails(owner, repo, reference);
+
                     path = path.TrimEnd('/');
 
                     var file = files.Where(x => x.filename == path).Single();
@@ -115,7 +122,7 @@ namespace GithubPullTracker.Controllers
                     {
                         if (file.status != "removed")
                         {
-                            var sourceFile = await Client.FileContents(owner, repo, path, pullRequest.Head.sha);
+                            var sourceFile = await Client.FileContents(owner, repo, path, pullRequest.HeadSha);
                             if (sourceFile != null)
                             {
                                 if (sourceFile.encoding == "base64")
@@ -130,7 +137,7 @@ namespace GithubPullTracker.Controllers
                     catch (Exception ex)
                     {
                     }
-                    
+
                     await db.SaveChangesAsync();
                     var visistedFiles = await db.Views.Where(x => x.Owner == owner && repo == x.Repo && reference == x.Number && CurrentUser.UserName == x.Login)
                         .Select(x => x.FileSha)
@@ -142,9 +149,6 @@ namespace GithubPullTracker.Controllers
 
                     return View(vm);
                 }
-
-                var pr = new PullRequestFileView(pullRequest, files);
-                return View(pr);
             }
         }
 

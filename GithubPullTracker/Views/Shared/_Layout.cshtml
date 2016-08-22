@@ -20,10 +20,16 @@
     @{
 
         var user = ViewData["__CurrentUser__"] as GithubPullTracker.Models.GithubUser;
+
+        string bodyClass = null;
+        if (ViewBag.FullWidth == true)
+        {
+            bodyClass = "wide";
+        }
     }
 
 </head>
-<body>
+<body class="@bodyClass">
     <div class="navbar">
         <div class="container">
 
@@ -46,26 +52,9 @@
             }
         </div>
     </div>
-    @{
-        var bodyClass = "container";
-        if (ViewBag.FullWidth == true)
-        {
-            bodyClass = "container-fluid";
-        }
-    }
-    @if (IsSectionDefined("header"))
-    {
-        <div class="header-content">
-            <div class="container ">
-                @RenderSection("header")
-            </div>
-        </div>
-    }
-
-
-    <div class="@bodyClass body-content">
-        @RenderBody()
-    </div>
+                
+            @RenderBody()
+            
 
     <footer>
         &copy; @DateTime.Now.Year Fated Creations.

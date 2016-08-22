@@ -26,6 +26,7 @@ namespace GithubClient.Models
         public string body { get; set; }
         public string body_html { get; set; }
         public User assignee { get; set; }
+        public User[] assignees { get; set; }
         public Milestone milestone { get; set; }
         public bool locked { get; set; }
         public DateTime created_at { get; set; }

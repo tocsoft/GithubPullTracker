@@ -1374,3 +1374,12 @@ pre code{
         .hero a.button{
             font-size:18px;
         }
+        .homepage{
+            width:980px;
+            margin:0 auto;
+            overflow:auto;
+        }
+        g-emoji img{
+            
+    vertical-align: text-top;
+        }

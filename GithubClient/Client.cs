@@ -191,7 +191,7 @@ namespace GithubClient
                     })
                     .ExecuteWithAsync<Issue>(client);
         }
-        
+
         public Task<IEnumerable<Commit>> Commits(string owner, string repo, int pullRequestNumber)
         {
             return
@@ -201,30 +201,45 @@ namespace GithubClient
                     })
                     .ExecuteWithAsync<IEnumerable<Commit>>(client);
         }
+
+        public Task<IEnumerable<User>> Assignees(string owner, string repo, int pullRequestNumber)
+        {
+            return
+                new RestRequest($"/repos/{owner}/{repo}/assignees", HttpMethod.Get)
+                    .UpateHeaders(h => {
+                        h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
+                    })
+                    .ExecuteWithAsync<IEnumerable<User>>(client);
+        }
         public Task<IEnumerable<CommitFile>> Files(string owner, string repo, int pullRequestNumber)
         {
             return
                   new RestRequest($"/repos/{owner}/{repo}/pulls/{pullRequestNumber}/files", HttpMethod.Get)
                       .ExecuteWithAsync<IEnumerable<CommitFile>>(client);
         }
-        public Task<IEnumerable< CommitComment>> FileComments(string owner, string repo, int pullRequestNumber)
+
+        public Task<IEnumerable<CommitComment>> FileComments(string owner, string repo, int pullRequestNumber)
         {
             return
                 new RestRequest($"/repos/{owner}/{repo}/pulls/{pullRequestNumber}/comments", HttpMethod.Get)
-                    .UpateHeaders(h => {
+                    .UpateHeaders(h =>
+                    {
                         h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
                     })
-                    .ExecuteWithAsync<IEnumerable<CommitComment>>(client);
+                    .ExecutePagesWithAsync<CommitComment>(client, 10);
         }
+
         public Task<IEnumerable<Comment>> Comments(string owner, string repo, int issueNumber)
         {
             return
                 new RestRequest($"/repos/{owner}/{repo}/issues/{issueNumber}/comments", HttpMethod.Get)
                     .UpateHeaders(h => {
+                        h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.raw+json"));
                         h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
                     })
-                    .ExecuteWithAsync<IEnumerable<Comment>>(client);
+                    .ExecutePagesWithAsync<Comment>(client, 10);
         }
+
         public Task<IEnumerable<Event>> Events(string owner, string repo, int issueNumber)
         {
             return

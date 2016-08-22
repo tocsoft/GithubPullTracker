@@ -1,128 +1,121 @@
 ﻿@model PullRequestFileView
-@{
-    ViewBag.FullWidth = true;
-    ViewBag.Title = Model.Title + " by " + Model.CreatedBy.login + " · Pull Request #" + Model.Number + " · " + Model.RepositoryOwner + "/" + Model.RepositoryName;
 
-}
-@section header
-{
-    <div class="title-bar">
-        <h1><i class="icon icon-repo"></i><a class="owner" href="~/@Model.RepositoryOwner">@Model.RepositoryOwner</a> / <a class="repo" href="~/@Model.RepositoryOwner/@Model.RepositoryName">@Model.RepositoryName</a></h1>
-    </div>
-}
-@Html.Partial("PullRequestHeader")
+@Html.Partial("PullRequestHeader", Model.Details)
 
-@helper RenderTree(IEnumerable<PullRequestViewItem> items, int depth) { 
+<div class="container-fluid body-content">
+    @helper RenderTree(IEnumerable<PullRequestViewItem> items, int depth)
+    {
 
-   <ul>
-       @foreach (var itm in items)
-       {
+    <ul>
+        @foreach (var itm in items)
+        {
             <li class="status-@itm.Status">
-            @if (itm.IsFile)
-            {
+                @if (itm.IsFile)
+                {
                     <a href="@Url.Action("ViewFiles", new { path = itm.Path })" data-sha="@itm.Sha" class="node  @(Model.VisitedFiles.Contains(itm.Sha, StringComparer.OrdinalIgnoreCase) ? "visited" : null)">
                         @for (var i = 0; i < depth; i++)
                         {
                             <span class="spacer"></span>
                         }
-                <i class="icon icon-file-text"></i><span class="fn">@itm.Name</span></a>
-            }
-            else
-            {
-                    <span  class="node">
-                @for (var i = 0; i < depth; i++)
-                {
-                <span class="spacer"></span>
+                        <i class="icon icon-file-text"></i><span class="fn">@itm.Name</span>
+                    </a>
                 }
-                <i class="icon icon-file-directory"></i><span class="fn">@itm.Name</span></span>
-                    @RenderTree(itm.Children, depth+1)
-            }
+                else
+                {
+                    <span class="node">
+                        @for (var i = 0; i < depth; i++)
+                        {
+                            <span class="spacer"></span>
+                        }
+                        <i class="icon icon-file-directory"></i><span class="fn">@itm.Name</span>
+                    </span>
+                    @RenderTree(itm.Children, depth + 1)
+                }
             </li>
-       }
-   </ul>
+        }
+    </ul>
 }
 
 
-<div id="splitter">
-    <div class="left-splitter">
-        <div id="file-list">
-            @RenderTree(Model.Items, 0)
-        </div>
-    </div>
-    <div class="right-splitter">       
-        <div id="loader">loading</div>
-        <div id="message"></div>
-        <div id="file_diff">
-            <div class="header">
-                <span id="fileName"></span>
-                <label><input type="checkbox" id="show-inline-comments" checked />show inline comments</label>
-            </div>
-            <div id="editor">
-                @if (Model.IsBinary)
-                {
-                    <div>Cant diff, binary file</div>
-                }
-
+    <div id="splitter">
+        <div class="left-splitter">
+            <div id="file-list">
+                @RenderTree(Model.Items, 0)
             </div>
         </div>
+        <div class="right-splitter">
+            <div id="loader">loading</div>
+            <div id="message"></div>
+            <div id="file_diff">
+                <div class="header">
+                    <span id="fileName"></span>
+                    <label><input type="checkbox" id="show-inline-comments" checked />show inline comments</label>
+                </div>
+                <div id="editor">
+                    @if (Model.IsBinary)
+                    {
+                        <div>Cant diff, binary file</div>
+                    }
+
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 
-<script type="x-template" id="home-comment-template">
-    @Html.Partial("_MainCommentTemplate")
-</script>
-<script type="x-template" id="home-file-comment-template">
-    @Html.Partial("_MainFileCommentTemplate")
-</script>
-<script type="x-template" id="inline-file-comment-template">
-    @Html.Partial("_InlineFileCommentTemplate")
-</script>
-
-
-
-@section scripts{
-    <style id="mergeHeight">
-        .CodeMirror-merge {
-            height: auto;
-        }
-
-    </style>
-
-    <script async>
-        var spliiterELm = $('#splitter');
-        
-        window.options = lscache.get("options") || { showInlineComments: true, splitterWidth: ($(window).width() * 0.2) };
-
-        $('.left-splitter').width(options.splitterWidth);
-
-        spliiterELm.splitter({
-            sizeLeft: options.splitterWidth
-        }).on("resize", function () {
-            options.splitterWidth = $('.left-splitter').width() - 5;
-            lscache.set('options', options);
-        });
-
+    <script type="x-template" id="home-comment-template">
+        @Html.Partial("_MainCommentTemplate")
     </script>
-    <script async>
-       
+    <script type="x-template" id="home-file-comment-template">
+        @Html.Partial("_MainFileCommentTemplate")
+    </script>
+    <script type="x-template" id="inline-file-comment-template">
+        @Html.Partial("_InlineFileCommentTemplate")
+    </script>
 
-        var editorTargetPos = spliiterELm.position().top;
-            
-        var mainScrollerELm  = $("html, body");
 
-        var animatingscrollToEditor = false;
-            
-        function scrollToEditor(){
-            if(!animatingscrollToEditor){
-                
-                var speed = 1500;
-                var dist = Math.abs(window.scrollY - editorTargetPos);
 
-                animatingscrollToEditor = true;
-                mainScrollerELm.stop(true);
-                mainScrollerELm.animate({ 'scrollTop': editorTargetPos + 'px' }, (dist * speed)/1000, function(){ animatingscrollToEditor= false;});
+    @section scripts{
+        <style id="mergeHeight">
+            .CodeMirror-merge {
+                height: auto;
             }
-        }
+        </style>
+
+        <script async>
+            var spliiterELm = $('#splitter');
+
+            window.options = lscache.get("options") || { showInlineComments: true, splitterWidth: ($(window).width() * 0.2) };
+
+            $('.left-splitter').width(options.splitterWidth);
+
+            spliiterELm.splitter({
+                sizeLeft: options.splitterWidth
+            }).on("resize", function () {
+                options.splitterWidth = $('.left-splitter').width() - 5;
+                lscache.set('options', options);
+            });
+
+        </script>
+        <script async>
+
+
+            var editorTargetPos = spliiterELm.position().top;
+
+            var mainScrollerELm  = $("html, body");
+
+            var animatingscrollToEditor = false;
+
+            function scrollToEditor(){
+                if(!animatingscrollToEditor){
+
+                    var speed = 1500;
+                    var dist = Math.abs(window.scrollY - editorTargetPos);
+
+                    animatingscrollToEditor = true;
+                    mainScrollerELm.stop(true);
+                    mainScrollerELm.animate({ 'scrollTop': editorTargetPos + 'px' }, (dist * speed)/1000, function(){ animatingscrollToEditor= false;});
+                }
+            }
 
             var fixHeightsfilediffElm = $('#file_diff');
             var fixHeightssplitterElm = $('#splitter');
@@ -134,10 +127,10 @@
                 fixHeightFiredOnce = true;
                 //var offset = splitter.position().top;
                 var winh = fixHeightswindowElm.height();
-                    
+
                 var editorHEader = fixHeightsfilediffElm.find('.header').outerHeight();
                 $('#mergeHeight').html(".CodeMirror-merge, .CodeMirror-merge .CodeMirror, .CodeMirror { height: " + (winh - editorHEader - 15) + "px;}")
-                    
+
                 fixHeightssplitterElm.height(winh).trigger("resize");
                 if(window.reloadEditors){
                     window.reloadEditors();
@@ -174,34 +167,34 @@
                     lscache.set("options", options);
                     applyCommentsToEditors();
                 });
-        
-            
-    </script>
 
-    
-    <script async>
-        
-        var editorElm = $('#editor');
-        var targetElm = $('#file_diff').hide();
-        var loaderElm = $('#loader').show();
-        var messageElm = $('#message').hide();
 
-        var sha = @Html.JavascriptString(Model.HeadSha);
+        </script>
 
-        var comments = @Html.JavascriptString(Model.CommentList);
-        var filecomments = {};
-        for(var i = 0; i< comments.length; i++){
-            var comment = comments[i];
-            if(comment.position){
-                if(!filecomments[comment.path]){
-                    filecomments[comment.path] = [];
+
+        <script async>
+
+            var editorElm = $('#editor');
+            var targetElm = $('#file_diff').hide();
+            var loaderElm = $('#loader').show();
+            var messageElm = $('#message').hide();
+
+            var sha = @Html.JavascriptString(Model.Details.HeadSha);
+
+            var comments = @Html.JavascriptString(Model.CommentList);
+            var filecomments = {};
+            for(var i = 0; i< comments.length; i++){
+                var comment = comments[i];
+                if(comment.position){
+                    if(!filecomments[comment.path]){
+                        filecomments[comment.path] = [];
+                    }
+                    filecomments[comment.path].push(comment);
                 }
-                filecomments[comment.path].push(comment);
             }
-        }
 
 
-        @*//TODO: move this to a server side version of the tracker!!!
+            @*//TODO: move this to a server side version of the tracker!!!
         var pageTracker = {
             isVisited : function(sha){
                 return lscache.get(sha);
@@ -213,266 +206,266 @@
 
         pageTracker.markVisited(@Html.JavascriptString(Model.CurrentFile.Sha));*@
 
-        var fileTree = @Html.JavascriptString(Model.FileItems.Select(x=>new { x.Path, x.Status, x.Patch, x.Sha }));
-        var files = {};
-        for(var i in fileTree){
-            var f = fileTree[i];
-            files[f.Path] = f;
-        }
+            var fileTree = @Html.JavascriptString(Model.FileItems.Select(x=>new { x.Path, x.Status, x.Patch, x.Sha }));
+            var files = {};
+            for(var i in fileTree){
+                var f = fileTree[i];
+                files[f.Path] = f;
+            }
 
-        var targetEditor;
-        var sourceEditor;
-        var currentFilePath = '';
-        var currentLine = '';
-        var pathPrefix = '@Url.Action("ViewPullRequest")';
+            var targetEditor;
+            var sourceEditor;
+            var currentFilePath = '';
+            var currentLine = '';
+            var pathPrefix = '@Url.Action("ViewPullRequest")';
 
-        @if (Model.CurrentFile != null)
+            @if (Model.CurrentFile != null)
         {
             <text>
-                var lineTOStart = window.location.hash.replace('#', '');
+            var lineTOStart = window.location.hash.replace('#', '');
 
-                setTimeout(function(){ 
-                    serverResult('@Model.CurrentFile.Path',
-                        lineTOStart,
-                        @Html.JavascriptString(Model.TargetText),
-                        @Html.JavascriptString(Model.IsBinary)
-                        );
+            setTimeout(function(){
+                serverResult('@Model.CurrentFile.Path',
+                    lineTOStart,
+                    @Html.JavascriptString(Model.TargetText),
+                    @Html.JavascriptString(Model.IsBinary)
+                    );
 
-                },10);
+            },10);
 
-                if(lineTOStart){
-                    lineTOStart = '#' + lineTOStart;
-                }
-                history.replaceState({ path: '@Model.CurrentFile.Path' }, null, pathPrefix +"/files/@Model.CurrentFile.Path"+lineTOStart);
+            if(lineTOStart){
+                lineTOStart = '#' + lineTOStart;
+            }
+            history.replaceState({ path: '@Model.CurrentFile.Path' }, null, pathPrefix +"/files/@Model.CurrentFile.Path"+lineTOStart);
             </text>
         }
         else
         {
 
             <text>
-                history.replaceState({ path: '' }, null, pathPrefix + "/files/");
-                messageElm.html("select a file on the left to see changes").show();
-                loaderElm.hide();
-        </text>
+            history.replaceState({ path: '' }, null, pathPrefix + "/files/");
+            messageElm.html("select a file on the left to see changes").show();
+            loaderElm.hide();
+            </text>
         }
 
 
 
-        function applyCommentsToEditors (){
-            var map= files[currentFilePath].patchMap;
+            function applyCommentsToEditors (){
+                var map= files[currentFilePath].patchMap;
 
-            function removeCommentBlocks(editor) {
-                if (!editor) {
-                    return;
+                function removeCommentBlocks(editor) {
+                    if (!editor) {
+                        return;
+                    }
+                    var doc = editor.getDoc();
+                    for (var i in doc._comments) {
+                        doc._comments[i].widget.clear();
+                    }
+                    doc._comments = null;
                 }
-                var doc = editor.getDoc();
-                for (var i in doc._comments) {
-                    doc._comments[i].widget.clear();
-                }
-                doc._comments = null;
-            }
-            removeCommentBlocks(targetEditor);
-            removeCommentBlocks(sourceEditor);
+                removeCommentBlocks(targetEditor);
+                removeCommentBlocks(sourceEditor);
 
 
-            if (options.showInlineComments) {
-                var templateFile = $('#inline-file-comment-template').html();
+                if (options.showInlineComments) {
+                    var templateFile = $('#inline-file-comment-template').html();
 
-                function addComment(doc, line, comment) {
-                    doc._comments = doc._comments || {};
+                    function addComment(doc, line, comment) {
+                        doc._comments = doc._comments || {};
 
-                    var block = doc._comments[line];
+                        var block = doc._comments[line];
 
-                    if (!block) {
-                        var elm = $('<div class="commentList" />');
-                        var widget = doc.addLineWidget(line, elm[0], { coverGutter: true, noHScroll: true, });
-                        doc._comments[line] = block = { elm: elm, widget: widget };
+                        if (!block) {
+                            var elm = $('<div class="commentList" />');
+                            var widget = doc.addLineWidget(line, elm[0], { coverGutter: true, noHScroll: true, });
+                            doc._comments[line] = block = { elm: elm, widget: widget };
+                        }
+
+                        function flatten(obj){
+                            var result = {};
+                            for(var p in obj){
+                                if(obj.hasOwnProperty(p)){
+
+                                    var value = obj[p];
+
+                                    if($.isPlainObject(value)){
+                                        value = flatten(value);
+                                        for(var p1 in value){
+                                            result[p+"."+p1] =  value[p1];
+                                        }
+                                    }else{
+                                        result[p] = value;
+                                    }
+                                }
+                            }
+
+                            return result;
+                        }
+
+                        var html = templateFile;
+                        var flatComment = flatten(comment);
+                        for(var p in flatComment){
+                            html = html.replaceAll("{" + p + "}", flatComment[p]);
+                        }
+
+                        //var html = templateFile
+                        //    .replaceAll("{path}", comment.path)
+                        //    .replaceAll("{fullPath}", pathPrefix + '/files/' + comment.path)
+                        //    .replaceAll("{avatarUrl}", comment.user.avatarUrl)
+                        //    .replaceAll("{username}", comment.user.login)
+                        //        .replaceAll("{change}", comment.change)
+                        //    .replaceAll("{created}", comment.createdAt)
+                        //    .replaceAll("{body}", marked(comment.body))
+
+                        block.elm.append(html);
+                        block.widget.changed();
+                        //dot adda single widget per comment append to the old widget if exists
+
                     }
 
-                    function flatten(obj){
-                        var result = {};
-                        for(var p in obj){
-                            if(obj.hasOwnProperty(p)){
-
-                                var value = obj[p];
-
-                                if($.isPlainObject(value)){
-                                    value = flatten(value);
-                                    for(var p1 in value){
-                                        result[p+"."+p1] =  value[p1];
-                                    }
-                                }else{
-                                    result[p] = value;
+                    var targetDoc = null;
+                    if (targetEditor) {
+                        targetDoc = targetEditor.getDoc();
+                    }
+                    var sourceDoc = null;
+                    if (sourceEditor) {
+                        var sourceDoc = sourceEditor.getDoc();
+                    }
+                    var commentList = filecomments[currentFilePath ];
+                    if(commentList){
+                        for(var i = 0; i< commentList.length; i++){
+                            var comment = commentList[i];
+                            if(comment.position){
+                                var pos = map.patchLines[comment.position];
+                                if(targetDoc && pos["newLine"]){
+                                    addComment(targetDoc, pos.newLine, comment);
+                                }else if(sourceDoc && pos["oldLine"]){
+                                    addComment(sourceDoc, pos.oldLine, comment);
                                 }
                             }
                         }
-
-                        return result;
-                    }
-
-                    var html = templateFile;
-                    var flatComment = flatten(comment);
-                    for(var p in flatComment){
-                        html = html.replaceAll("{" + p + "}", flatComment[p]);
-                    }
-
-                    //var html = templateFile
-                    //    .replaceAll("{path}", comment.path)
-                    //    .replaceAll("{fullPath}", pathPrefix + '/files/' + comment.path)
-                    //    .replaceAll("{avatarUrl}", comment.user.avatarUrl)
-                    //    .replaceAll("{username}", comment.user.login)
-                    //        .replaceAll("{change}", comment.change)
-                    //    .replaceAll("{created}", comment.createdAt)
-                    //    .replaceAll("{body}", marked(comment.body))
-
-                    block.elm.append(html);
-                    block.widget.changed();
-                    //dot adda single widget per comment append to the old widget if exists
-
-                }
-
-                var targetDoc = null;
-                if (targetEditor) {
-                    targetDoc = targetEditor.getDoc();
-                }
-                var sourceDoc = null;
-                if (sourceEditor) {
-                    var sourceDoc = sourceEditor.getDoc();
-                }
-                var commentList = filecomments[currentFilePath ];
-                if(commentList){
-                    for(var i = 0; i< commentList.length; i++){
-                        var comment = commentList[i];
-                        if(comment.position){
-                            var pos = map.patchLines[comment.position];
-                            if(targetDoc && pos["newLine"]){
-                                addComment(targetDoc, pos.newLine, comment);
-                            }else if(sourceDoc && pos["oldLine"]){
-                                addComment(sourceDoc, pos.oldLine, comment);
-                            }
-                        }
                     }
                 }
+
+                $('#editor').trigger('contentReloaded');
+
+                setTimeout(function () {
+                    scrollToLine(currentLine);
+                }, 1);
             }
 
-            $('#editor').trigger('contentReloaded');
+            function elementInViewport(el) {
+                var top = el.offsetTop;
+                var left = el.offsetLeft;
+                var width = el.offsetWidth;
+                var height = el.offsetHeight;
 
-            setTimeout(function () {
-                scrollToLine(currentLine);
-            }, 1);
-        }
-
-        function elementInViewport(el) {
-            var top = el.offsetTop;
-            var left = el.offsetLeft;
-            var width = el.offsetWidth;
-            var height = el.offsetHeight;
-
-            while(el.offsetParent) {
-                el = el.offsetParent;
-                top += el.offsetTop;
-                left += el.offsetLeft;
-            }
-
-            return (
-              top >= window.pageYOffset &&
-              left >= window.pageXOffset &&
-              (top + height) <= (window.pageYOffset + window.innerHeight) &&
-              (left + width) <= (window.pageXOffset + window.innerWidth)
-            );
-        }
-
-        var allLinks = $('#file-list a');
-        allLinks.click(function(e){
-            e.preventDefault();
-            $this = $(this);
-            var path = $this.attr('data-path');
-
-            allLinks.removeClass("selected");
-
-            $this
-                .addClass("selected")
-                .addClass("visited");//just asume we've visisted it
-
-            loadPath(path);
-        }).each(function(){
-            $this = $(this);
-            var path = $this.attr('href').replace(pathPrefix +"/files/", "");
-            $this.attr('data-path', path);
-            if(path == currentFilePath){
-                $('#file-list').scrollTop($this.position().top);
-                $this.addClass("selected");
-                if(!elementInViewport(this)){
-                    $("html,body").scrollTop($this.position().top);
-                }
-            }
-
-            var clist = filecomments[path];
-            if(clist){
-                $this.append($("<span class='badge' />").text(clist.length));
-            }
-            //var fileSha = $this.attr('data-sha');
-            //if(pageTracker.isVisited(fileSha)){
-            //    $this.addClass("visited");
-            //}
-        })
-        function loadPath(path, skipNavigation, refresh){
-
-            var parts = path.split('#')
-            path = parts[0];
-            var lineScrollerTarget = parts[1];
-
-
-            var navPath = path;
-            if (navPath) {
-                navPath = '/files/' + navPath;
-            }
-
-            if (!skipNavigation) {
-                var statePath = path;
-
-                var urlLine = lineScrollerTarget;
-                if (parts.length == 1 && currentFilePath == path)
-                {
-                    //we stayed on the same page but we didn't select a new line then pick old line to render on the url
-                    urlLine = currentLine;
+                while(el.offsetParent) {
+                    el = el.offsetParent;
+                    top += el.offsetTop;
+                    left += el.offsetLeft;
                 }
 
-                if (urlLine) {
-                    navPath = navPath + '#' + urlLine;
-                    statePath = statePath + '#' + urlLine;
+                return (
+                  top >= window.pageYOffset &&
+                  left >= window.pageXOffset &&
+                  (top + height) <= (window.pageYOffset + window.innerHeight) &&
+                  (left + width) <= (window.pageXOffset + window.innerWidth)
+                );
+            }
+
+            var allLinks = $('#file-list a');
+            allLinks.click(function(e){
+                e.preventDefault();
+                $this = $(this);
+                var path = $this.attr('data-path');
+
+                allLinks.removeClass("selected");
+
+                $this
+                    .addClass("selected")
+                    .addClass("visited");//just asume we've visisted it
+
+                loadPath(path);
+            }).each(function(){
+                $this = $(this);
+                var path = $this.attr('href').replace(pathPrefix +"/files/", "");
+                $this.attr('data-path', path);
+                if(path == currentFilePath){
+                    $('#file-list').scrollTop($this.position().top);
+                    $this.addClass("selected");
+                    if(!elementInViewport(this)){
+                        $("html,body").scrollTop($this.position().top);
+                    }
                 }
 
-                currentLine = urlLine;
-
-
-
-                if (currentFilePath != path) {
-                    history.pushState({ path: statePath }, null, pathPrefix + navPath);
-                } else {
-                    history.replaceState({ path: statePath }, null, pathPrefix + navPath);
+                var clist = filecomments[path];
+                if(clist){
+                    $this.append($("<span class='badge' />").text(clist.length));
                 }
-            }
-            if (currentFilePath == path && !refresh) {
-                scrollToLine(lineScrollerTarget);
+                //var fileSha = $this.attr('data-sha');
+                //if(pageTracker.isVisited(fileSha)){
+                //    $this.addClass("visited");
+                //}
+            })
+            function loadPath(path, skipNavigation, refresh){
 
-                return; //we are allready showing the page remain
-            }
-            if (!path) {
+                var parts = path.split('#')
+                path = parts[0];
+                var lineScrollerTarget = parts[1];
 
-                messageElm.show();
+
+                var navPath = path;
+                if (navPath) {
+                    navPath = '/files/' + navPath;
+                }
+
+                if (!skipNavigation) {
+                    var statePath = path;
+
+                    var urlLine = lineScrollerTarget;
+                    if (parts.length == 1 && currentFilePath == path)
+                    {
+                        //we stayed on the same page but we didn't select a new line then pick old line to render on the url
+                        urlLine = currentLine;
+                    }
+
+                    if (urlLine) {
+                        navPath = navPath + '#' + urlLine;
+                        statePath = statePath + '#' + urlLine;
+                    }
+
+                    currentLine = urlLine;
+
+
+
+                    if (currentFilePath != path) {
+                        history.pushState({ path: statePath }, null, pathPrefix + navPath);
+                    } else {
+                        history.replaceState({ path: statePath }, null, pathPrefix + navPath);
+                    }
+                }
+                if (currentFilePath == path && !refresh) {
+                    scrollToLine(lineScrollerTarget);
+
+                    return; //we are allready showing the page remain
+                }
+                if (!path) {
+
+                    messageElm.show();
+                    targetElm.hide();
+                    loaderElm.hide();
+                    //show the child file screen
+                    return;
+                }
+                messageElm.hide();
                 targetElm.hide();
-                loaderElm.hide();
-                //show the child file screen
-                return;
-            }
-            messageElm.hide();
-            targetElm.hide();
-            loaderElm.show();
-            //if(files[path].Status == 'removed' ){
-            //    serverResult(path, lineScrollerTarget, "", (!files[path].patch));
-            //}else{
-            $.get(pathPrefix + navPath+"?sha=" + sha + "&filesha="+files[path].Sha, function(data)
+                loaderElm.show();
+                //if(files[path].Status == 'removed' ){
+                //    serverResult(path, lineScrollerTarget, "", (!files[path].patch));
+                //}else{
+                $.get(pathPrefix + navPath+"?sha=" + sha + "&filesha="+files[path].Sha, function(data)
                 {
                     var isBinary = data.isBinary;
                     if(data.fileMissing){
@@ -480,378 +473,379 @@
                     }
                     serverResult(path, lineScrollerTarget, data.contents, isBinary);
                 });
-            //}
-        }
-
-        function serverResult(path, line, targetText, isBinary) {
-            currentFilePath = path;
-            var change = files[path].Status;
-            var patch = files[path].Patch;
-
-            if (typeof patch === 'string') {
-                files[path].Patch = patch = JsDiff.parsePatch(patch);
+                //}
             }
 
-            $('#fileName').text(path)
-                .removeClass("status-modified")
-                .removeClass("status-added")
-                .removeClass("status-removed")
-                .addClass("status-" + change);
+            function serverResult(path, line, targetText, isBinary) {
+                currentFilePath = path;
+                var change = files[path].Status;
+                var patch = files[path].Patch;
 
-            //if (data.notfound) {
-            //    editorElm.html("<div>Unable to find '" + path + "' in pull request.</div>");
-            //    return;
-            //}
-            if (isBinary) {
-                editorElm.html("<div>Binary file " + data.change + ", preview unavailible.</div>");
-                return;
-            }
-
-            editorElm.html("");
-
-
-
-            var fileMode = CodeMirror.findModeByFileName(path);
-
-
-            var sourceText = "";
-            if (change != 'added') {
-                sourceText = JsDiff.applyPatch(targetText, inversePatch(patch));
-            }
-
-
-
-            var mime = "";
-            if (fileMode) {
-                mime = fileMode.mime;
-            }
-            window.reloadEditors = null;
-            if (!sourceText) {
-
-                targetEditor = CodeMirror(editorElm[0], {
-                    value: targetText,
-                    lineNumbers: true,
-                    mode: mime,
-                    connect: null,
-                    readOnly: 'nocursor',
-                    allowEditingOriginals: false,
-                    collapseIdentical: false,
-                    revertButtons: false,
-                    lineWrapping: false,
-                    gutters: ["CodeMirror-linenumbers", "github-comments"]
-                });
-                window.reloadEditors = function () {
-                    targetEditor.refresh();
-                }
-                var doc = targetEditor.getDoc();
-
-                var lineCount = doc.lineCount();
-                var lastListChar = doc.getLine(lineCount - 1).length;
-                doc.markText({ line: 0, ch: 0 }, { line: lineCount, ch: lastListChar }, { className: 'CodeMirror-merge-l-inserted', inclusiveLeft: true, inclusiveRight: true });
-                //single page code mirror with all green background
-            } else if (!targetText) {
-
-                //single page code mirror with all red background
-                sourceEditor = CodeMirror(editorElm[0], {
-                    value: sourceText,
-                    lineNumbers: true,
-                    mode: mime,
-                    connect: null,
-                    readOnly: 'nocursor',
-                    allowEditingOriginals: false,
-                    collapseIdentical: false,
-                    revertButtons: false,
-                    lineWrapping: false,
-                    gutters: ["CodeMirror-linenumbers", "github-comments"]
-                });
-                window.reloadEditors = function () {
-                    sourceEditor.refresh();
-                }
-                var doc = sourceEditor.getDoc();
-                var lineCount = doc.lineCount();
-                var lastListChar = doc.getLine(lineCount - 1).length;
-                doc.markText({ line: 0, ch: 0 }, { line: lineCount, ch: lastListChar }, { className: 'CodeMirror-merge-l-deleted', inclusiveLeft: true, inclusiveRight: true });
-            } else {
-                var mergView = CodeMirror.MergeView(editorElm[0], {
-                    origLeft: sourceText,
-                    value: targetText,
-                    lineNumbers: true,
-                    mode: mime,
-                    connect: null,
-                    readOnly: 'nocursor',
-                    allowEditingOriginals: false,
-                    collapseIdentical: false,
-                    revertButtons: false,
-                    lineWrapping: false,
-                    gutters: ["CodeMirror-linenumbers", "github-comments"]
-                });
-
-                sourceEditor = mergView.left.orig;
-                targetEditor = mergView.edit;
-                window.reloadEditors = function () {
-                    sourceEditor.refresh();
-                    targetEditor.refresh();
-                    mergView.resize();
-                }
-            }
-
-            function loadMode(editor1, editor2, mode){
-                if(!editor1 && !editor2){
-                    return ;
-                }
-                if(!mode){
-                    return ;
+                if (typeof patch === 'string') {
+                    files[path].Patch = patch = JsDiff.parsePatch(patch);
                 }
 
-                var url = "/scripts/mode/"+mode.mode+"/"+mode.mode+".js";
+                $('#fileName').text(path)
+                    .removeClass("status-modified")
+                    .removeClass("status-added")
+                    .removeClass("status-removed")
+                    .addClass("status-" + change);
 
-                if(!CodeMirror.modes[mode.mode]){
+                //if (data.notfound) {
+                //    editorElm.html("<div>Unable to find '" + path + "' in pull request.</div>");
+                //    return;
+                //}
+                if (isBinary) {
+                    editorElm.html("<div>Binary file " + data.change + ", preview unavailible.</div>");
+                    return;
+                }
 
-                    var d = document;
-                    script = d.createElement('script');
-                    script.type = 'text/javascript';
-                    script.async = true;
-                    script.onload = function(){
+                editorElm.html("");
+
+
+
+                var fileMode = CodeMirror.findModeByFileName(path);
+
+
+                var sourceText = "";
+                if (change != 'added') {
+                    sourceText = JsDiff.applyPatch(targetText, inversePatch(patch));
+                }
+
+
+
+                var mime = "";
+                if (fileMode) {
+                    mime = fileMode.mime;
+                }
+                window.reloadEditors = null;
+                if (!sourceText) {
+
+                    targetEditor = CodeMirror(editorElm[0], {
+                        value: targetText,
+                        lineNumbers: true,
+                        mode: mime,
+                        connect: null,
+                        readOnly: 'nocursor',
+                        allowEditingOriginals: false,
+                        collapseIdentical: false,
+                        revertButtons: false,
+                        lineWrapping: false,
+                        gutters: ["CodeMirror-linenumbers", "github-comments"]
+                    });
+                    window.reloadEditors = function () {
+                        targetEditor.refresh();
+                    }
+                    var doc = targetEditor.getDoc();
+
+                    var lineCount = doc.lineCount();
+                    var lastListChar = doc.getLine(lineCount - 1).length;
+                    doc.markText({ line: 0, ch: 0 }, { line: lineCount, ch: lastListChar }, { className: 'CodeMirror-merge-l-inserted', inclusiveLeft: true, inclusiveRight: true });
+                    //single page code mirror with all green background
+                } else if (!targetText) {
+
+                    //single page code mirror with all red background
+                    sourceEditor = CodeMirror(editorElm[0], {
+                        value: sourceText,
+                        lineNumbers: true,
+                        mode: mime,
+                        connect: null,
+                        readOnly: 'nocursor',
+                        allowEditingOriginals: false,
+                        collapseIdentical: false,
+                        revertButtons: false,
+                        lineWrapping: false,
+                        gutters: ["CodeMirror-linenumbers", "github-comments"]
+                    });
+                    window.reloadEditors = function () {
+                        sourceEditor.refresh();
+                    }
+                    var doc = sourceEditor.getDoc();
+                    var lineCount = doc.lineCount();
+                    var lastListChar = doc.getLine(lineCount - 1).length;
+                    doc.markText({ line: 0, ch: 0 }, { line: lineCount, ch: lastListChar }, { className: 'CodeMirror-merge-l-deleted', inclusiveLeft: true, inclusiveRight: true });
+                } else {
+                    var mergView = CodeMirror.MergeView(editorElm[0], {
+                        origLeft: sourceText,
+                        value: targetText,
+                        lineNumbers: true,
+                        mode: mime,
+                        connect: null,
+                        readOnly: 'nocursor',
+                        allowEditingOriginals: false,
+                        collapseIdentical: false,
+                        revertButtons: false,
+                        lineWrapping: false,
+                        gutters: ["CodeMirror-linenumbers", "github-comments"]
+                    });
+
+                    sourceEditor = mergView.left.orig;
+                    targetEditor = mergView.edit;
+                    window.reloadEditors = function () {
+                        sourceEditor.refresh();
+                        targetEditor.refresh();
+                        mergView.resize();
+                    }
+                }
+
+                function loadMode(editor1, editor2, mode){
+                    if(!editor1 && !editor2){
+                        return ;
+                    }
+                    if(!mode){
+                        return ;
+                    }
+
+                    var url = "/scripts/mode/"+mode.mode+"/"+mode.mode+".js";
+
+                    if(!CodeMirror.modes[mode.mode]){
+
+                        var d = document;
+                        script = d.createElement('script');
+                        script.type = 'text/javascript';
+                        script.async = true;
+                        script.onload = function(){
+                            if(editor1){
+                                editor1.setOption("mode", mode.mime);
+                            }
+                            if(editor2){
+                                editor2.setOption("mode", mode.mime);
+                            }
+                        };
+                        script.src = url;
+                        d.getElementsByTagName('head')[0].appendChild(script);
+
+                    }else{
                         if(editor1){
                             editor1.setOption("mode", mode.mime);
                         }
                         if(editor2){
                             editor2.setOption("mode", mode.mime);
                         }
-                    };
-                    script.src = url;
-                    d.getElementsByTagName('head')[0].appendChild(script);
-
-                }else{
-                    if(editor1){
-                        editor1.setOption("mode", mode.mime);
-                    }
-                    if(editor2){
-                        editor2.setOption("mode", mode.mime);
                     }
                 }
-            }
 
-            loadMode(sourceEditor,targetEditor, fileMode);//call this once loaded
+                loadMode(sourceEditor,targetEditor, fileMode);//call this once loaded
 
-            function markPatch(editor, map) {
+                function markPatch(editor, map) {
 
-                if (editor) {
-                    var doc = editor.getDoc();
-                    var lineCount = doc.lineCount();
+                    if (editor) {
+                        var doc = editor.getDoc();
+                        var lineCount = doc.lineCount();
 
-                    var annotation = [];
-                    var currentAnn = null;
-                    for (var i = 0; i < lineCount; i++) {
-                        var mappedPage = map[i + 1]
-                        if (mappedPage > -1) {
-                            if (currentAnn == null) {
-                                currentAnn = { from: { line: i } };
+                        var annotation = [];
+                        var currentAnn = null;
+                        for (var i = 0; i < lineCount; i++) {
+                            var mappedPage = map[i + 1]
+                            if (mappedPage > -1) {
+                                if (currentAnn == null) {
+                                    currentAnn = { from: { line: i } };
+                                }
+                                currentAnn.to = { line: i };
+                                //var btn = $('<span class="addcomment"></span>');
+                                //btn.click(function () {
+                                //    addComments(this);
+                                //});
+
+                                //editor.setGutterMarker(i, "github-comments", btn[0]);
+                                //btn.data("patchLine", mappedPage);
+
+                            } else {
+                                if (currentAnn) {
+                                    annotation.push(currentAnn);
+                                }
+                                currentAnn = null;
+                                doc.addLineClass(i, "wrap", "not-in-patch");
                             }
-                            currentAnn.to = { line: i };
-                            //var btn = $('<span class="addcomment"></span>');
-                            //btn.click(function () {
-                            //    addComments(this);
-                            //});
+                        }
+                        if (currentAnn !== null) {
+                            annotation.push(currentAnn);
+                        }
+                        var bar = editor.annotateScrollbar('in-patch');
 
-                            //editor.setGutterMarker(i, "github-comments", btn[0]);
-                            //btn.data("patchLine", mappedPage);
+                        bar.update(annotation);
+                    }
+                }
 
-                        } else {
-                            if (currentAnn) {
-                                annotation.push(currentAnn);
-                            }
-                            currentAnn = null;
-                            doc.addLineClass(i, "wrap", "not-in-patch");
+                var patchMap  = files[path].patchMap = mapPatch(patch)
+
+                markPatch(targetEditor, patchMap.newLines);
+                markPatch(sourceEditor, patchMap.oldLines);
+
+                applyCommentsToEditors ();
+
+                var lineClicked = function (cm, line, gutter) {
+                    var type = 's';
+                    if (cm == targetEditor) {
+                        type = 't';
+                    }
+                    var target = type + '-' + (line + 1);
+                    if (currentLine == target){
+                        loadPath(path + '#');//removes the selected line !!!
+                    }else{
+                        loadPath(path + '#' + target);
+                    }
+                }
+
+                if (targetEditor) { targetEditor.on("gutterClick", lineClicked); }
+                if (sourceEditor) { sourceEditor.on("gutterClick", lineClicked); }
+
+                var currentTarget = 0;
+                var scrollerTimeout;
+
+                var scroll = function (cm) {
+                    var info = cm.getScrollInfo();
+                    var curentPos = info.top;
+                    if (window.scrollY < editorTargetPos) {
+                        if (info.top > 5) {
+                            scrollToEditor();
+                        }
+                    }else if(window.scrollY  > editorTargetPos){
+                        if ((info.top + info.clientHeight)+5 < info.height) {
+                            scrollToEditor();
                         }
                     }
-                    if (currentAnn !== null) {
-                        annotation.push(currentAnn);
-                    }
-                    var bar = editor.annotateScrollbar('in-patch');
-
-                    bar.update(annotation);
                 }
+
+                //editorElm.find('.CodeMirror-scroll').on('scroll', function (e) {
+                //    e.preventDefault();
+
+                //});
+
+                if (targetEditor) { targetEditor.on("scroll", scroll); }
+                if (sourceEditor) { sourceEditor.on("scroll", scroll); }
+
+
+
+                //applyCommentsToEditors();
+                window.fixHeights();
+
+                targetElm.show();
+                loaderElm.hide();
+
+                window.reloadEditors();
+                scrollToLine(line);
+
             }
 
-            var patchMap  = files[path].patchMap = mapPatch(patch)
+            function scrollToLine(line) {
+                currentLine = line;
 
-            markPatch(targetEditor, patchMap.newLines);
-            markPatch(sourceEditor, patchMap.oldLines);
-
-            applyCommentsToEditors ();
-
-            var lineClicked = function (cm, line, gutter) {
-                var type = 's';
-                if (cm == targetEditor) {
-                    type = 't';
-                }
-                var target = type + '-' + (line + 1);
-                if (currentLine == target){
-                    loadPath(path + '#');//removes the selected line !!!
-                }else{
-                    loadPath(path + '#' + target);
-                }
-            }
-
-            if (targetEditor) { targetEditor.on("gutterClick", lineClicked); }
-            if (sourceEditor) { sourceEditor.on("gutterClick", lineClicked); }
-            
-            var currentTarget = 0;
-            var scrollerTimeout;
-
-            var scroll = function (cm) {
-                var info = cm.getScrollInfo();
-                var curentPos = info.top;
-                if (window.scrollY < editorTargetPos) {
-                    if (info.top > 5) {
-                        scrollToEditor();
+                function removehighLight() {
+                    if (sourceEditor && sourceEditor._hightlightedLine) {
+                        sourceEditor.removeLineClass(sourceEditor._hightlightedLine, 'wrap', 'highlighted');
+                        sourceEditor._hightlightedLine = null;
                     }
-                }else if(window.scrollY  > editorTargetPos){
-                    if ((info.top + info.clientHeight)+5 < info.height) {
-                        scrollToEditor();
+                    if (targetEditor && targetEditor._hightlightedLine) {
+                        targetEditor.removeLineClass(targetEditor._hightlightedLine, 'wrap', 'highlighted');
+                        targetEditor._hightlightedLine = null;
                     }
                 }
-            }
 
-            //editorElm.find('.CodeMirror-scroll').on('scroll', function (e) {
-            //    e.preventDefault();
-
-            //});
-
-            if (targetEditor) { targetEditor.on("scroll", scroll); }
-            if (sourceEditor) { sourceEditor.on("scroll", scroll); }
-
-            
-
-            //applyCommentsToEditors();
-            window.fixHeights();
-            
-            targetElm.show();
-            loaderElm.hide();
-
-            window.reloadEditors();
-            scrollToLine(line);
-
-        }
-
-        function scrollToLine(line) {
-            currentLine = line;
-
-            function removehighLight() {
-                if (sourceEditor && sourceEditor._hightlightedLine) {
-                    sourceEditor.removeLineClass(sourceEditor._hightlightedLine, 'wrap', 'highlighted');
-                    sourceEditor._hightlightedLine = null;
+                if (!line) {
+                    removehighLight();
+                    return;
                 }
-                if (targetEditor && targetEditor._hightlightedLine) {
-                    targetEditor.removeLineClass(targetEditor._hightlightedLine, 'wrap', 'highlighted');
-                    targetEditor._hightlightedLine = null;
+
+                var parts = line.split('-');
+                if (parts[0] === 'p') {
+                    var map = files[currentFilePath].patchMap.patchLines[parseInt(parts[1])+1];
+                    if(map.newLine){
+                        parts[0] = "t";
+                        parts[1] = map.newLine;
+                    }else if(map.oldLine){
+                        parts[0] = "s";
+                        parts[1] = map.oldLine;
+                    }
                 }
-            }
 
-            if (!line) {
-                removehighLight();
-                return;
-            }
-
-            var parts = line.split('-');
-            if (parts[0] === 'p') {
-                var map = files[currentFilePath].patchMap.patchLines[parseInt(parts[1])+1];
-                if(map.newLine){
-                    parts[0] = "t";
-                    parts[1] = map.newLine;
-                }else if(map.oldLine){
-                    parts[0] = "s";
-                    parts[1] = map.oldLine;
+                var editor = null;
+                if (parts[0] === 't') {
+                    editor = targetEditor;
+                } else if (parts[0] === 's') {
+                    editor = sourceEditor;
                 }
-            }
-
-            var editor = null;
-            if (parts[0] === 't') {
-                editor = targetEditor;
-            } else if (parts[0] === 's') {
-                editor = sourceEditor;
-            } 
-            if (editor) {
-                var line = parseInt(parts[1]) - 1;
+                if (editor) {
+                    var line = parseInt(parts[1]) - 1;
 
 
-                var t = editor.charCoords({ line: line, ch: 0 }, "local").top;
-                var middleHeight = editor.getScrollerElement().offsetHeight / 2;
-                editor.scrollTo(null, t);//- middleHeight - 5);
+                    var t = editor.charCoords({ line: line, ch: 0 }, "local").top;
+                    var middleHeight = editor.getScrollerElement().offsetHeight / 2;
+                    editor.scrollTo(null, t);//- middleHeight - 5);
 
 
-                removehighLight();
+                    removehighLight();
 
-                editor.addLineClass(line, 'wrap', 'highlighted');
-                editor._hightlightedLine = line;
+                    editor.addLineClass(line, 'wrap', 'highlighted');
+                    editor._hightlightedLine = line;
 
-                var highlightedLine= $('.CodeMirror-code .highlighted');
+                    var highlightedLine= $('.CodeMirror-code .highlighted');
                     setTimeout(function(){
                         $('html, body').scrollTop($(window).height());
                     },100);
+                }
             }
-        }
 
-        // left: 37, up: 38, right: 39, down: 40,
-        // spacebar: 32, pageup: 33, pagedown: 34, end: 35, home: 36
-        var keys = {37: 1, 38: 1, 39: 1, 40: 1};
+            // left: 37, up: 38, right: 39, down: 40,
+            // spacebar: 32, pageup: 33, pagedown: 34, end: 35, home: 36
+            var keys = {37: 1, 38: 1, 39: 1, 40: 1};
 
-        var delay =250;
-        var delayTo;
-        function preventDefault(e) {
-            e = e || window.event;
-            if (e.preventDefault)
-                e.preventDefault();
-            e.returnValue = false;  
-            clearTimeout(delayTo);  
-            delayTo = setTimeout(enableScroll, delay);
-        }
-
-        function preventDefaultForScrollKeys(e) {
-            if (keys[e.keyCode]) {
-                preventDefault(e);
-                clearTimeout(delayTo);  
+            var delay =250;
+            var delayTo;
+            function preventDefault(e) {
+                e = e || window.event;
+                if (e.preventDefault)
+                    e.preventDefault();
+                e.returnValue = false;
+                clearTimeout(delayTo);
                 delayTo = setTimeout(enableScroll, delay);
-                return false;
             }
-        }
 
-        function disableScroll() {
-            
-            clearTimeout(delayTo);  
-            delayTo = setTimeout(enableScroll, delay);
-
-            if (window.addEventListener) // older FF
-                window.addEventListener('DOMMouseScroll', preventDefault, false);
-            window.onwheel = preventDefault; // modern standard
-            window.onmousewheel = document.onmousewheel = preventDefault; // older browsers, IE
-            window.ontouchmove  = preventDefault; // mobile
-            document.onkeydown  = preventDefaultForScrollKeys;
-        }
-
-        function enableScroll() {
-            if (window.removeEventListener)
-                window.removeEventListener('DOMMouseScroll', preventDefault, false);
-            window.onmousewheel = document.onmousewheel = null; 
-            window.onwheel = null; 
-            window.ontouchmove = null;  
-            document.onkeydown = null;  
-        }
-
-        var deadZonePos = $('#splitter').position().top
-        var scrollLockTo;
-        var lastPos = window.scrollY;
-        $(window).on("scroll", function(e){
-            clearTimeout(scrollLockTo);
-            
-            if(lastPos < deadZonePos && window.scrollY >deadZonePos){
-                disableScroll();
-                scrollToEditor();
+            function preventDefaultForScrollKeys(e) {
+                if (keys[e.keyCode]) {
+                    preventDefault(e);
+                    clearTimeout(delayTo);
+                    delayTo = setTimeout(enableScroll, delay);
+                    return false;
+                }
             }
-            scrollLockTo = setTimeout(function(){
-                lastPos= window.scrollY;
-            },100);
-        })
-    </script>
-}
+
+            function disableScroll() {
+
+                clearTimeout(delayTo);
+                delayTo = setTimeout(enableScroll, delay);
+
+                if (window.addEventListener) // older FF
+                    window.addEventListener('DOMMouseScroll', preventDefault, false);
+                window.onwheel = preventDefault; // modern standard
+                window.onmousewheel = document.onmousewheel = preventDefault; // older browsers, IE
+                window.ontouchmove  = preventDefault; // mobile
+                document.onkeydown  = preventDefaultForScrollKeys;
+            }
+
+            function enableScroll() {
+                if (window.removeEventListener)
+                    window.removeEventListener('DOMMouseScroll', preventDefault, false);
+                window.onmousewheel = document.onmousewheel = null;
+                window.onwheel = null;
+                window.ontouchmove = null;
+                document.onkeydown = null;
+            }
+
+            var deadZonePos = $('#splitter').position().top
+            var scrollLockTo;
+            var lastPos = window.scrollY;
+            $(window).on("scroll", function(e){
+                clearTimeout(scrollLockTo);
+
+                if(lastPos < deadZonePos && window.scrollY >deadZonePos){
+                    disableScroll();
+                    scrollToEditor();
+                }
+                scrollLockTo = setTimeout(function(){
+                    lastPos= window.scrollY;
+                },100);
+            })
+        </script>
+    }
+</div>
