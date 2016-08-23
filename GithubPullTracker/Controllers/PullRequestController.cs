@@ -11,7 +11,6 @@ using System.IO;
 using System.Text;
 using System.Net;
 using AttributeRouting.Web.Mvc;
-using System.Data.Entity;
 using GithubPullTracker.DataStore;
 
 namespace GithubPullTracker.Controllers
