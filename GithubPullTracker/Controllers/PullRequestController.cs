@@ -12,6 +12,7 @@ using System.Text;
 using System.Net;
 using AttributeRouting.Web.Mvc;
 using System.Data.Entity;
+using GithubPullTracker.DataStore;
 
 namespace GithubPullTracker.Controllers
 {
@@ -19,15 +20,16 @@ namespace GithubPullTracker.Controllers
     {
         private async Task<PullRequestView> GetPullRequestDetails(string owner, string repo, int number)
         {
+
+            var store = new RepoStore();
             var prTask = Client.PullRequest(owner, repo, number);
-            var comments = Client.Comments(owner, repo, number);
-            var commits= Client.Commits(owner, repo, number);
+            
             var assignees = Client.Assignees(owner, repo, number);
+            var approvalsTask = store.GetApprovals(owner, repo, number); 
 
+            await Task.WhenAll(prTask,  assignees, approvalsTask);
 
-            await Task.WhenAll(prTask, comments, commits, assignees);
-
-            return new PullRequestView(CurrentUser, prTask.Result, comments.Result, commits.Result, assignees.Result);
+            return new PullRequestView(CurrentUser, prTask.Result, assignees.Result, approvalsTask.Result);
         }
 
 
@@ -43,30 +45,86 @@ namespace GithubPullTracker.Controllers
             
             var timelineTask =  Client.Timeline(owner, repo, reference);
 
+            var issueCommentsTask = Client.Comments(owner, repo, reference);
+            var commitsTask = Client.Commits(owner, repo, reference);
+            await Task.WhenAll(pullRequestTask, issueTask, commentsTask, timelineTask, issueCommentsTask, commitsTask);
 
-            await Task.WhenAll(pullRequestTask, issueTask, commentsTask, timelineTask);
-
-            var pr = new PullRequestCommentsView(pullRequestTask.Result, issueTask.Result, commentsTask.Result, timelineTask.Result);
+            var pr = new PullRequestCommentsView(pullRequestTask.Result, issueTask.Result, commentsTask.Result, timelineTask.Result, issueCommentsTask.Result, commitsTask.Result);
             return View(pr);
         }
 
         [GET("{owner}/{repo}/pull/{reference}/files/{*path}")]
         public async Task<ActionResult> ViewFiles(string owner, string repo, int reference, string path = null, string sha = null, string filesha = null)
         {
-            //markas visited in tabel storage
-            using (var db = new DatabaseContext())
+            var repoStore = new RepoStore();
+            if (Request.IsAjaxRequest())
             {
 
-                if (Request.IsAjaxRequest())
+
+                string sourceText = "";
+                bool fileMissing = false;
+                bool isBinaryDataType = false;
+                try
                 {
-
-
-                    string sourceText = "";
-                    bool fileMissing = false;
-                    bool isBinaryDataType = false;
-                    try
+                    var sourceFile = await Client.FileContents(owner, repo, path, sha);
+                    if (sourceFile != null)
                     {
-                        var sourceFile = await Client.FileContents(owner, repo, path, sha);
+                        if (sourceFile.encoding == "base64")
+                        {
+                            var data = Convert.FromBase64String(sourceFile.content);
+
+                            sourceText = readData(data, out isBinaryDataType);
+                        }
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    fileMissing = true;
+                }
+
+                if (!string.IsNullOrEmpty(filesha))
+                {
+                    repoStore.AddFileView(owner, repo, reference, filesha, CurrentUser.UserName);
+                }
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
+                {
+                    contents = sourceText,
+                    isBinary = isBinaryDataType,
+                    missing = fileMissing,
+                });
+
+                await repoStore.Flush();
+
+                return Content(json, "application/json");
+            }
+
+            var files = await Client.Files(owner, repo, reference);
+
+            if (path == null)
+            {
+                path = files.First().filename;
+                return RedirectToAction("ViewFiles", new { owner, repo, reference, path });
+            }
+            else
+            {
+
+                var pullRequest = await GetPullRequestDetails(owner, repo, reference);
+
+                path = path.TrimEnd('/');
+
+                var file = files.Where(x => x.filename == path).Single();
+
+                repoStore.AddFileView(owner, repo, reference, file.sha, CurrentUser.UserName);
+
+                string sourceText = "";
+                bool isBinaryDataType = false;
+
+                try
+                {
+                    if (file.status != "removed")
+                    {
+                        var sourceFile = await Client.FileContents(owner, repo, path, pullRequest.HeadSha);
                         if (sourceFile != null)
                         {
                             if (sourceFile.encoding == "base64")
@@ -75,80 +133,19 @@ namespace GithubPullTracker.Controllers
 
                                 sourceText = readData(data, out isBinaryDataType);
                             }
-                            
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        fileMissing = true;
-                    }
-
-                    if (!string.IsNullOrEmpty(filesha))
-                    {
-                        db.Views.Add(new FileView(CurrentUser.UserName, owner, repo, reference, filesha));
-                    }
-                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
-                    {
-                        contents = sourceText,
-                        isBinary = isBinaryDataType,
-                        missing = fileMissing,
-                    });
-
-                    await db.SaveChangesAsync();
-
-                    return Content(json, "application/json");
                 }
-
-                var files = await Client.Files(owner, repo, reference);
-                if (path == null)
+                catch (Exception ex)
                 {
-                    path = files.First().filename;
-                    return RedirectToAction("ViewFiles", new { owner, repo, reference, path });
                 }
-                else
-                {
+                var visistedFiles = await repoStore.ListFileViews(owner, repo, reference, CurrentUser.UserName);
 
-                    var pullRequest = await GetPullRequestDetails(owner, repo, reference);
-
-                    path = path.TrimEnd('/');
-
-                    var file = files.Where(x => x.filename == path).Single();
-                    db.Views.Add(new FileView(CurrentUser.UserName, owner, repo, reference, file.sha));
-
-                    string sourceText = "";
-                    bool isBinaryDataType = false;
-
-                    try
-                    {
-                        if (file.status != "removed")
-                        {
-                            var sourceFile = await Client.FileContents(owner, repo, path, pullRequest.HeadSha);
-                            if (sourceFile != null)
-                            {
-                                if (sourceFile.encoding == "base64")
-                                {
-                                    var data = Convert.FromBase64String(sourceFile.content);
-
-                                    sourceText = readData(data, out isBinaryDataType);
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                    }
-
-                    await db.SaveChangesAsync();
-                    var visistedFiles = await db.Views.Where(x => x.Owner == owner && repo == x.Repo && reference == x.Number && CurrentUser.UserName == x.Login)
-                        .Select(x => x.FileSha)
-                        .ToListAsync();
-
-                    var comments = await Client.FileComments(owner, repo, reference);
-                    var vm = new PullRequestFileView(pullRequest, files, path, sourceText, isBinaryDataType, comments, visistedFiles);
+                var comments = await Client.FileComments(owner, repo, reference);
+                var vm = new PullRequestFileView(pullRequest, files, path, sourceText, isBinaryDataType, comments, visistedFiles);
 
 
-                    return View(vm);
-                }
+                return View(vm);
             }
         }
 

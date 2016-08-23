@@ -6,17 +6,15 @@ using System.Web;
 using GithubClient.Models;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
+using GithubPullTracker.DataStore.Models;
 
 namespace GithubPullTracker.Models
 {
     public class PullRequestView
     {
-        static Regex aprovedRegex = new Regex(@"\bapproved? +:\+1:(?:$|\s)", RegexOptions.Compiled);
-        static Regex unaprovedRegex = new Regex(@"\bunapproved? +:\-1:(?:$|\s)", RegexOptions.Compiled);
-        public PullRequestView(GithubUser user, PullRequest pr, IEnumerable<Comment> comments, IEnumerable<Commit> commits, IEnumerable<User> assignees)
+        public PullRequestView(GithubUser user, PullRequest pr, IEnumerable<User> assignees, IEnumerable<CommitApproval> approvals)
         {
-            var lastCommit = commits.OrderBy(x => x.commit.committer.date).Last();
-            var searchableComments = comments.Where(x => x.created_at > lastCommit.commit.committer.date);
+            var applicableApprovals = approvals.Where(x => x.HeadSha == pr.Head.sha);
 
             //all assignees must aprove the pr
             var requiredPeople = pr.assignees.Where(x => x.login != pr.user.login).ToList();
@@ -27,29 +25,10 @@ namespace GithubPullTracker.Models
                 //we don't have anyone that could aprove it, probably a repo with no collaberators where the PR was created by the owner
                 fallbackPeople.Add(pr.user);
             }
-
-
-
+            
             //lets calculate the list of people that have approved the PR
-            HashSet<string> approvedPeople = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var c in searchableComments)
-            {
-                if (aprovedRegex.IsMatch(c.body))
-                {
-                    approvedPeople.Add(c.user.login);
-                }
-                if (unaprovedRegex.IsMatch(c.body))
-                {
-                    approvedPeople.Remove(c.user.login);
-                }
-            }
-
-            this.ApprovedBy = searchableComments.Select(x => x.user)
-                                .Where(x => approvedPeople.Contains(x.login))
-                                .GroupBy(x => x.login)
-                                .Select(x => x.First())
-                                .ToList();
+            var approvedPeople = applicableApprovals.Select(x => x.Login).ToList();
+            
 
             if (requiredPeople.Any())
             {
@@ -99,8 +78,8 @@ namespace GithubPullTracker.Models
 
             this.CreatedAt = pr.created_at;
             Status = pr.state;
-            Comments = comments.ToList();
-            Commits = commits.ToList();
+            Comments = pr.comments;
+            Commits = pr.commits;
 
             HeadName = pr.Head.Ref;
             BaseName = pr.Base.Ref;
@@ -128,7 +107,7 @@ namespace GithubPullTracker.Models
             this.MergedAt = pr.merged_at;
         }
 
-        public IList<Commit> Commits { get; set; }
+        public int Commits { get; set; }
 
         public IList<User> OutstandingAprovers { get; set; }
 
@@ -136,7 +115,7 @@ namespace GithubPullTracker.Models
 
         public bool AllRequired { get; set; }
 
-        public IList<User> ApprovedBy { get; set; }
+        //public IList<User> ApprovedBy { get; set; }
 
         public bool HasUserApproved { get; set; }
 
@@ -158,7 +137,7 @@ namespace GithubPullTracker.Models
         public DateTimeOffset CreatedAt { get; private set; }
         public string Status { get; private set; }
         public int Files { get; private set; }
-        public IList<Comment> Comments { get; private set; }
+        public int Comments { get; private set; }
         public string HeadName { get; private set; }
         public string BaseName { get; private set; }
         public string HeadNameFull { get; private set; }

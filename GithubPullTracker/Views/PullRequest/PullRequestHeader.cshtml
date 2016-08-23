@@ -20,7 +20,7 @@
 
             <text>
                 <span class="prstatus-merged">Merged</span>
-                <a href="@Model.MergedBy.html_url" target="_blank" class="user">@Model.MergedBy.login</a> merged @Model.Commits.Count into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
+                <a href="@Model.MergedBy.html_url" target="_blank" class="user">@Model.MergedBy.login</a> merged @Model.Commits into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
                 <time datetime="@Model.MergedAt.Value.ToString("o")">@Model.MergedAt.Value.ToString()</time>
             </text>
 
@@ -31,7 +31,7 @@
 
             <text>
                 <span class="prstatus-closed">Closed</span>
-                <a href="@Model.ClosedBy.html_url" target="_blank" class="user">@Model.ClosedBy.login</a> merged @Model.Commits.Count into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
+                <a href="@Model.ClosedBy.html_url" target="_blank" class="user">@Model.ClosedBy.login</a> merged @Model.Commits into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
             </text>
 
 
@@ -67,7 +67,7 @@
 <div class="tab-bar">
     <nav class="tabs">
 
-        <a href="@Url.Action("ViewPullRequest")" class="@(Model is PullRequestCommentsView ? "selected" : "")"><i class="icon icon-comment-discussion icon-outline"></i>Conversation <span class="badge">@Model.Comments.Count</span></a>
+        <a href="@Url.Action("ViewPullRequest")" class="@(Model is PullRequestCommentsView ? "selected" : "")"><i class="icon icon-comment-discussion icon-outline"></i>Conversation <span class="badge">@Model.Comments</span></a>
         <a href="@Url.Action("ViewFiles")" class="@(Model is PullRequestFileView ? "selected" : "")"><i class="icon icon-file-text"></i>Files changed <span class="badge">@Model.Files</span></a>
         <a href="http://github.com/@Model.RepositoryOwner/@Model.RepositoryName/pull/@Model.Number" target="_blank" class="right">view on github</a>
     </nav>

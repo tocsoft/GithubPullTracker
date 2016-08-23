@@ -15,19 +15,21 @@ namespace GithubPullTracker.Models
         public PullRequestCommentsView(PullRequestView details,
             Issue issue,
             IEnumerable<CommitComment> prComment,
-            IEnumerable<Event> events
+            IEnumerable<Event> events,
+            IEnumerable<Comment> comments,
+            IEnumerable<Commit> commits
             )
         {
             this.events = events;
             this.Details = details;
             this.FileCommentsList = prComment;
-            
+            this.CommentsList = comments;
             this.Events =
                 TimelineEvent.Merge(
-                    TimelineEvent.Create(details.Commits),
+                    TimelineEvent.Create(CommentsList),
                     TimelineEvent.Create(FileCommentsList),
                     TimelineEvent.Create(events),
-                    TimelineEvent.Create(details.Comments)
+                    TimelineEvent.Create(commits)
                     )
                     .ToList();
 
@@ -37,9 +39,9 @@ namespace GithubPullTracker.Models
                 users.AddRange(details.Assignees);
 
             users.Add(details.CreatedBy);
-            users.AddRange(details.Commits.Select(x=>x.committer));
-            users.AddRange(details.Commits.Select(x=>x.author));
-            users.AddRange(details.Comments.Select(x=>x.user));
+            users.AddRange(commits.Select(x=>x.committer));
+            users.AddRange(commits.Select(x=>x.author));
+            users.AddRange(comments.Select(x=>x.user));
             users.AddRange(FileCommentsList.Select(x=>x.user));
             
             Participents = users.GroupBy(x => x.login).Select(x => x.First());
@@ -53,5 +55,6 @@ namespace GithubPullTracker.Models
         public IEnumerable<TimelineEvent> Events { get; private set; }
         public IEnumerable<User> Participents { get; private set; }
         public PullRequestView Details { get; private set; }
+        public IEnumerable<Comment> CommentsList { get; private set; }
     }
 }
