@@ -7,6 +7,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GithubPullTracker", "Github
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GithubClient", "GithubClient\GithubClient.csproj", "{3CC4E190-FFE0-4848-863F-22516DA59C31}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AAE1282D-5F8F-4187-B21A-78C62937C8A2}"
+	ProjectSection(SolutionItems) = preProject
+		DesignNotes.txt = DesignNotes.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

@@ -57,6 +57,7 @@ namespace GithubPullTracker.Models
             : base(page, pagesize, results, state, order, dir, connection, term)
         {
             this.Repo = repo;
+            
         }
 
         public Repo Repo { get; private set; }

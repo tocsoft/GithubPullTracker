@@ -1,0 +1,21 @@
+
+Each user/organisation will be an indervidual braintree client.
+
+each organisation will be associated with a single active subscription which can have one or more addons.
+
+each organisation can has a expiring private repository limit
+
+org can have a experation date for private repos (experation date updates every time we recieve a push notification from braintree)
+
+org can have a non expiring private repo limit 
+
+each repository can be flagged as no counting towards limit
+
+each time we recieve a push from a github webhook or a user visits a repo and tries to 
+approve/unapprove it then we check all the subscription counts and limits and verify we 
+should be updating the status or a user tries to enable a new private repo.
+
+we will need to periodically check that the organisation still has the list of active repositories(i.e. repo hasn't been deleted/renamed)
+we will determin a repo as having been renamed if the repo is new but it has a webhook already configured.
+on rename we will have to migrate/duplicate all events associated with the old repo and move them to the new one.
+
