@@ -414,6 +414,7 @@
                 path = parts[0];
                 var lineScrollerTarget = parts[1];
 
+                path = decodeURIComponent(path);
 
                 var navPath = path;
                 if (navPath) {
@@ -464,6 +465,7 @@
                 //if(files[path].Status == 'removed' ){
                 //    serverResult(path, lineScrollerTarget, "", (!files[path].patch));
                 //}else{
+
                 $.get(pathPrefix + navPath+"?sha=" + sha + "&filesha="+files[path].Sha, function(data)
                 {
                     var isBinary = data.isBinary;
