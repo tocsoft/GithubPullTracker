@@ -28,9 +28,10 @@ namespace GithubPullTracker.Controllers
             
             var assignees = Client.Assignees(owner, repo, number);
             var approvalsTask = store.GetApprovals(owner, repo, number);
-            await Task.WhenAll(prTask,  assignees, approvalsTask);
+            var repoSettingsTask = store.GetRepoSettings(owner, repo);
+            await Task.WhenAll(prTask,  assignees, approvalsTask, repoSettingsTask);
 
-            return new PullRequestView(CurrentUser, prTask.Result, assignees.Result, approvalsTask.Result);
+            return new PullRequestView(CurrentUser, prTask.Result, assignees.Result, approvalsTask.Result, repoSettingsTask.Result);
         }
         [Auth]
         [POST("{owner}/{repo}/pull/{reference}/approve")]
@@ -43,7 +44,7 @@ namespace GithubPullTracker.Controllers
 
             var reposettings = await Store.GetRepoSettings(owner, repo);
 
-            var privateenabled = reposettings.PrivateEnabled && pullRequest.IsPrivate;
+            var privateenabled = reposettings.PrivateEnabled;
             var publicenabled = reposettings.PublicEnabled && !pullRequest.IsPrivate;
             if (publicenabled || privateenabled)//no enabled eather way
             {

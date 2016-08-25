@@ -51,28 +51,28 @@
         </div>
     </section>
     <aside>
-        <div class="approvals">
-            @if (!Model.IsMerged)
+        
+            @if (!Model.IsMerged && Model.ApprovalsEnabled)
             {
-                <form action="@Url.Action("Approve")" method="post">
-                    <input type="hidden" name="approved" value="@((!Model.HasUserApproved).ToString())" />
-                    <input type="hidden" name="headsha" value="@(Model.HeadSha)" />
-                    @if (this.ViewContext.RouteData.Values.ContainsKey("path"))
-                {
-
-                        <input type="hidden" name="path" value="@(this.ViewContext.RouteData.Values["path"])" />
-                    }
-                    @if (Model.HasUserApproved)
-                {
-                        <button class="unapprove"><i class="icon icon-x"></i>unapprove</button>
-                    }
-                    else
-                    {
-                        <button class="approve"><i class="icon icon-check"></i>approve</button>
-                    }
-                </form>
+                <div class="approvals">
+                    <form action="@Url.Action("Approve")" method="post">
+                        <input type="hidden" name="approved" value="@((!Model.HasUserApproved).ToString())" />
+                        <input type="hidden" name="headsha" value="@(Model.HeadSha)" />
+                        @if (this.ViewContext.RouteData.Values.ContainsKey("path"))
+                        {
+                            <input type="hidden" name="path" value="@(this.ViewContext.RouteData.Values["path"])" />
+                        }
+                        @if (Model.HasUserApproved)
+                        {
+                            <button class="unapprove"><i class="icon icon-x"></i>unapprove</button>
+                        }
+                        else
+                        {
+                            <button class="approve"><i class="icon icon-check"></i>approve</button>
+                        }
+                    </form>
+                </div>
             }
-        </div>
     </aside>
 </div>
 <div class="tab-bar">

@@ -52,7 +52,7 @@ namespace GithubPullTracker.Controllers
             //todo retrive protected branches etc
 
             await Task.WhenAll(settingsTask, hooksTask, settingsTask);
-            var hook = hooksTask.Result.Where(x => x.config.url.Equals(WebHookUrl, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
+            var hook = hooksTask.Result.Where(x => x.config.url != null && x.config.url.Equals(WebHookUrl, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
 
             var repoSettings = settingsTask.Result.Repositories.Where(x => x.Repo.Equals(repo, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
 
@@ -152,7 +152,7 @@ namespace GithubPullTracker.Controllers
                 return Content("Invalid signature");
             }
 
-            var privateenabled = settings.PrivateEnabled && hook.repository.IsPrivate;
+            var privateenabled = settings.PrivateEnabled;
             var publicenabled = settings.PublicEnabled && !hook.repository.IsPrivate;
             if (!publicenabled && !privateenabled)//no enabled eather way
             {
@@ -175,7 +175,7 @@ namespace GithubPullTracker.Controllers
 
             if (hook is PullRequestWebhook)
             {
-                await RecievePullRequestHook((PullRequestWebhook)hook, Store);
+                await RecievePullRequestHook((PullRequestWebhook)hook, Store, settings);
             }
 
             return Content("OK");
@@ -183,7 +183,7 @@ namespace GithubPullTracker.Controllers
         }
 
 
-        private async Task RecievePullRequestHook(PullRequestWebhook hook, RepoStore store)
+        private async Task RecievePullRequestHook(PullRequestWebhook hook, RepoStore store, RepoSettings settings)
         {
             //pr state change recalculate state and update status
 
@@ -196,7 +196,7 @@ namespace GithubPullTracker.Controllers
             var cachedRepoSettingsTask = Store.GetPullRequestSettings(owner, repo, hook.pull_request.number);
             await Task.WhenAll(assignees, approvalsTask, statusTask, cachedRepoSettingsTask);
 
-            var details = new PullRequestView(new GithubUser { UserName = hook.sender.login }, hook.pull_request, assignees.Result, approvalsTask.Result);
+            var details = new PullRequestView(new GithubUser { UserName = hook.sender.login }, hook.pull_request, assignees.Result, approvalsTask.Result, settings);
 
             var currentstatus = statusTask.Result.statuses.Where(x => x.context == statuscontext).SingleOrDefault();
             var status = currentstatus?.state ?? CommitStatus.error;

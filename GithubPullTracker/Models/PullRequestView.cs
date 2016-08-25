@@ -13,7 +13,7 @@ namespace GithubPullTracker.Models
 {
     public class PullRequestView
     {
-        public PullRequestView(GithubUser user, PullRequest pr, IEnumerable<User> assignees, IEnumerable<CommitApproval> approvals)
+        public PullRequestView(GithubUser user, PullRequest pr, IEnumerable<User> assignees, IEnumerable<CommitApproval> approvals, RepoSettings settings)
         {
             var applicableApprovals = approvals.Where(x => x.HeadSha == pr.Head.sha && x.Approved);
 
@@ -150,6 +150,8 @@ namespace GithubPullTracker.Models
             StatusDescription = sb.ToString();
 
             IsPrivate = pr.Base.repo.IsPrivate;
+            
+            ApprovalsEnabled = (settings.PrivateEnabled || (settings.PublicEnabled && !IsPrivate));
         }
 
 
@@ -198,5 +200,6 @@ namespace GithubPullTracker.Models
         public User ClosedBy { get; private set; }
         public bool IsPrivate { get; internal set; }
         public IEnumerable<User> ApprovedBy { get; private set; }
+        public bool ApprovalsEnabled { get; private set; }
     }
 }
