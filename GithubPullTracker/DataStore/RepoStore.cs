@@ -166,7 +166,6 @@ namespace GithubPullTracker.DataStore
 
         public void UpdateApproval(string owner, string repo, int number, string headsha, string username, bool approved)
         {
-            CloudTable table = client.GetTableReference(approvalsTableName);
             var view = new Models.CommitApproval(owner, repo, number, headsha, username, approved);
 
             TableOperation insertOperation = TableOperation.InsertOrReplace(view);
@@ -182,11 +181,46 @@ namespace GithubPullTracker.DataStore
 
             var targetKey = CommitApproval.GeneratePartitionKey(owner, repo, number);
 
-            TableQuery<CommitApproval> query = new TableQuery<CommitApproval>().Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, targetKey));
+            TableQuery<CommitApproval> query = new TableQuery<CommitApproval>().Where(
+                 
+                        TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, targetKey)
+                                             );
+            try
+            {
+                var pageViews = await table.ExecuteQueryAsync(query);
+                return pageViews.Where(x=>x.RowKey != "@").ToList();
+            }
+            catch(Exception ex)
+            {
+                throw;
+            }
+
+        }
+
+        public void UpdatePullRequestSettings(PullRequestSettings settings)
+        {
+            TableOperation insertOperation = TableOperation.InsertOrReplace(settings);
+
+            opperations[approvalsTableName].Add(insertOperation);
+        }
+        public async Task<PullRequestSettings> GetPullRequestSettings(string owner, string repo, int number)
+        {
+            await Flush(approvalsTableName);
+
+            CloudTable table = client.GetTableReference(approvalsTableName);
+
+            var targetKey = PullRequestSettings.GeneratePartitionKey(owner, repo, number);
+
+            var query = new TableQuery<PullRequestSettings>().Where(
+                 TableQuery.CombineFilters(
+                        TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, targetKey),
+                        TableOperators.And,
+                        TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "@")
+                        ));
 
             var pageViews = await table.ExecuteQueryAsync(query);
 
-            return pageViews.ToList();
+            return pageViews.FirstOrDefault() ?? new PullRequestSettings(owner, repo, number, false);
         }
     }
 }

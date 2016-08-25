@@ -3,24 +3,54 @@
 @{
     ViewBag.Title = "Settings";
 }
+<div class="header-content">
+    <div class="container ">
+        <div class="title-bar">
 
-<h2>Settings</h2>
+            <h1><i class="icon icon-repo"></i><a class="owner" href="~/@Model.RepoOwner">@Model.RepoOwner</a> / <a class="repo" href="~/@Model.RepoOwner/@Model.RepoName">@Model.RepoName</a></h1>
 
-<p>This repo is @(Model.Enabled?"enabled":"disabled")</p>
-
-@if (Model.CanConfigure)
-{
-    <form action="@Url.Action("Configure")" method="post">
-        <input type="hidden" name="enabled" value="@((!Model.Enabled).ToString())" />
-        @if (Model.Enabled)
+        </div>
+    </div>
+</div>
+<div class="homepage">
+    <div class="panel">
+        <h2>Approval tracking</h2>
+        @if (Model.WebhookMissConfigured)
         {
-        <button type="submit">Disable</button>
+            <p class="alert warning">
+                We have detected the webhook intergration with github is missconfigured.
+            </p>
+            <form class="action" action="@Url.Action("Configure")" method="post">
+                <input type="hidden" name="enabled" value="@(Model.Enabled.ToString())" />
+                <button type="submit">Fix</button>
+            </form>
         }
         else
-        { <button type="submit">Enable</button>}
-    </form>
-}
-else
-{
-    <p>can canfigure reason to be here</p>
-}
+        {
+            <p>Track pull request approvals for this repository.</p>
+            if (Model.CanConfigure)
+            {
+                <form class="action" action="@Url.Action("Configure")" method="post">
+                    <input type="hidden" name="enabled" value="@((!Model.Enabled).ToString())" />
+                    @if (Model.Enabled)
+                    {
+                        <button type="submit" class="danger">Remove Tracking</button>
+                    }
+                    else
+                    { <button type="submit">Track</button>}
+                </form>
+            }
+            else
+            {
+                <div class="action">
+                    we're sorry but you can't enable tracking on this repository.
+                </div>
+            }
+        }
+    </div>
+    <div class="panel">
+        <h2>Branch Protection</h2>
+
+        <p>TODO show/update branch protection in here</p>
+    </div>
+</div>

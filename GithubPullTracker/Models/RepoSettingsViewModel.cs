@@ -48,6 +48,9 @@ namespace GithubPullTracker.Models
                     }
                 }
             }
+            else{
+                WebhookMissConfigured = (hook != null);
+            }
             
             BranchProtected = true;//if repo.defualt branch !have protecton || has protection and dorsn't have our context as a required success!
 
@@ -55,6 +58,9 @@ namespace GithubPullTracker.Models
 
             //is this repo already allocated one of the private seats? or is it public
             CanConfigure = !IsPrivate;
+
+            RepoOwner = repo.owner.login;
+            RepoName = repo.name;
         }
 
         public bool IsPrivate { get; set; }
@@ -62,11 +68,12 @@ namespace GithubPullTracker.Models
         public bool Enabled { get; set; }
 
         public bool CanConfigure { get; set; }
-
-        public bool WebhookMissing { get; set; }
-
+        
         public bool BranchProtected { get; set; }
         public bool WebhookMissConfigured { get; private set; }
+
+        public string RepoOwner { get; set; }
+        public string RepoName { get; set; }
 
         internal async Task SaveChanges(RepoStore store)
         {

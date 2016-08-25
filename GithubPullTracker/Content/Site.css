@@ -434,6 +434,7 @@ div.commentList {
     overflow:auto;
     width:980px;
     margin:0 auto;
+    position: relative;
 }
 .body-content .title-bar{ margin-bottom:15px;   }
 
@@ -1382,4 +1383,13 @@ pre code{
         g-emoji img{
             
     vertical-align: text-top;
+        }
+        a.config{
+            position:absolute;
+            top: 15px;
+            right: 0;
+            margin-right:20px;
+        }
+        a.config span{
+            display:none;
         }

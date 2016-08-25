@@ -187,7 +187,8 @@ namespace GithubPullTracker.Controllers
             var assignees = Client.Assignees(owner, repo, number);
             var approvalsTask = store.GetApprovals(owner, repo, number);
             var statusTask = Client.GetStatuses(owner, repo, hook.pull_request.Head.sha);
-            await Task.WhenAll(assignees, approvalsTask, statusTask);
+            var cachedRepoSettingsTask = Store.GetPullRequestSettings(owner, repo, hook.pull_request.number);
+            await Task.WhenAll(assignees, approvalsTask, statusTask, cachedRepoSettingsTask);
 
             var details = new PullRequestView(new GithubUser { UserName = hook.sender.login }, hook.pull_request, assignees.Result, approvalsTask.Result);
 
@@ -195,6 +196,10 @@ namespace GithubPullTracker.Controllers
             var status = currentstatus?.state ?? CommitStatus.error;
             var description = currentstatus?.description;
 
+            var setting = cachedRepoSettingsTask.Result;
+            setting.Approved = details.ExpectedStatus == CommitStatus.success;
+            Store.UpdatePullRequestSettings(setting);
+            await Store.Flush();
 
             if (status != details.ExpectedStatus || description != details.StatusDescription)
             {

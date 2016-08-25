@@ -6,18 +6,35 @@ using Microsoft.WindowsAzure.Storage.Table;
 
 namespace GithubPullTracker.DataStore.Models
 {
+    public class PullRequestSettings : TableEntity
+    {
+        public static string GeneratePartitionKey(string owner, string repo, int number)
+        {
+            return $"{owner.ToLower()}@{repo.ToLower()}@{number}";
+        }
+        public PullRequestSettings() { }
+        public PullRequestSettings(string owner, string repo, int number, bool approved)
+        {
+            this.PartitionKey = GeneratePartitionKey(owner, repo, number);
+            this.RowKey = "@";
+
+            this.Approved = approved;
+        }
+
+        public bool Approved { get; set; }
+    }
+
     public class CommitApproval : TableEntity
     {
 
         public static string GeneratePartitionKey(string owner, string repo, int number)
         {
-            return $"{owner}@{repo}@{number}";
-
+            return $"{owner.ToLower()}@{repo.ToLower()}@{number}";
         }
         public CommitApproval(string owner, string repo, int number, string headsha, string login, bool approved)
         {
             this.PartitionKey = GeneratePartitionKey(owner, repo, number);
-            this.RowKey = $"{login}";
+            this.RowKey = $"{login.ToLower()}";
 
             this.Repo = repo;
             this.Owner = owner;
@@ -33,6 +50,6 @@ namespace GithubPullTracker.DataStore.Models
         public int Number { get; set; }
         public string Owner { get; set; }
         public string Repo { get; set; }
-        public bool Approved { get;  set; }
+        public bool Approved { get; set; }
     }
 }
