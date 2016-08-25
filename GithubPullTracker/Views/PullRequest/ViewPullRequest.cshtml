@@ -53,22 +53,71 @@
         </section>
         <section>
             <h3>Assignee</h3>
-            
+
             @if (Model.Details.Assignees.Any())
             {
                 foreach (var assignee in Model.Details.Assignees)
                 {
-                <a href="@assignee.html_url">
-                    <img src="@(assignee.avatar_url)&s=40" alt="@assignee.login" />
-                    @assignee.login
-                </a>
-                    }
+                    <a href="@assignee.html_url">
+                        <img src="@(assignee.avatar_url)&s=40" alt="@assignee.login" />
+                        @assignee.login
+                    </a>
                 }
+            }
             else
             {
                 <span>Unassigned</span>
             }
         </section>
+        <section>
+            <h3>Approved By</h3>
+            @foreach (var assignee in Model.Details.ApprovedBy)
+            {
+                <a href="@assignee.html_url">
+                    <img src="@(assignee.avatar_url)&s=40" alt="@assignee.login" />
+                    @assignee.login
+                </a>
+            }
+        </section>
+        @if (Model.Details.OutstandingAprovers.Any())
+        {
+            <section>
+                <h3>
+                    Outstanding Approvers
+                    @(Model.Details.AllRequired ? "(all)" : "(any)")
+                </h3>
+                @foreach (var assignee in Model.Details.OutstandingAprovers)
+                {
+                    <a href="@assignee.html_url">
+                        <img src="@(assignee.avatar_url)&s=40" alt="@assignee.login" />
+                        @assignee.login
+                    </a>
+                }
+           
+            </section>
+        }
+        @if (!Model.Details.IsMerged)
+        {
+            <div class="approvals  show-fixed" >
+                    <form action="@Url.Action("Approve")" method="post">
+                        <input type="hidden" name="approved" value="@((!Model.Details.HasUserApproved).ToString())" />
+                        <input type="hidden" name="headsha" value="@(Model.Details.HeadSha)" />
+                        @if (this.ViewContext.RouteData.Values.ContainsKey("path"))
+                    {
+
+                            <input type="hidden" name="path" value="@(this.ViewContext.RouteData.Values["path"])" />
+                        }
+                        @if (Model.Details.HasUserApproved)
+                    {
+                            <button class="unapprove"><i class="icon icon-x"></i>unapprove</button>
+                        }
+                        else
+                        {
+                            <button class="approve"><i class="icon icon-check"></i>approve</button>
+                        }
+                    </form>
+            </div>
+        }
 
         <a href="http://github.com/@Model.Details.RepositoryOwner/@Model.Details.RepositoryName/pull/@Model.Details.Number" target="_blank" class="right show-fixed">view on github</a>
     </aside>

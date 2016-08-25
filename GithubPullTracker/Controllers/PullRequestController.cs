@@ -27,13 +27,70 @@ namespace GithubPullTracker.Controllers
             var prTask = Client.PullRequest(owner, repo, number);
             
             var assignees = Client.Assignees(owner, repo, number);
-            var approvalsTask = store.GetApprovals(owner, repo, number); 
-
+            var approvalsTask = store.GetApprovals(owner, repo, number);
             await Task.WhenAll(prTask,  assignees, approvalsTask);
 
             return new PullRequestView(CurrentUser, prTask.Result, assignees.Result, approvalsTask.Result);
         }
+        [Auth]
+        [POST("{owner}/{repo}/pull/{reference}/approve")]
+        public async Task<ActionResult> Approve(string owner, string repo, int reference, string headSha, bool approved, string path = null)
+        {
+            Store.UpdateApproval(owner, repo, reference, headSha, CurrentUser.UserName, approved);
+            await Store.Flush();
 
+            var pullRequest= await GetPullRequestDetails(owner, repo, reference);
+
+            var reposettings = await Store.GetRepoSettings(owner, repo);
+
+            var privateenabled = reposettings.PrivateEnabled && pullRequest.IsPrivate;
+            var publicenabled = reposettings.PublicEnabled && !pullRequest.IsPrivate;
+            if (publicenabled || privateenabled)//no enabled eather way
+            {
+                if (pullRequest.IsPrivate)
+                {
+                    //getorg settings
+                    var ownerSettings = await Store.GetOwnerSettings(owner);
+                    if (ownerSettings.SubscriptionExpires >= DateTime.UtcNow)
+                    {
+                        return Content("Subscription expired");
+                    }
+                }
+
+                var ownerClient = new GithubClient.Client(Client.UserAgent) { AccessToken = reposettings.GetAuthToken() };
+
+                var settings = await Store.GetPullRequestSettings(owner, repo, reference);
+
+                var statuslist= await ownerClient.GetStatuses(owner, repo, headSha);
+
+                var details = pullRequest;
+                settings.Approved = details.ExpectedStatus == CommitStatus.success;
+
+                var currentstatus = statuslist.statuses.Where(x => x.context == RepositoryController.statuscontext).SingleOrDefault();
+                var status = currentstatus?.state ?? CommitStatus.error;
+                var description = currentstatus?.description;
+
+                if (status != details.ExpectedStatus || description != details.StatusDescription)
+                {
+
+                    var url = Request.Url.GetLeftPart(UriPartial.Authority) + $"/{owner}/{repo}/pull/{reference}";
+                    //we could enque this update for a background task to complete???
+                    await ownerClient.SetStatus(owner, repo, headSha, details.ExpectedStatus, url, details.StatusDescription, RepositoryController.statuscontext);
+                }
+
+                //all now approved
+
+                Store.UpdatePullRequestSettings(settings);
+                await Store.Flush();
+            }
+
+            if (path == null) {
+                return RedirectToAction("ViewPullRequest", new { owner, repo, reference });
+            }else
+            {
+                return RedirectToAction("ViewFiles", new { owner, repo, reference, path = path });
+            }
+        }
 
         [Auth]
         [GET("{owner}/{repo}/pull/{reference}")]

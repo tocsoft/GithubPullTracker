@@ -14,6 +14,13 @@ namespace GithubClient
     {
         private readonly RestClient client;
 
+        public string UserAgent
+        {
+            get
+            {
+                return client.UserAgent;
+            }
+        }
         const string auth_scheme = "token";
         public string AccessToken
         {

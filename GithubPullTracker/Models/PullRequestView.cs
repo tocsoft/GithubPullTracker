@@ -30,7 +30,8 @@ namespace GithubPullTracker.Models
             //lets calculate the list of people that have approved the PR
             var approvedPeople = applicableApprovals.Select(x => x.Login).ToList();
 
-            IEnumerable<User> approvedBy = null;
+            ApprovedBy = Enumerable.Empty<User>();
+            OutstandingAprovers = Enumerable.Empty<User>();
             if (requiredPeople.Any())
             {
                 RequiredAprovers = requiredPeople.ToList();
@@ -42,17 +43,17 @@ namespace GithubPullTracker.Models
                 this.IsApproved = !OutstandingAprovers.Any();
                 if (IsApproved)
                 {
-                    approvedBy = RequiredAprovers;
+                    ApprovedBy = RequiredAprovers;
                 }else
                 {
-                    approvedBy = Enumerable.Empty<User>();
+                    ApprovedBy = Enumerable.Empty<User>();
                 }
             }
             else
             {
                 RequiredAprovers = fallbackPeople.ToList();
-                approvedBy = fallbackPeople.Where(x => approvedPeople.Contains(x.login)).ToList();
-                if (approvedBy.Any())
+                this.ApprovedBy = fallbackPeople.Where(x => approvedPeople.Contains(x.login)).ToList();
+                if (ApprovedBy.Any())
                 {
 
                     //any of the fallbacks have agreed then we are saying its approved
@@ -121,7 +122,7 @@ namespace GithubPullTracker.Models
             if (!IsApproved)
             {
                 sb.Append("awaiting approval from ");
-                if (!AllRequired && OutstandingAprovers.Count > 1)
+                if (!AllRequired && OutstandingAprovers.Count() > 1)
                 {
                     sb.Append("any of ");
                 }
@@ -138,15 +139,17 @@ namespace GithubPullTracker.Models
 
                 sb.Append("approved by ");
 
-                var first = approvedBy.First();
+                var first = ApprovedBy.First();
                 sb.AppendFormat($"{first.login}");
-                foreach (var app in approvedBy.Skip(1))
+                foreach (var app in ApprovedBy.Skip(1))
                 {
                     sb.AppendFormat($", {app.login}");
                 }
                 //list all approving people who mattered
             }
             StatusDescription = sb.ToString();
+
+            IsPrivate = pr.Base.repo.IsPrivate;
         }
 
 
@@ -154,9 +157,9 @@ namespace GithubPullTracker.Models
         public CommitStatus ExpectedStatus { get; set; }
         public int Commits { get; set; }
 
-        public IList<User> OutstandingAprovers { get; set; }
+        public IEnumerable<User> OutstandingAprovers { get; set; }
 
-        public IList<User> RequiredAprovers { get; set; }
+        public IEnumerable<User> RequiredAprovers { get; set; }
 
         public bool AllRequired { get; set; }
 
@@ -187,11 +190,13 @@ namespace GithubPullTracker.Models
         public string BaseName { get; private set; }
         public string HeadNameFull { get; private set; }
         public string BaseNameFull { get; private set; }
-        public IList<User> Assignees { get; private set; }
+        public IEnumerable<User> Assignees { get; private set; }
         public bool IsMerged { get; private set; }
         public DateTime? ClosedDate { get; private set; }
         public DateTime? MergedAt { get; private set; }
         public User MergedBy { get; private set; }
         public User ClosedBy { get; private set; }
+        public bool IsPrivate { get; internal set; }
+        public IEnumerable<User> ApprovedBy { get; private set; }
     }
 }

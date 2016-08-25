@@ -18,6 +18,7 @@ namespace GithubPullTracker.Controllers
 {
     public class RepositoryController : ControllerBase
     {
+        public const string statuscontext = "codereview/pulltracker";
         static string WebHookProxyurl = SettingsManager.Settings.GetSetting("WebhookProxyUrl");
         string _webHookUrl;
         public string WebHookUrl
@@ -45,7 +46,7 @@ namespace GithubPullTracker.Controllers
             {
                 throw new UnauthorizedAccessException();
             }
-            var settingsTask = Store.GetOwnerSettings(owner);
+            var settingsTask = Store.GetOwnerConfig(owner);
 
             var hooksTask = Client.GetHooks(owner, repo);
             //todo retrive protected branches etc
@@ -117,7 +118,6 @@ namespace GithubPullTracker.Controllers
             return RedirectToAction("Settings", new { result = "config_success" });
         }
 
-        const string statuscontext = "codereview/pulltracker";
 
         [POST("repositories/receive")]
         public async System.Threading.Tasks.Task<ActionResult> WebhookRecieve()
@@ -142,10 +142,15 @@ namespace GithubPullTracker.Controllers
                 hook = Newtonsoft.Json.JsonConvert.DeserializeObject<Webhook>(json);
             }
             //now we have a webhook we can determin if they have used the correct secret to sign it
+            var settings = await Store.GetRepoSettings(hook.repository.owner.login, hook.repository.name);
 
-
-            var store = new RepoStore();
-            var settings = await store.GetRepoSettings(hook.repository.owner.login, hook.repository.name);
+            var hmac = new HMACSHA1(Encoding.UTF8.GetBytes(settings.WebhookSecret));
+            var hashmessage = hmac.ComputeHash(Encoding.UTF8.GetBytes(json));
+            var hash = BitConverter.ToString(hashmessage).Replace("-", "").ToLower();
+            if (Request.Headers["X-Hub-Signature"] != ("sha1=" + hash))
+            {
+                return Content("Invalid signature");
+            }
 
             var privateenabled = settings.PrivateEnabled && hook.repository.IsPrivate;
             var publicenabled = settings.PublicEnabled && !hook.repository.IsPrivate;
@@ -155,13 +160,14 @@ namespace GithubPullTracker.Controllers
                 return Content("OK");
             }
 
-            var hmac = new HMACSHA1(Encoding.UTF8.GetBytes(settings.WebhookSecret));
-            var hashmessage = hmac.ComputeHash(Encoding.UTF8.GetBytes(json));
-            var hash = BitConverter.ToString(hashmessage).Replace("-", "").ToLower();
-            if (Request.Headers["X-Hub-Signature"] != ("sha1=" + hash))
+            if (hook.repository.IsPrivate)
             {
-                //
-                return Content("Invalid signature");
+                //getorg settings
+                var ownerSettings = await Store.GetOwnerSettings(hook.repository.owner.login);
+                if (ownerSettings.SubscriptionExpires >= DateTime.UtcNow)
+                {
+                    return Content("Subscription expired");
+                }
             }
 
             //we now can access the API in the context of the authorizor
@@ -169,7 +175,7 @@ namespace GithubPullTracker.Controllers
 
             if (hook is PullRequestWebhook)
             {
-                await RecievePullRequestHook((PullRequestWebhook)hook, store);
+                await RecievePullRequestHook((PullRequestWebhook)hook, Store);
             }
 
             return Content("OK");

@@ -12,57 +12,68 @@
     </div>
 </div>
 <div class="title-bar">
-    <h2>@Model.Title <span>#@Model.Number</span></h2>
-    <div>
+    <section>
+        <h2>@Model.Title <span>#@Model.Number</span></h2>
+        <div>
 
-        @if (Model.MergedAt.HasValue)
-        {
-
-            <text>
-                <span class="prstatus-merged">Merged</span>
-                <a href="@Model.MergedBy.html_url" target="_blank" class="user">@Model.MergedBy.login</a> merged @Model.Commits into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
-                <time datetime="@Model.MergedAt.Value.ToString("o")">@Model.MergedAt.Value.ToString()</time>
-            </text>
-
-
-        }
-        else if (Model.ClosedDate.HasValue)
-        {
-
-            <text>
-                <span class="prstatus-closed">Closed</span>
-                <a href="@Model.ClosedBy.html_url" target="_blank" class="user">@Model.ClosedBy.login</a> merged @Model.Commits into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
-            </text>
-
-
-        }
-        else
-        {
-
-            <text>
-                <span class="prstatus-opened">Open</span>
-                <a href="@Model.CreatedBy.html_url" target="_blank" class="user">@Model.CreatedBy.login</a> wants to merge  @Model.Commits into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
-            </text>
-        }
-
-
-
-    </div>
-    <div class="approvals">
-        @if (!Model.IsMerged)
-        {
-            if (Model.HasUserApproved)
+            @if (Model.MergedAt.HasValue)
             {
-                <a class="button" href="#">unapprove</a>
+
+                <text>
+                    <span class="prstatus-merged">Merged</span>
+                    <a href="@Model.MergedBy.html_url" target="_blank" class="user">@Model.MergedBy.login</a> merged @Model.Commits into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
+                    <time datetime="@Model.MergedAt.Value.ToString("o")">@Model.MergedAt.Value.ToString()</time>
+                </text>
+
+
+            }
+            else if (Model.ClosedDate.HasValue)
+            {
+
+                <text>
+                    <span class="prstatus-closed">Closed</span>
+                    <a href="@Model.ClosedBy.html_url" target="_blank" class="user">@Model.ClosedBy.login</a> merged @Model.Commits into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
+                </text>
+
+
             }
             else
             {
-                <a class="button" href="#">approve</a>
+
+                <text>
+                    <span class="prstatus-opened">Open</span>
+                    <a href="@Model.CreatedBy.html_url" target="_blank" class="user">@Model.CreatedBy.login</a> wants to merge  @Model.Commits into <span class="branchname" title="@Model.BaseNameFull">@Model.BaseName</span> from <span class="branchname" title="@Model.HeadNameFull">@Model.HeadName</span>
+                </text>
             }
-        }
 
 
-    </div>
+
+        </div>
+    </section>
+    <aside>
+        <div class="approvals">
+            @if (!Model.IsMerged)
+            {
+                <form action="@Url.Action("Approve")" method="post">
+                    <input type="hidden" name="approved" value="@((!Model.HasUserApproved).ToString())" />
+                    <input type="hidden" name="headsha" value="@(Model.HeadSha)" />
+                    @if (this.ViewContext.RouteData.Values.ContainsKey("path"))
+                {
+
+                        <input type="hidden" name="path" value="@(this.ViewContext.RouteData.Values["path"])" />
+                    }
+                    @if (Model.HasUserApproved)
+                {
+                        <button class="unapprove"><i class="icon icon-x"></i>unapprove</button>
+                    }
+                    else
+                    {
+                        <button class="approve"><i class="icon icon-check"></i>approve</button>
+                    }
+                </form>
+            }
+        </div>
+    </aside>
 </div>
 <div class="tab-bar">
     <nav class="tabs">

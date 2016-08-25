@@ -86,7 +86,28 @@ namespace GithubPullTracker.DataStore
             return reposettings.FirstOrDefault() ?? new Models.RepoSettings(owner, repo);
         }
 
-        public async Task<OwnerConfig> GetOwnerSettings(string owner)
+        public async Task<OwnerSettings> GetOwnerSettings(string owner)
+        {
+            await Flush(settingsTableName);
+
+            CloudTable table = client.GetTableReference(settingsTableName);
+
+            var targetKey = OwnerSettings.GeneratePartitionKey(owner);
+
+            var query = new TableQuery<OwnerSettings>().Where(
+                TableQuery.CombineFilters(
+                    TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, targetKey),
+                    TableOperators.And,
+                    TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "@")
+                    ));
+
+
+            var results = await table.ExecuteQueryAsync(query);
+            
+            return results.FirstOrDefault() ?? new OwnerSettings(owner);
+        }
+
+        public async Task<OwnerConfig> GetOwnerConfig(string owner)
         {
             await Flush(settingsTableName);
 
