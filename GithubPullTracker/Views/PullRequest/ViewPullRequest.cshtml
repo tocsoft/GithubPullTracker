@@ -71,13 +71,18 @@
         </section>
         <section>
             <h3>Approved By</h3>
-            @foreach (var assignee in Model.Details.ApprovedBy)
+            @if (Model.Details.ApprovedBy.Any())
             {
-                <a href="@assignee.html_url">
-                    <img src="@(assignee.avatar_url)&s=40" alt="@assignee.login" />
-                    @assignee.login
-                </a>
+                foreach (var assignee in Model.Details.ApprovedBy)
+                {
+                    <a href="@assignee.html_url">
+                        <img src="@(assignee.avatar_url)&s=40" alt="@assignee.login" />
+                        @assignee.login
+                    </a>
+                }
             }
+            else
+            {<span>awaiting approval</span>}
         </section>
         @if (Model.Details.OutstandingAprovers.Any())
         {
@@ -178,7 +183,7 @@
                 itm.removeClass('fixed');
             }
 
-        });
+        }).scroll();
 
 
         @*diffViewScript('@Model.CurrentFile', '@Model.HeadSha', '@Url.Action("ViewPullRequest")', @Html.Raw(Model.TreeData.ToString()), '@Model.RepositoryOwner','@Model.RepositoryName')*@

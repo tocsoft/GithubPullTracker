@@ -267,7 +267,7 @@ namespace GithubClient
                     .UpateHeaders(h => {
                         h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
                     })
-                    .ExecuteWithAsync<IEnumerable<Commit>>(client);
+                    .ExecutePagesWithAsync<Commit>(client);
         }
 
         public Task<IEnumerable<User>> Assignees(string owner, string repo, int pullRequestNumber)
@@ -277,13 +277,13 @@ namespace GithubClient
                     .UpateHeaders(h => {
                         h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
                     })
-                    .ExecuteWithAsync<IEnumerable<User>>(client);
+                    .ExecutePagesWithAsync<User>(client);
         }
         public Task<IEnumerable<CommitFile>> Files(string owner, string repo, int pullRequestNumber)
         {
             return
                   new RestRequest($"/repos/{owner}/{repo}/pulls/{pullRequestNumber}/files", HttpMethod.Get)
-                      .ExecuteWithAsync<IEnumerable<CommitFile>>(client);
+                      .ExecutePagesWithAsync<CommitFile>(client);
         }
 
         public Task<IEnumerable<CommitComment>> FileComments(string owner, string repo, int pullRequestNumber)
@@ -315,7 +315,7 @@ namespace GithubClient
                     .UpateHeaders(h => {
                         h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
                     })
-                    .ExecuteWithAsync<IEnumerable<Event>>(client);
+                    .ExecutePagesWithAsync<Event>(client);
         }
 
         public Task<IEnumerable<Event>> Timeline(string owner, string repo, int issueNumber)
