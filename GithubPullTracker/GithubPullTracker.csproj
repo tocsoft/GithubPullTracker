@@ -496,11 +496,14 @@
     <Compile Include="DataStore\Models\OwnerSettings.cs" />
     <Compile Include="DataStore\RepoStore.cs" />
     <Compile Include="DataStore\TableExtension.cs" />
+    <Compile Include="DataStore\OwnerConfig.cs" />
+    <Compile Include="DataStore\WebhookReceiverConfig.cs" />
     <Compile Include="Encrypter.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="IStringEncrypter.cs" />
+    <Compile Include="Models\RepoSettingsViewModel.cs" />
     <Compile Include="Models\TimelineEvents.cs" />
     <Compile Include="Models\Commit.cs" />
     <Compile Include="Models\PageMap.cs" />
@@ -512,6 +515,7 @@
     <Compile Include="Models\GithubUser.cs" />
     <Compile Include="AuthAttribute.cs" />
     <Compile Include="Models\PullRequestViewItem.cs" />
+    <Compile Include="Models\Webhook.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="HtmlExtensions.cs" />
     <Compile Include="SettingsManager.cs" />
@@ -523,9 +527,7 @@
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Home\SignIn.cshtml" />
     <Content Include="Scripts\jquery-1.10.2.min.map" />
-    <Content Include="Views\Home\_SearchResults.cshtml" />
     <Content Include="Views\Home\SearchOwner.cshtml" />
-    <Content Include="Views\Home\SearchRepo.cshtml" />
     <Content Include="Views\Home\Login.cshtml" />
     <Content Include="Views\Home\_MainCommentTemplate.cshtml" />
     <Content Include="Views\Home\_MainFileCommentTemplate.cshtml" />
@@ -547,6 +549,9 @@
     <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventOther_milestoned.cshtml" />
     <Content Include="Views\PullRequest\DisplayTemplates\TimelineEventOther_labeled.cshtml" />
     <Content Include="Scripts\web.config" />
+    <Content Include="Views\Repository\Settings.cshtml" />
+    <Content Include="Views\Shared\_SearchResults.cshtml" />
+    <Content Include="Views\Repository\SearchRepo.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -557,7 +562,6 @@
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Views\Auth\" />
-    <Folder Include="Views\Repository\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GithubClient\GithubClient.csproj">

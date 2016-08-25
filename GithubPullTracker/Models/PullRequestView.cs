@@ -7,6 +7,7 @@ using GithubClient.Models;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 using GithubPullTracker.DataStore.Models;
+using System.Text;
 
 namespace GithubPullTracker.Models
 {
@@ -14,7 +15,7 @@ namespace GithubPullTracker.Models
     {
         public PullRequestView(GithubUser user, PullRequest pr, IEnumerable<User> assignees, IEnumerable<CommitApproval> approvals)
         {
-            var applicableApprovals = approvals.Where(x => x.HeadSha == pr.Head.sha);
+            var applicableApprovals = approvals.Where(x => x.HeadSha == pr.Head.sha && x.Approved);
 
             //all assignees must aprove the pr
             var requiredPeople = pr.assignees.Where(x => x.login != pr.user.login).ToList();
@@ -28,8 +29,8 @@ namespace GithubPullTracker.Models
             
             //lets calculate the list of people that have approved the PR
             var approvedPeople = applicableApprovals.Select(x => x.Login).ToList();
-            
 
+            IEnumerable<User> approvedBy = null;
             if (requiredPeople.Any())
             {
                 RequiredAprovers = requiredPeople.ToList();
@@ -39,12 +40,21 @@ namespace GithubPullTracker.Models
 
                 //no one outstanding
                 this.IsApproved = !OutstandingAprovers.Any();
+                if (IsApproved)
+                {
+                    approvedBy = RequiredAprovers;
+                }else
+                {
+                    approvedBy = Enumerable.Empty<User>();
+                }
             }
             else
             {
                 RequiredAprovers = fallbackPeople.ToList();
-                if (fallbackPeople.Any(x => !approvedPeople.Contains(x.login)))
+                approvedBy = fallbackPeople.Where(x => approvedPeople.Contains(x.login)).ToList();
+                if (approvedBy.Any())
                 {
+
                     //any of the fallbacks have agreed then we are saying its approved
                     this.IsApproved = true;
                 }
@@ -105,8 +115,43 @@ namespace GithubPullTracker.Models
             ClosedBy = pr.closed_by;
             this.MergedBy = pr.merged_by;
             this.MergedAt = pr.merged_at;
+
+            ExpectedStatus = IsApproved ? CommitStatus.success : CommitStatus.pending;
+            StringBuilder sb = new StringBuilder();
+            if (!IsApproved)
+            {
+                sb.Append("awaiting approval from ");
+                if (!AllRequired && OutstandingAprovers.Count > 1)
+                {
+                    sb.Append("any of ");
+                }
+
+                var first = OutstandingAprovers.First();
+                sb.AppendFormat($"{first.login}");
+                foreach (var app in OutstandingAprovers.Skip(1))
+                {
+                    sb.AppendFormat($", {app.login}");
+                }
+            }
+            else
+            {
+
+                sb.Append("approved by ");
+
+                var first = approvedBy.First();
+                sb.AppendFormat($"{first.login}");
+                foreach (var app in approvedBy.Skip(1))
+                {
+                    sb.AppendFormat($", {app.login}");
+                }
+                //list all approving people who mattered
+            }
+            StatusDescription = sb.ToString();
         }
 
+
+        public string StatusDescription { get; set; }
+        public CommitStatus ExpectedStatus { get; set; }
         public int Commits { get; set; }
 
         public IList<User> OutstandingAprovers { get; set; }

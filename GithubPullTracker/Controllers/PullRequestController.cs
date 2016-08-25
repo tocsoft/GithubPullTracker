@@ -12,11 +12,14 @@ using System.Text;
 using System.Net;
 using AttributeRouting.Web.Mvc;
 using GithubPullTracker.DataStore;
+using System.Security.Cryptography;
+using GithubClient.Models;
 
 namespace GithubPullTracker.Controllers
 {
     public class PullRequestController : ControllerBase
     {
+
         private async Task<PullRequestView> GetPullRequestDetails(string owner, string repo, int number)
         {
 

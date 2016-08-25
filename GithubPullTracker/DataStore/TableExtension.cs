@@ -28,5 +28,24 @@ namespace GithubPullTracker.DataStore
 
             return items;
         }
+
+        public static async Task<IList<DynamicTableEntity>> ExecuteQueryAsync(this CloudTable table, TableQuery query, CancellationToken ct = default(CancellationToken), Action<IList<DynamicTableEntity>> onProgress = null)
+        {
+
+            var items = new List<DynamicTableEntity>();
+            TableContinuationToken token = null;
+
+            do
+            {
+                
+                TableQuerySegment<DynamicTableEntity> seg = await table.ExecuteQuerySegmentedAsync(query, token);
+                token = seg.ContinuationToken;
+                items.AddRange(seg);
+                if (onProgress != null) onProgress(items);
+
+            } while (token != null && !ct.IsCancellationRequested);
+
+            return items;
+        }
     }
 }

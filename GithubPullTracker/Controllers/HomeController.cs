@@ -44,27 +44,6 @@ namespace GithubPullTracker.Controllers
             return View(vm);
         }
 
-        [GET("{owner}/{repo}")]
-        public async Task<ActionResult> SearchRepo(string query, string owner, string repo, int page = 1, RequestState? state = null, SortOrder? order = null, SortOrderDirection? dir = null, RequestConnection? type = null)
-        {
-
-            var realState = state ?? RequestState.Open;
-            var realOrder = order ?? SortOrder.bestmatch;
-            var realdir = dir ?? SortOrderDirection.Decending;
-            var realType = type ?? RequestConnection.All;
-            int pagesize = 25;
-
-            var resultsTask = Client.SearchPullRequests(page, pagesize, realState, realOrder, realdir, realType, CurrentUser.UserName, query, owner, repo);
-            var repoTask = Client.Repo(owner, repo);
-
-            await Task.WhenAll(resultsTask, repoTask);
-
-            var vm = new RepoSearchResults(repoTask.Result, page, pagesize, resultsTask.Result, realState, realOrder, realdir, realType, query);
-
-            return View(vm);
-        }
-
-
 
         [GET("{owner}")]
         public async Task<ActionResult> SearchOwner(string query, string owner, int page = 1, RequestState? state = null, SortOrder? order = null, SortOrderDirection? dir = null, RequestConnection? type = null)

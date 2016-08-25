@@ -14,19 +14,22 @@ namespace GithubPullTracker.DataStore
         private static readonly CloudTableClient client;
         private static readonly string fileViewsTableName;
         private static readonly string approvalsTableName;
+        private static readonly string settingsTableName;
         static RepoStore()
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(SettingsManager.Settings.GetSetting("Storage.ConnectionString"));
             fileViewsTableName = SettingsManager.Settings.GetSetting("Storage.TableNames.FileViews");
             approvalsTableName = SettingsManager.Settings.GetSetting("Storage.TableNames.Approvals");
+            settingsTableName = SettingsManager.Settings.GetSetting("Storage.TableNames.Settings");
             client = storageAccount.CreateCloudTableClient();
         }
 
         Dictionary<string, List<TableOperation>> opperations = new Dictionary<string, List<TableOperation>>() {
             {fileViewsTableName, new List<TableOperation>() },
-            {approvalsTableName, new List<TableOperation>() }
+            {approvalsTableName, new List<TableOperation>() },
+            {settingsTableName, new List<TableOperation>() }
         };
-        
+
         internal async Task Flush(string tableName)
         {
             List<Task> writeTasks = new List<Task>();
@@ -58,12 +61,70 @@ namespace GithubPullTracker.DataStore
                 await Task.WhenAll(writeTasks);
             }
         }
-
         public Task Flush()
         {
             return Flush(null);
         }
-        
+
+        public async Task<RepoSettings> GetRepoSettings(string owner, string repo)
+        {
+            await Flush(settingsTableName);
+
+            CloudTable table = client.GetTableReference(settingsTableName);
+
+            var targetKey = RepoSettings.GeneratePartitionKey(owner);
+
+            var query = new TableQuery<RepoSettings>().Where(
+                  TableQuery.CombineFilters(
+                        TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, targetKey),
+                        TableOperators.And,
+                        TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, repo.ToLower())
+                        ));
+
+            var reposettings = await table.ExecuteQueryAsync(query);
+
+            return reposettings.FirstOrDefault() ?? new Models.RepoSettings(owner, repo);
+        }
+
+        public async Task<OwnerConfig> GetOwnerSettings(string owner)
+        {
+            await Flush(settingsTableName);
+
+            CloudTable table = client.GetTableReference(settingsTableName);
+
+            var targetKey = OwnerSettings.GeneratePartitionKey(owner);
+
+            var query = new TableQuery().Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, targetKey));
+            
+            
+            var results = await table.ExecuteQueryAsync(query);
+
+            var ownerData = results.Where(x => x.RowKey == "@").FirstOrDefault();
+            var repos = results.Where(x => x.RowKey != "@");
+
+
+            return new OwnerConfig(owner, Convert<OwnerSettings>(ownerData), Convert<RepoSettings>(repos));
+        }
+
+        private IEnumerable<T> Convert<T>(IEnumerable<DynamicTableEntity> data) where T : TableEntity, new()
+        {
+            return data.Select(x => Convert<T>(x)).ToList();
+        }
+        private T Convert<T>(DynamicTableEntity data) where T : TableEntity, new()
+        {
+            if (data == null)
+            {
+                return null;
+            }
+            var entity = new T();
+            entity.PartitionKey = data.PartitionKey;
+            entity.RowKey = data.RowKey;
+            entity.Timestamp = data.Timestamp;
+            entity.ReadEntity(data.Properties, null);
+            entity.ETag = data.ETag;
+            return entity;
+        }
+
         public void AddFileView(string owner, string repo, int number, string sha, string username)
         {
             var view = new Models.FileView(owner, repo, number, username, sha);
@@ -72,6 +133,21 @@ namespace GithubPullTracker.DataStore
             //await table.ExecuteAsync();
             opperations[fileViewsTableName].Add(insertOperation);
         }
+        
+        internal void SetRepoSettings(RepoSettings repoSettings)
+        {
+            TableOperation insertOperation = TableOperation.InsertOrReplace(repoSettings);
+            //await table.ExecuteAsync();
+            opperations[settingsTableName].Add(insertOperation);
+        }
+
+        internal void SetOwnerSettings(OwnerSettings owner)
+        {
+            TableOperation insertOperation = TableOperation.InsertOrReplace(owner);
+            //await table.ExecuteAsync();
+            opperations[settingsTableName].Add(insertOperation);
+        }
+
 
         public async Task<IEnumerable<string>> ListFileViews(string owner, string repo, int number, string username)
         {
@@ -110,7 +186,7 @@ namespace GithubPullTracker.DataStore
 
             var pageViews = await table.ExecuteQueryAsync(query);
 
-            return pageViews.Where(x=>x.Approved).ToList();
+            return pageViews.ToList();
         }
     }
 }

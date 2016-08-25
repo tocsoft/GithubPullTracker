@@ -50,6 +50,67 @@ namespace GithubClient
 
         }
 
+        public Task<Statuses> GetStatuses(string owner, string repo, string commitSha)
+        {
+            return new RestRequest($"/repos/{owner}/{repo}/commits/{commitSha}/status")
+                   .ExecuteWithAsync<Statuses>(client);
+        }
+
+        public async Task SetStatus(string owner, string repo, string commitSha, CommitStatus status, string requestUrl, string description, string context)
+        {
+            await new RestRequest($"/repos/{owner}/{repo}/statuses/{commitSha}", HttpMethod.Post)
+                    .AddParameter(new
+                    {
+                        state = status.ToString(),
+                        target_url = requestUrl,
+                        description = description,
+                        context = context
+                    })
+                    .ExecuteWithAsync(client);
+        }
+
+        public Task<IEnumerable<WebhokSettings>> GetHooks(string owner, string repo)
+        {
+            return new RestRequest($"/repos/{owner}/{repo}/hooks", HttpMethod.Get)
+                     .ExecutePagesWithAsync<WebhokSettings>(client);
+        }
+        public Task SetHook(string owner, string repo, WebhokSettings settings)
+        {
+            if(settings.id > 0)
+            {
+                //has an Id we are doing an update
+                return new RestRequest($"/repos/{owner}/{repo}/hooks/{settings.id}", new HttpMethod("PATCH"))
+                    .AddParameter(new
+                    {
+                        settings.active,
+                        settings.config,
+                        settings.events
+                    })
+                    .ExecuteWithAsync(client);
+
+            }
+            else
+            {
+                return new RestRequest($"/repos/{owner}/{repo}/hooks", HttpMethod.Post)
+                .AddParameter(new
+                {
+                    name="web",
+                    settings.active,
+                    settings.config,
+                    settings.events
+                })
+                .ExecuteWithAsync(client);
+            }
+
+        }
+
+        public Task DeleteHook(string owner, string repo, WebhokSettings settings)
+        {
+            //has an Id we are doing an update
+            return new RestRequest($"/repos/{owner}/{repo}/hooks/{settings.id}", HttpMethod.Delete)
+                .ExecuteWithAsync(client);
+        }
+
         public Task<SearchResult> SearchPullRequests(int page, int pagesize, RequestState state, SortOrder order, SortOrderDirection direction, RequestConnection? connection, string login, string terms, string owner, string repository)
         {
             var req = new RestRequest($"/search/issues", HttpMethod.Get);

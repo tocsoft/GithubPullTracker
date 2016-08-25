@@ -57,9 +57,10 @@ namespace GithubPullTracker.Models
             : base(page, pagesize, results, state, order, dir, connection, term)
         {
             this.Repo = repo;
-            
+            IsAdmin = repo.permissions.admin;
         }
 
+        public bool IsAdmin { get; set; }
         public Repo Repo { get; private set; }
 
         public override string GenerateUrl(int? page, RequestState? state, SortOrder? order, SortOrderDirection? dir, RequestConnection? connection, string term)

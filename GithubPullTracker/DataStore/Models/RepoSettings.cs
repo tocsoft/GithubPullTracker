@@ -19,28 +19,31 @@ namespace GithubPullTracker.DataStore.Models
         public RepoSettings(string owner, string repo)
         {
             this.PartitionKey = GeneratePartitionKey(owner);
-            this.RowKey = repo;
+            this.RowKey = repo.ToLower();
+            Repo = repo;
         }
 
         public string Owner
         {
             get { return PartitionKey; }
-            set { PartitionKey = value; }
         }
 
         public string Repo
         {
-            get { return PartitionKey; }
-            set { RowKey = value; }
+            get;
+            set;
         }
 
-        public bool Enabaled { get; set; }
-                                
+        public bool PrivateEnabled { get; set; } = false;
+        public bool PublicEnabled { get; set; } = false;
+
         public string EncodedAuthorizationToken
         {
             get;
             set;
         }
+
+        public string WebhookSecret { get; set; }
 
         public string GetAuthToken()
         {
@@ -65,5 +68,6 @@ namespace GithubPullTracker.DataStore.Models
                 EncodedAuthorizationToken = enc.Encrypt(token);
             }
         }
+
     }
 }
