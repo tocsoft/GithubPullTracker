@@ -510,7 +510,7 @@
 
                 var sourceText = "";
                 if (change != 'added') {
-                    sourceText = JsDiff.applyPatch(targetText, inversePatch(patch));
+                    sourceText = JsDiff.applyPatch(targetText, inversePatch(patch), {fuzzFactor : 1});
                 }
 
 
