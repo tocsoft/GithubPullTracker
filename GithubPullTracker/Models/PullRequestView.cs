@@ -116,7 +116,7 @@ namespace GithubPullTracker.Models
             ClosedBy = pr.closed_by;
             this.MergedBy = pr.merged_by;
             this.MergedAt = pr.merged_at;
-
+            this.IsMerged = pr.merged;
             ExpectedStatus = IsApproved ? CommitStatus.success : CommitStatus.pending;
             StringBuilder sb = new StringBuilder();
             if (!IsApproved)
