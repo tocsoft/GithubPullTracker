@@ -301,5 +301,11 @@ $(function () {
     }(jQuery));
 
     $('.label').contrastingText();
+    $('g-emoji').each(function () {
+        var $this = $(this);
+        var src = $this.attr('fallback-src');
+        var alias = $this.attr('alias');
+        $this.html("<img src='" + src + "' width='20' alt=':" + alias + ":'/>");
+    })
 })
 

@@ -9,11 +9,37 @@ using System.Web.Security;
 using GithubPullTracker.Models;
 using AttributeRouting.Web.Mvc;
 using GithubClient;
+using Braintree;
 
 namespace GithubPullTracker.Controllers
 {
-    public class AuthController : ControllerBase
+    public class AccountController : ControllerBase
     {
+
+        [GET("settings/profile", SitePrecedence = 1)]
+        public ActionResult Profile()
+        {
+            //get list of organisations and current 
+            return View();
+        }
+
+        [GET("organizations/{orgname}/", SitePrecedence = 1)]
+        public ActionResult OrganisationProfile()
+        {
+            
+            var gateway = new BraintreeGateway
+            {
+                Environment = Braintree.Environment.SANDBOX,
+                MerchantId = "the_merchant_id",
+                PublicKey = "a_public_key",
+                PrivateKey = "a_private_key"
+            };
+            //gateway.Subscription.Search(new SubscriptionSearchRequest().Status.IncludedIn(SubscriptionStatus.)
+            //get organisations user 
+            CurrentUser = null;
+
+            return Redirect("/");
+        }
 
         [GET("logout", SitePrecedence = 1)]
         public ActionResult SignOut()

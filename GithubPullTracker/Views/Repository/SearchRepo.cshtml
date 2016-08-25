@@ -6,14 +6,20 @@
     ViewBag.HideRepo = true;
 }
 
-@section header
-{
-    <div class="title-bar">
-        <h1><i class="icon icon-repo"></i><a class="owner" href="~/@Model.Repo.owner.login">@Model.Repo.owner.login</a> / <a class="repo" href="~/@Model.Repo.owner.login/@Model.Repo.name">@Model.Repo.name</a></h1>
 
+<div class="header-content">
+    <div class="container ">
+        <div class="title-bar">
+            @if (Model.IsAdmin)
+            {
+                <a class="config" href="~/@Model.Repo.owner.login/@Model.Repo.name/settings" title="settings"><i class="icon icon-gear"></i><span>Settings</span></a>
+            }
+            <h1><i class="icon icon-repo"></i><a class="owner" href="~/@Model.Repo.owner.login">@Model.Repo.owner.login</a> / <a class="repo" href="~/@Model.Repo.owner.login/@Model.Repo.name">@Model.Repo.name</a></h1>
+
+        </div>
     </div>
-}
-
+</div>
+<div class="homepage">
     <div id="searchResults" class="noRepos">
 
 
@@ -53,7 +59,7 @@
                             <span class="label" style="background-color:#@l.color">@l.name</span>
                         }@if (result.Assignee != null)
                         {
-                        <a class="user"  target="_blank"  href="@result.Assignee.html_url"><img alt="@result.Assignee.login" src="@(result.Assignee.avatar_url)&s=40"></a>
+                            <a class="user" target="_blank" href="@result.Assignee.html_url"><img alt="@result.Assignee.login" src="@(result.Assignee.avatar_url)&s=40"></a>
                         }
                     </div>
                     <div class="meta">
@@ -129,3 +135,5 @@
             </div>
         }
     </div>
+
+</div>

@@ -109,6 +109,12 @@ html{
         line-height: 16px;
         color: #767676;
     }
+    #sidebar .approvals {
+        text-align: right;
+        margin-top: 10px;
+        margin-bottom: 5px;
+    width: 100%;
+    }
 
 .addcomment, 
 .viewcomment{
@@ -434,6 +440,52 @@ div.commentList {
     overflow:auto;
     width:980px;
     margin:0 auto;
+    position: relative;
+}
+    .title-bar section {
+        float:left;
+        width:80%;
+    }
+    .title-bar aside{
+        float:right;
+        width:15%;
+        text-align:right;
+        margin:20px 10px;
+        box-sizing:border-box;
+    }
+.approvals button
+{
+        display: inline-block;
+    padding: 4px 8px;
+    font-weight: 600;
+    line-height: 20px;
+    color: #fff;
+    text-align: center;
+    border-radius: 3px;
+    position: relative;
+    padding-left: 25px;
+    background-color: #6cc644;
+    border:none;
+    cursor:pointer;
+}
+.approvals button.approve{
+    background-color: #6cc644;
+}
+.approvals button.approve:hover{
+    background-color: #58a038;
+}
+.approvals button.unapprove{
+    background-color: #bd2c00;
+}
+.approvals button.unapprove:hover{
+    background-color: #8c2100;
+}
+.approvals button .icon{
+    position:absolute;
+    left:7px;
+    top:5px;
+    font-size:1.3em
+
 }
 .body-content .title-bar{ margin-bottom:15px;   }
 
@@ -1373,4 +1425,22 @@ pre code{
         
         .hero a.button{
             font-size:18px;
+        }
+        .homepage{
+            width:980px;
+            margin:0 auto;
+            overflow:auto;
+        }
+        g-emoji img{
+            
+    vertical-align: text-top;
+        }
+        a.config{
+            position:absolute;
+            top: 15px;
+            right: 0;
+            margin-right:20px;
+        }
+        a.config span{
+            display:none;
         }

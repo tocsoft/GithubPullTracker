@@ -26,6 +26,7 @@ namespace GithubClient.Models
         public string body { get; set; }
         public string body_html { get; set; }
         public User assignee { get; set; }
+        public User[] assignees { get; set; }
         public Milestone milestone { get; set; }
         public bool locked { get; set; }
         public DateTime created_at { get; set; }
@@ -49,6 +50,8 @@ namespace GithubClient.Models
         public int additions { get; set; }
         public int deletions { get; set; }
         public int changed_files { get; set; }
+
+        public Repo repo { get; set; }
     }
 
     public class Milestone
@@ -110,7 +113,8 @@ namespace GithubClient.Models
         public string name { get; set; }
         public string full_name { get; set; }
         public string description { get; set; }
-        public bool _private { get; set; }
+        [JsonProperty("private")]
+        public bool IsPrivate { get; set; }
         public bool fork { get; set; }
         public string url { get; set; }
         public string html_url { get; set; }

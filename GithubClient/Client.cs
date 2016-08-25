@@ -14,6 +14,13 @@ namespace GithubClient
     {
         private readonly RestClient client;
 
+        public string UserAgent
+        {
+            get
+            {
+                return client.UserAgent;
+            }
+        }
         const string auth_scheme = "token";
         public string AccessToken
         {
@@ -48,6 +55,67 @@ namespace GithubClient
                 UserAgent = useragent,                
             };
 
+        }
+
+        public Task<Statuses> GetStatuses(string owner, string repo, string commitSha)
+        {
+            return new RestRequest($"/repos/{owner}/{repo}/commits/{commitSha}/status")
+                   .ExecuteWithAsync<Statuses>(client);
+        }
+
+        public async Task SetStatus(string owner, string repo, string commitSha, CommitStatus status, string requestUrl, string description, string context)
+        {
+            await new RestRequest($"/repos/{owner}/{repo}/statuses/{commitSha}", HttpMethod.Post)
+                    .AddParameter(new
+                    {
+                        state = status.ToString(),
+                        target_url = requestUrl,
+                        description = description,
+                        context = context
+                    })
+                    .ExecuteWithAsync(client);
+        }
+
+        public Task<IEnumerable<WebhokSettings>> GetHooks(string owner, string repo)
+        {
+            return new RestRequest($"/repos/{owner}/{repo}/hooks", HttpMethod.Get)
+                     .ExecutePagesWithAsync<WebhokSettings>(client);
+        }
+        public Task SetHook(string owner, string repo, WebhokSettings settings)
+        {
+            if(settings.id > 0)
+            {
+                //has an Id we are doing an update
+                return new RestRequest($"/repos/{owner}/{repo}/hooks/{settings.id}", new HttpMethod("PATCH"))
+                    .AddParameter(new
+                    {
+                        settings.active,
+                        settings.config,
+                        settings.events
+                    })
+                    .ExecuteWithAsync(client);
+
+            }
+            else
+            {
+                return new RestRequest($"/repos/{owner}/{repo}/hooks", HttpMethod.Post)
+                .AddParameter(new
+                {
+                    name="web",
+                    settings.active,
+                    settings.config,
+                    settings.events
+                })
+                .ExecuteWithAsync(client);
+            }
+
+        }
+
+        public Task DeleteHook(string owner, string repo, WebhokSettings settings)
+        {
+            //has an Id we are doing an update
+            return new RestRequest($"/repos/{owner}/{repo}/hooks/{settings.id}", HttpMethod.Delete)
+                .ExecuteWithAsync(client);
         }
 
         public Task<SearchResult> SearchPullRequests(int page, int pagesize, RequestState state, SortOrder order, SortOrderDirection direction, RequestConnection? connection, string login, string terms, string owner, string repository)
@@ -191,7 +259,7 @@ namespace GithubClient
                     })
                     .ExecuteWithAsync<Issue>(client);
         }
-        
+
         public Task<IEnumerable<Commit>> Commits(string owner, string repo, int pullRequestNumber)
         {
             return
@@ -199,32 +267,47 @@ namespace GithubClient
                     .UpateHeaders(h => {
                         h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
                     })
-                    .ExecuteWithAsync<IEnumerable<Commit>>(client);
+                    .ExecutePagesWithAsync<Commit>(client);
+        }
+
+        public Task<IEnumerable<User>> Assignees(string owner, string repo, int pullRequestNumber)
+        {
+            return
+                new RestRequest($"/repos/{owner}/{repo}/assignees", HttpMethod.Get)
+                    .UpateHeaders(h => {
+                        h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
+                    })
+                    .ExecutePagesWithAsync<User>(client);
         }
         public Task<IEnumerable<CommitFile>> Files(string owner, string repo, int pullRequestNumber)
         {
             return
                   new RestRequest($"/repos/{owner}/{repo}/pulls/{pullRequestNumber}/files", HttpMethod.Get)
-                      .ExecuteWithAsync<IEnumerable<CommitFile>>(client);
+                      .ExecutePagesWithAsync<CommitFile>(client);
         }
-        public Task<IEnumerable< CommitComment>> FileComments(string owner, string repo, int pullRequestNumber)
+
+        public Task<IEnumerable<CommitComment>> FileComments(string owner, string repo, int pullRequestNumber)
         {
             return
                 new RestRequest($"/repos/{owner}/{repo}/pulls/{pullRequestNumber}/comments", HttpMethod.Get)
-                    .UpateHeaders(h => {
+                    .UpateHeaders(h =>
+                    {
                         h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
                     })
-                    .ExecuteWithAsync<IEnumerable<CommitComment>>(client);
+                    .ExecutePagesWithAsync<CommitComment>(client, 10);
         }
+
         public Task<IEnumerable<Comment>> Comments(string owner, string repo, int issueNumber)
         {
             return
                 new RestRequest($"/repos/{owner}/{repo}/issues/{issueNumber}/comments", HttpMethod.Get)
                     .UpateHeaders(h => {
+                        h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.raw+json"));
                         h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
                     })
-                    .ExecuteWithAsync<IEnumerable<Comment>>(client);
+                    .ExecutePagesWithAsync<Comment>(client, 10);
         }
+
         public Task<IEnumerable<Event>> Events(string owner, string repo, int issueNumber)
         {
             return
@@ -232,7 +315,7 @@ namespace GithubClient
                     .UpateHeaders(h => {
                         h.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.VERSION.html+json"));
                     })
-                    .ExecuteWithAsync<IEnumerable<Event>>(client);
+                    .ExecutePagesWithAsync<Event>(client);
         }
 
         public Task<IEnumerable<Event>> Timeline(string owner, string repo, int issueNumber)

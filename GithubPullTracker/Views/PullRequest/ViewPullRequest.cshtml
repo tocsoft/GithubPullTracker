@@ -1,98 +1,152 @@
 ﻿@model GithubPullTracker.Models.PullRequestCommentsView
-@{
 
-    ViewBag.Title = Model.Title + " by " + Model.CreatedBy.login + " · Pull Request #" + Model.Number + " · " + Model.RepositoryOwner + "/" + Model.RepositoryName;
+@Html.Partial("PullRequestHeader", Model.Details)
 
-}
-@section header
-{
-    <div class="title-bar">
-        <h1><i class="icon icon-repo"></i><a class="owner" href="~/@Model.RepositoryOwner">@Model.RepositoryOwner</a> / <a class="repo" href="~/@Model.RepositoryOwner/@Model.RepositoryName">@Model.RepositoryName</a></h1>
-    </div>
-}
-@Html.Partial("PullRequestHeader")
-
-        <div id="home">
-            <div class="main-comment" id="description">
-                <a href="@Model.CreatedBy.html_url" target="_blank" class="avatar">
-                    <img src="@(Model.CreatedBy.avatar_url)&s=40"  alt="@Model.CreatedBy.login" />
-                </a>
-                <div class="comment">
-                    <div class="header">
-                        <a href="@Model.CreatedBy.html_url" target="_blank">@Model.CreatedBy.login</a> commented <time class="timeago" datetime="@Model.CreatedAt.ToString("o")">@Model.CreatedAt</time>
-                    </div>
-
-
-                    @if (string.IsNullOrWhiteSpace(Model.Details))
-                    {
-                        <div class="markdown">
-                            <em>No description provided.</em>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="markdown">@Html.Raw(Model.Details)</div>
-                    }
+<div class="container body-content">
+    <div id="home">
+        <div class="main-comment" id="description">
+            <a href="@Model.Details.CreatedBy.html_url" target="_blank" class="avatar">
+                <img src="@(Model.Details.CreatedBy.avatar_url)&s=40" alt="@Model.Details.CreatedBy.login" />
+            </a>
+            <div class="comment">
+                <div class="header">
+                    <a href="@Model.Details.CreatedBy.html_url" target="_blank">@Model.Details.CreatedBy.login</a> commented <time class="timeago" datetime="@Model.Details.CreatedAt.ToString("o")">@Model.Details.CreatedAt</time>
                 </div>
 
-            </div>
 
-                @foreach (var evnt in Model.Events)
+                @if (string.IsNullOrWhiteSpace(Model.Details.Body))
                 {
-                    @Html.DisplayFor(c=>evnt)
+                    <div class="markdown">
+                        <em>No description provided.</em>
+                    </div>
                 }
+                else
+                {
+                    <div class="markdown">@Html.Raw(Model.Details.Body)</div>
+                }
+            </div>
 
         </div>
 
-<aside id="sidebar">
-    <section>
-        <h3>Labels</h3>
-
-        @if (Model.Labels.Any())
+        @foreach (var evnt in Model.Events)
         {
-            foreach (var l in Model.Labels)
+            @Html.DisplayFor(c => evnt)
+        }
+
+    </div>
+
+    <aside id="sidebar">
+        <section>
+            <h3>Labels</h3>
+
+            @if (Model.Labels.Any())
             {
-                <span class="label" style="background-color:#@l.color">@l.name</span>
+                foreach (var l in Model.Labels)
+                {
+                    <span class="label" style="background-color:#@l.color">@l.name</span>
+                }
+            }
+            else
+            {
+                <span>None yet</span>
+            }
+        </section>
+        <section>
+            <h3>Assignee</h3>
+
+            @if (Model.Details.Assignees.Any())
+            {
+                foreach (var assignee in Model.Details.Assignees)
+                {
+                    <a href="@assignee.html_url">
+                        <img src="@(assignee.avatar_url)&s=40" alt="@assignee.login" />
+                        @assignee.login
+                    </a>
+                }
+            }
+            else
+            {
+                <span>Unassigned</span>
+            }
+        </section>
+
+        @if (Model.Details.ApprovalsEnabled)
+        {
+            <section>
+                <h3>Approved By</h3>
+                @if (Model.Details.ApprovedBy.Any())
+                {
+                    foreach (var assignee in Model.Details.ApprovedBy)
+                    {
+                        <a href="@assignee.html_url">
+                            <img src="@(assignee.avatar_url)&s=40" alt="@assignee.login" />
+                            @assignee.login
+                        </a>
+                    }
+                }
+                else
+                {<span>awaiting approval</span>}
+            </section>
+            if (Model.Details.OutstandingAprovers.Any())
+            {
+                <section>
+                    <h3>
+                        Outstanding Approvers
+                        @(Model.Details.AllRequired ? "(all)" : "(any)")
+                    </h3>
+                    @foreach (var assignee in Model.Details.OutstandingAprovers)
+                    {
+                        <a href="@assignee.html_url">
+                            <img src="@(assignee.avatar_url)&s=40" alt="@assignee.login" />
+                            @assignee.login
+                        </a>
+                    }
+           
+                </section>
+            }
+            if (!Model.Details.IsMerged)
+            {
+                <div class="approvals  show-fixed" >
+                        <form action="@Url.Action("Approve")" method="post">
+                            <input type="hidden" name="approved" value="@((!Model.Details.HasUserApproved).ToString())" />
+                            <input type="hidden" name="headsha" value="@(Model.Details.HeadSha)" />
+                            @if (this.ViewContext.RouteData.Values.ContainsKey("path"))
+                            {
+
+                                <input type="hidden" name="path" value="@(this.ViewContext.RouteData.Values["path"])" />
+                            }
+                            @if (Model.Details.HasUserApproved)
+                            {
+                                <button class="unapprove"><i class="icon icon-x"></i>unapprove</button>
+                            }
+                            else
+                            {
+                                <button class="approve"><i class="icon icon-check"></i>approve</button>
+                            }
+                        </form>
+                </div>
             }
         }
-        else
-        {
-            <span>None yet</span>
-        }
-    </section>
-    <section>
-        <h3>Assignee</h3>
-        @if (Model.Assignee != null)
-        {
-            <a href="@Model.Assignee.html_url">
-                <img src="@(Model.Assignee.avatar_url)&s=40" alt="@Model.Assignee.login" />
-                @Model.Assignee.login
-            </a>
-        }
-        else
-        {
-            <span>Unassigned</span>
-        }
-    </section>
-    
-    <a href="http://github.com/@Model.RepositoryOwner/@Model.RepositoryName/pull/@Model.Number" target="_blank" class="right show-fixed">view on github</a>
-</aside>
+
+        <a href="http://github.com/@Model.Details.RepositoryOwner/@Model.Details.RepositoryName/pull/@Model.Details.Number" target="_blank" class="right show-fixed">view on github</a>
+    </aside>
 
 
 
-        
-
-<script type="x-template" id="home-comment-template">
-    @Html.Partial("_MainCommentTemplate")
-</script>
-<script type="x-template" id="home-file-comment-template">
-    @Html.Partial("_MainFileCommentTemplate")
-</script>
-<script type="x-template" id="inline-file-comment-template">
-    @Html.Partial("_InlineFileCommentTemplate")
-</script>
 
 
+    <script type="x-template" id="home-comment-template">
+        @Html.Partial("_MainCommentTemplate")
+    </script>
+    <script type="x-template" id="home-file-comment-template">
+        @Html.Partial("_MainFileCommentTemplate")
+    </script>
+    <script type="x-template" id="inline-file-comment-template">
+        @Html.Partial("_InlineFileCommentTemplate")
+    </script>
+
+
+</div>
 
 @section scripts{
     <style id="mergeHeight">
@@ -103,7 +157,7 @@
     <script>
        
 
-        window.repocontext = '@(Model.RepositoryOwner)/@(Model.RepositoryName)';
+        window.repocontext = '@(Model.Details.RepositoryOwner)/@(Model.Details.RepositoryName)';
         var itm = $('#sidebar');
         var posTop = itm.position().top;
         var posleft = itm.position().left;
@@ -133,7 +187,7 @@
                 itm.removeClass('fixed');
             }
 
-        });
+        }).scroll();
 
 
         @*diffViewScript('@Model.CurrentFile', '@Model.HeadSha', '@Url.Action("ViewPullRequest")', @Html.Raw(Model.TreeData.ToString()), '@Model.RepositoryOwner','@Model.RepositoryName')*@

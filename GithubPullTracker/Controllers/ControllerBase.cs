@@ -7,6 +7,7 @@ using System.Web.Mvc;
 using System.Web.Routing;
 using System.Web.Security;
 using GithubClient;
+using GithubPullTracker.DataStore;
 using GithubPullTracker.Models;
 using Newtonsoft.Json;
 
@@ -23,6 +24,8 @@ namespace GithubPullTracker.Controllers
         public GithubUser CurrentUser { get { return ViewData["__CurrentUser__"] as GithubUser; } protected set { ViewData["__CurrentUser__"] = value; } }
 
         public GithubClient.Client Client { get; private set; } = new GithubClient.Client("pull-tracker");
+
+        public RepoStore Store { get; private set; } = new RepoStore();
 
         protected override IAsyncResult BeginExecute(RequestContext requestContext, AsyncCallback callback, object state)
         {
@@ -53,6 +56,13 @@ namespace GithubPullTracker.Controllers
 
         protected override void OnException(ExceptionContext filterContext)
         {
+            if(filterContext.Exception is UnauthorizedAccessException)
+            {
+                filterContext.ExceptionHandled = true;
+                filterContext.Result = new HttpUnauthorizedResult();
+                return;
+            }
+
             var ex = filterContext.Exception as RestException;
             if (ex != null)
             {

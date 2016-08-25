@@ -8,22 +8,19 @@ using Newtonsoft.Json.Linq;
 
 namespace GithubPullTracker.Models
 {
-    public class PullRequestFileView : PullRequestView
+    public class PullRequestFileView 
     {
         PullRequestViewItem rootItem;
-
-        public PullRequestFileView(PullRequest pr, IEnumerable<CommitFile> files):base(pr)
+        
+        public PullRequestFileView(PullRequestView header, IEnumerable<CommitFile> files, string selectedPath, string targetText, bool isBinary, IEnumerable<CommitComment> comments, IEnumerable<string> visistedFileShas)
         {
             rootItem = new PullRequestViewItem(files);
-        }
-
-        public PullRequestFileView(PullRequest pr, IEnumerable<CommitFile> files, string selectedPath, string targetText, bool isBinary, IEnumerable<CommitComment> comments, IEnumerable<string> visistedFileShas) : this(pr, files)
-        {
             this.TargetText = targetText;
             this.IsBinary = isBinary;
             CurrentFile = rootItem.GetItem(selectedPath);
-            this.CommentList = comments;
             this.VisitedFiles = visistedFileShas;
+            this.CommentList = comments;
+            this.Details = header;
         }
         public PullRequestViewItem CurrentFile { get; set; }
 
@@ -42,5 +39,6 @@ namespace GithubPullTracker.Models
         public bool IsBinary { get; private set; }
         public IEnumerable<CommitComment> CommentList { get; private set; }
         public IEnumerable<string> VisitedFiles { get; private set; }
+        public PullRequestView Details { get; private set; }
     }
 }
