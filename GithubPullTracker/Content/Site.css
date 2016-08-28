@@ -228,8 +228,10 @@ div.commentList {
          margin-left:10px
      }
         .main-comment .avatar img {
-                border-radius: 3px;
+            border-radius: 3px;
+            width: 40px;
         }
+
  .main-comment .comment:after,  .main-comment .comment:before {
 	right: 100%;
 	top: 15px;
