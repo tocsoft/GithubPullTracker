@@ -2,8 +2,27 @@
 
 
 @{
-    ViewBag.Title = "Search";
     var CurrentUser = ViewData["__CurrentUser__"] as GithubUser;
+
+    string state = (Model.State == GithubClient.RequestState.Open ? $"{Model.OpenHits} open" : $"{Model.ClosedHits} closed");
+    string connection = "";
+    switch (Model.ConnectionType)
+    {
+        case GithubClient.RequestConnection.Assigned:
+            connection = $" · Assigned to {CurrentUser.UserName}";
+            break;
+        case GithubClient.RequestConnection.Involved:
+            connection = $" · Involving {CurrentUser.UserName}";
+            break;
+        case GithubClient.RequestConnection.Author:
+            connection = $" · Created by {CurrentUser.UserName}";
+            break;
+        case GithubClient.RequestConnection.All:
+        default:
+            break;
+    }
+
+    ViewBag.Title = $"Pull Requests · {state}{connection}";
 }
 
 <div class="homepage">
@@ -30,6 +49,11 @@
         </div>
     </div>
     <div class="rows">
+        @if (!Model.Items.Any())
+        {
+            <p>No results matched your search.</p>
+        }
+
     @foreach (var result in Model.Items)
     {
         <div class="@(result.ClosedAt.HasValue ? "closed" : null)">

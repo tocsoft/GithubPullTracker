@@ -1,9 +1,27 @@
 ﻿@model GithubPullTracker.Models.RepoSearchResults
 
-
 @{
-    ViewBag.Title = "Search";
-    ViewBag.HideRepo = true;
+    var CurrentUser = ViewData["__CurrentUser__"] as GithubUser;
+
+    string state = (Model.State == GithubClient.RequestState.Open ? $"{Model.OpenHits} open" : $"{Model.ClosedHits} closed");
+    string connection = "";
+    switch (Model.ConnectionType)
+    {
+        case GithubClient.RequestConnection.Assigned:
+            connection = $" · Assigned to {CurrentUser.UserName}";
+            break;
+        case GithubClient.RequestConnection.Involved:
+            connection = $" · Involving {CurrentUser.UserName}";
+            break;
+        case GithubClient.RequestConnection.Author:
+            connection = $" · Created by {CurrentUser.UserName}";
+            break;
+        case GithubClient.RequestConnection.All:
+        default:
+            break;
+    }
+
+    ViewBag.Title = $"{Model.Repo.owner.login}/{Model.Repo.name} · Pull Requests · {state}{connection}";
 }
 
 
