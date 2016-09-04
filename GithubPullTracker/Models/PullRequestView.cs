@@ -69,7 +69,7 @@ namespace GithubPullTracker.Models
                 AllRequired = false;
                 //
             }
-
+            
             HasUserApproved = approvedPeople.Contains(user.UserName);
 
             HeadSha = pr.Head.sha;
@@ -151,7 +151,15 @@ namespace GithubPullTracker.Models
 
             IsPrivate = pr.Base.repo.IsPrivate;
             
+            
+
             ApprovalsEnabled = (settings.PrivateEnabled || (settings.PublicEnabled && !IsPrivate));
+
+            // the user can approve if
+                // repo is setup
+                // not merged
+                // and user is on the required approvers list
+            CanApprove = ApprovalsEnabled && !IsMerged && RequiredAprovers.Any(x => x.login == user.UserName);
         }
 
 
@@ -201,5 +209,6 @@ namespace GithubPullTracker.Models
         public bool IsPrivate { get; internal set; }
         public IEnumerable<User> ApprovedBy { get; private set; }
         public bool ApprovalsEnabled { get; private set; }
+        public bool CanApprove { get; private set; }
     }
 }

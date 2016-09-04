@@ -107,7 +107,7 @@
            
                 </section>
             }
-            if (!Model.Details.IsMerged)
+            if (Model.Details.CanApprove)
             {
                 <div class="approvals  show-fixed" >
                         <form action="@Url.Action("Approve")" method="post">
@@ -115,7 +115,6 @@
                             <input type="hidden" name="headsha" value="@(Model.Details.HeadSha)" />
                             @if (this.ViewContext.RouteData.Values.ContainsKey("path"))
                             {
-
                                 <input type="hidden" name="path" value="@(this.ViewContext.RouteData.Values["path"])" />
                             }
                             @if (Model.Details.HasUserApproved)
