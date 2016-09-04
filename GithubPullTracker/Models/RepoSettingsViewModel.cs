@@ -55,9 +55,32 @@ namespace GithubPullTracker.Models
             BranchProtected = true;//if repo.defualt branch !have protecton || has protection and dorsn't have our context as a required success!
 
             IsPrivate = repo.IsPrivate;
+            if (Enabled)
+            {
+                CanConfigure = true;
+            }
+            else
+            {
+                if (IsPrivate)
+                {
+                    //is this repo already allocated one of the private seats? or is it public
+                    if (ownerSettings.Settings.SubscriptionExpires >= DateTime.UtcNow)
+                    {
+                        //not expired
 
-            //is this repo already allocated one of the private seats? or is it public
-            CanConfigure = !IsPrivate;
+                        var enabledPrivateRepos = ownerSettings.Repositories.Count(x => x.PrivateEnabled);
+
+                        if (enabledPrivateRepos <= ownerSettings.Settings.PrivateRepoCount)
+                        {
+                            CanConfigure = true;
+                        }
+                    }
+                }
+                else
+                {
+                    CanConfigure = true;
+                }
+            }
 
             RepoOwner = repo.owner.login;
             RepoName = repo.name;

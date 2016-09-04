@@ -164,7 +164,7 @@ namespace GithubPullTracker.Controllers
             {
                 //getorg settings
                 var ownerSettings = await Store.GetOwnerSettings(hook.repository.owner.login);
-                if (ownerSettings.SubscriptionExpires >= DateTime.UtcNow)
+                if (ownerSettings.SubscriptionExpires < DateTime.UtcNow)
                 {
                     return Content("Subscription expired");
                 }
