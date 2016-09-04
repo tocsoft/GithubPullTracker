@@ -19,11 +19,11 @@ namespace GithubPullTracker.Models
             var settings = ownerSerttings.Repositories.Single();
             var applicableApprovals = approvals.Where(x => x.HeadSha == pr.Head.sha && x.Approved);
 
-            var excluded = ownerSerttings.Settings.ExcludedFallbackApproversList()//excluded at the org level (build server accounts etc)
+            var excluded = ownerSerttings.Settings.ExcludedFallbackApproversList();//excluded at the org level (build server accounts etc)
             //all assignees must aprove the pr
             var requiredPeople = pr.assignees.Where(x => x.login != pr.user.login).ToList();
             var fallbackPeople = assignees.Where(x => x.login != pr.user.login)
-                .Where(x=> !excluded.Contains(x.login))// remove people who have been excluded
+                .Where(x=> !excluded.Contains(x.login, StringComparer.OrdinalIgnoreCase))// remove people who have been excluded ignoring case
                 .ToList();
 
             if (requiredPeople.Count + fallbackPeople.Count == 0)
