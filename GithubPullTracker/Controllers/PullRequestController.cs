@@ -52,9 +52,9 @@ namespace GithubPullTracker.Controllers
                 {
                     //getorg settings
                     var ownerSettings = await Store.GetOwnerSettings(owner);
-                    if (ownerSettings.SubscriptionExpires >= DateTime.UtcNow)
+                    if (ownerSettings.SubscriptionExpires <= DateTime.UtcNow)
                     {
-                        return Content("Subscription expired");
+                        return RedirectToAction("ViewPullRequest", new { owner, repo, reference, error="subscriptionexpired" });
                     }
                 }
 
