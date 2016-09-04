@@ -142,7 +142,8 @@ namespace GithubPullTracker.Controllers
                 hook = Newtonsoft.Json.JsonConvert.DeserializeObject<Webhook>(json);
             }
             //now we have a webhook we can determin if they have used the correct secret to sign it
-            var settings = await Store.GetRepoSettings(hook.repository.owner.login, hook.repository.name);
+            var ownerSettings = await Store.GetOwnerConfig(hook.repository.owner.login, hook.repository.name);
+            var settings = ownerSettings.Repositories.Single();
 
             var hmac = new HMACSHA1(Encoding.UTF8.GetBytes(settings.WebhookSecret));
             var hashmessage = hmac.ComputeHash(Encoding.UTF8.GetBytes(json));
@@ -163,8 +164,7 @@ namespace GithubPullTracker.Controllers
             if (hook.repository.IsPrivate)
             {
                 //getorg settings
-                var ownerSettings = await Store.GetOwnerSettings(hook.repository.owner.login);
-                if (ownerSettings.SubscriptionExpires < DateTime.UtcNow)
+                if (ownerSettings.Settings.SubscriptionExpires < DateTime.UtcNow)
                 {
                     return Content("Subscription expired");
                 }
@@ -175,7 +175,7 @@ namespace GithubPullTracker.Controllers
 
             if (hook is PullRequestWebhook)
             {
-                await RecievePullRequestHook((PullRequestWebhook)hook, Store, settings);
+                await RecievePullRequestHook((PullRequestWebhook)hook, Store, ownerSettings);
             }
 
             return Content("OK");
@@ -183,7 +183,7 @@ namespace GithubPullTracker.Controllers
         }
 
 
-        private async Task RecievePullRequestHook(PullRequestWebhook hook, RepoStore store, RepoSettings settings)
+        private async Task RecievePullRequestHook(PullRequestWebhook hook, RepoStore store, OwnerConfig settings)
         {
             //pr state change recalculate state and update status
 

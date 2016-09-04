@@ -28,7 +28,7 @@ namespace GithubPullTracker.Controllers
             
             var assignees = Client.Assignees(owner, repo, number);
             var approvalsTask = store.GetApprovals(owner, repo, number);
-            var repoSettingsTask = store.GetRepoSettings(owner, repo);
+            var repoSettingsTask = store.GetOwnerConfig(owner, repo);
             await Task.WhenAll(prTask,  assignees, approvalsTask, repoSettingsTask);
 
             return new PullRequestView(CurrentUser, prTask.Result, assignees.Result, approvalsTask.Result, repoSettingsTask.Result);
