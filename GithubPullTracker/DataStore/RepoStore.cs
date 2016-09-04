@@ -107,7 +107,7 @@ namespace GithubPullTracker.DataStore
             return results.FirstOrDefault() ?? new OwnerSettings(owner);
         }
 
-        public async Task<OwnerConfig> GetOwnerConfig(string owner)
+        public async Task<OwnerConfig> GetOwnerConfig(string owner, string repo = null)
         {
             await Flush(settingsTableName);
 
@@ -115,16 +115,33 @@ namespace GithubPullTracker.DataStore
 
             var targetKey = OwnerSettings.GeneratePartitionKey(owner);
 
-            var query = new TableQuery().Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, targetKey));
-            
-            
+            var queryString = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, targetKey);
+
+            if(repo != null)
+            {
+                queryString = $@"({queryString}) {TableOperators.And} ({ TableQuery.CombineFilters(
+                        TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "@"),
+                        TableOperators.Or,                      
+                        TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, repo.ToLower())
+                    ) })";
+            }
+
+            var query = new TableQuery().Where(queryString);
+                        
             var results = await table.ExecuteQueryAsync(query);
 
             var ownerData = results.Where(x => x.RowKey == "@").FirstOrDefault();
             var repos = results.Where(x => x.RowKey != "@");
+            var convertedRepos = Convert<RepoSettings>(repos);
+            if (repo != null)
+            {
+                if (!convertedRepos.Any())
+                {
+                    convertedRepos = new[] { new RepoSettings(owner, repo) };
+                }
+            }
 
-
-            return new OwnerConfig(owner, Convert<OwnerSettings>(ownerData), Convert<RepoSettings>(repos));
+            return new OwnerConfig(owner, Convert<OwnerSettings>(ownerData), convertedRepos);
         }
 
         private IEnumerable<T> Convert<T>(IEnumerable<DynamicTableEntity> data) where T : TableEntity, new()

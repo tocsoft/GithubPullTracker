@@ -8,18 +8,23 @@ using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 using GithubPullTracker.DataStore.Models;
 using System.Text;
+using GithubPullTracker.DataStore;
 
 namespace GithubPullTracker.Models
 {
     public class PullRequestView
     {
-        public PullRequestView(GithubUser user, PullRequest pr, IEnumerable<User> assignees, IEnumerable<CommitApproval> approvals, RepoSettings settings)
+        public PullRequestView(GithubUser user, PullRequest pr, IEnumerable<User> assignees, IEnumerable<CommitApproval> approvals, OwnerConfig ownerSerttings)
         {
+            var settings = ownerSerttings.Repositories.Single();
             var applicableApprovals = approvals.Where(x => x.HeadSha == pr.Head.sha && x.Approved);
 
+            var excluded = ownerSerttings.Settings.ExcludedFallbackApproversList();//excluded at the org level (build server accounts etc)
             //all assignees must aprove the pr
             var requiredPeople = pr.assignees.Where(x => x.login != pr.user.login).ToList();
-            var fallbackPeople = assignees.Where(x => x.login != pr.user.login).ToList();
+            var fallbackPeople = assignees.Where(x => x.login != pr.user.login)
+                .Where(x=> !excluded.Contains(x.login, StringComparer.OrdinalIgnoreCase))// remove people who have been excluded ignoring case
+                .ToList();
 
             if (requiredPeople.Count + fallbackPeople.Count == 0)
             {
@@ -69,7 +74,7 @@ namespace GithubPullTracker.Models
                 AllRequired = false;
                 //
             }
-
+            
             HasUserApproved = approvedPeople.Contains(user.UserName);
 
             HeadSha = pr.Head.sha;
@@ -151,7 +156,15 @@ namespace GithubPullTracker.Models
 
             IsPrivate = pr.Base.repo.IsPrivate;
             
+            
+
             ApprovalsEnabled = (settings.PrivateEnabled || (settings.PublicEnabled && !IsPrivate));
+
+            // the user can approve if
+                // repo is setup
+                // not merged
+                // and user is on the required approvers list
+            CanApprove = ApprovalsEnabled && !IsMerged && RequiredAprovers.Any(x => x.login == user.UserName);
         }
 
 
@@ -201,5 +214,6 @@ namespace GithubPullTracker.Models
         public bool IsPrivate { get; internal set; }
         public IEnumerable<User> ApprovedBy { get; private set; }
         public bool ApprovalsEnabled { get; private set; }
+        public bool CanApprove { get; private set; }
     }
 }

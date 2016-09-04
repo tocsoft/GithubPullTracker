@@ -50,7 +50,7 @@
     </section>
     <aside>
         
-            @if (!Model.IsMerged && Model.ApprovalsEnabled)
+            @if (Model.CanApprove)
             {
                 <div class="approvals">
                     <form action="@Url.Action("Approve")" method="post">

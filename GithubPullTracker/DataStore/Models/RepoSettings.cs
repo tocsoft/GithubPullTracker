@@ -68,6 +68,5 @@ namespace GithubPullTracker.DataStore.Models
                 EncodedAuthorizationToken = enc.Encrypt(token);
             }
         }
-
     }
 }
