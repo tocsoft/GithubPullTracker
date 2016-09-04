@@ -1,4 +1,7 @@
 ﻿@model PullRequestFileView
+@{
+    ViewBag.Title = Model.Details.Title + " by " + Model.Details.CreatedBy.login + " · Pull Request #" + Model.Details.Number + " · " + Model.Details.RepositoryOwner + "/" + Model.Details.RepositoryName;
+}
 @Html.Partial("PullRequestHeader", Model.Details)
 
 <div class="container-fluid body-content">
