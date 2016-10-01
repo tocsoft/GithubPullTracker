@@ -148,6 +148,7 @@ namespace GithubPullTracker.Models
             var mergable = new[] { "unlabeled", "unassigned", "demilestoned", "committed" };
             
             var all =  events
+                .Where(x=>x!=null)
                     .Select(x=>new TimelineEventOther()
                          {
                              Item = x,

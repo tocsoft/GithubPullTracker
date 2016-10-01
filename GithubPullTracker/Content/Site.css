@@ -497,8 +497,14 @@ div.commentList {
 }
 
 .CodeMirror-code> div{
-    padding-top:0.25em;padding-bottom:0.25em;
+    /*padding-top:0.25em;
+    padding-bottom:0.25em;*/
 }
+.CodeMirror
+{
+  line-height:21px;
+}
+
 
 
 .file-diff {
@@ -1446,3 +1452,7 @@ pre code{
         a.config span{
             display:none;
         }
+#message,#loader {
+    margin-top: 25%;
+    text-align: center;
+}

@@ -230,7 +230,8 @@
                 serverResult('@Model.CurrentFile.Path',
                     lineTOStart,
                     @Html.JavascriptString(Model.TargetText),
-                    @Html.JavascriptString(Model.IsBinary)
+                    @Html.JavascriptString(Model.IsBinary),
+                    ""//write what the change was here
                     );
 
             },10);
@@ -475,19 +476,22 @@
                     if(data.fileMissing){
                         isBinary = (!files[path].patch);
                     }
-                    serverResult(path, lineScrollerTarget, data.contents, isBinary);
+                    serverResult(path, lineScrollerTarget, data.contents, isBinary, data.change);
                 });
                 //}
             }
 
-            function serverResult(path, line, targetText, isBinary) {
+            function serverResult(path, line, targetText, isBinary, change) {
                 currentFilePath = path;
                 var change = files[path].Status;
                 var patch = files[path].Patch;
-
-                if (typeof patch === 'string') {
-                    files[path].Patch = patch = JsDiff.parsePatch(patch);
+                if(!patch){
+                    isBinary = true;//no patch treat as binary for now.
                 }
+                    if (typeof patch === 'string') {
+                        files[path].Patch = patch = JsDiff.parsePatch(patch);
+                    }
+                
 
                 $('#fileName').text(path)
                     .removeClass("status-modified")
@@ -500,7 +504,10 @@
                 //    return;
                 //}
                 if (isBinary) {
-                    editorElm.html("<div>Binary file " + data.change + ", preview unavailible.</div>");
+                    messageElm.html("<div>Binary file, preview unavailible.</div>");
+                    
+                    loaderElm.hide();
+                    messageElm.show();
                     return;
                 }
 
@@ -670,6 +677,12 @@
                         bar.update(annotation);
                     }
                 }
+                
+                //applyCommentsToEditors();
+                window.fixHeights();
+
+                targetElm.show();
+                loaderElm.hide();
 
                 var patchMap  = files[path].patchMap = mapPatch(patch)
 
@@ -721,14 +734,17 @@
 
 
 
-                //applyCommentsToEditors();
-                window.fixHeights();
-
-                targetElm.show();
-                loaderElm.hide();
-
                 window.reloadEditors();
-                scrollToLine(line);
+                if(line){
+                    scrollToLine(line);
+                }else{
+                    //scroll to diff                    
+                    if (targetEditor) {
+                        targetEditor.execCommand("goNextDiff"); 
+                    }else if (sourceEditor) { 
+                        sourceEditor.execCommand("goNextDiff"); 
+                    }
+                }
 
             }
 
