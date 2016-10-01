@@ -80,6 +80,10 @@ String.prototype.replaceAll = function (search, replacement) {
 };
 
 function inversePatch(patchs) {
+    if (!patchs) {
+        return [];
+    }
+
     var patchsResult = []
     for (var i = 0; i < patchs.length; i++) {
         var p = patchs[i];
